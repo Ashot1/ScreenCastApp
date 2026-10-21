@@ -1,5 +1,27 @@
 # Результаты проверки основы
 
+## Приёмка 25A — 21 октября 2026
+
+Пробы, macOS 26 и слой оформления ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25a-parent-inspection.md)).
+
+- **Пробы R1–R4** — основные пути прошли:
+  - настройки с боковой панелью;
+  - лента у края со стеклом и вводом, приложение пользователя остаётся впереди;
+  - `.onDisappear` корня главного окна при закрытии;
+  - иконки пунктов меню на macOS 27.
+
+  Снимки сделаны через computer-use приложения Claude с разрешения пользователя.
+- **Исполнитель:**
+  - yarn verify 358 Rust / 92 Swift, feature Swift 140, Clippy;
+  - аудит: экспорты в `Contents/MacOS/Ambient`, нет `Ambient.debug.dylib`, minos 26.0 у всех Mach-O, подписи;
+  - перечень проверок 111 = 111.
+- **Оркестратор:**
+  - свежий yarn verify 16:17–16:21Z, exit 0, 358 Rust / 92 Swift;
+  - хэши Mach-O совпадают с доказательством исполнителя;
+  - 22 прежние контрольные сборки (378 файлов) не изменились;
+  - новая `Ambient-design-25a.app`.
+- **Не проверено:** интерфейс самого Ambient (смотрит пользователь, D77), CI на `macos-26` (нет удалённого репозитория), устройство с macOS 26.
+
 ## Исправление запуска на macOS 27 — 21 октября 2026
 
 Пользователь впервые открыл собранное приложение, и оно не запустилось. В отчёте macOS о сбое загрузчик отказался грузить `@rpath/Ambient.debug.dylib`: «code signature … not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs».

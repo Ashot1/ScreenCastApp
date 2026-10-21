@@ -38,7 +38,7 @@ yarn install --frozen-lockfile
 yarn verify:portable
 ```
 
-Сборка приложения: `yarn build:macos`. Результат — `target/macos/Build/Products/Debug/Ambient.app`. Нужен официальный Rust 1.99.1 с библиотекой, совместимой с macOS 14; воспроизводимая изолированная установка описана в [macOS README](src/platforms/macos/README.md). Точные команды и ограничения: [разработка](docs/development.md), [текущий статус](docs/project-status.md).
+Сборка приложения: `yarn build:macos`. Результат — `target/macos/Build/Products/Debug/Ambient.app`. Нужен официальный Rust 1.99.1 с библиотекой, совместимой с macOS 26 (приложение требует macOS 26+, D72); воспроизводимая изолированная установка описана в [macOS README](src/platforms/macos/README.md). Точные команды и ограничения: [разработка](docs/development.md), [текущий статус](docs/project-status.md).
 
 ## Куда смотреть
 

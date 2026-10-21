@@ -3,7 +3,7 @@ set -euo pipefail
 
 ambient_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ambient_root"
-export MACOSX_DEPLOYMENT_TARGET=14.0
+export MACOSX_DEPLOYMENT_TARGET=26.0
 
 ambient_command="${1:-}"
 if [[ $# -gt 0 ]]; then shift; fi

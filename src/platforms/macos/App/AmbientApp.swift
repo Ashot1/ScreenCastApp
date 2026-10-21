@@ -9,10 +9,12 @@ import SwiftUI
         Window("Ambient", id: "memory") {
             AssistantView(model: delegate.model, chatGPT: delegate.chatGPT)
                 .task { await delegate.chatGPT.reload() }
+                .ambientTheme()
         }
         .defaultSize(width: 660, height: 700)
         Settings {
             AssistantSettingsView(model: delegate.model, chatGPT: delegate.chatGPT)
+                .ambientTheme()
         }
         MenuBarExtra {
             AssistantMenu(model: delegate.model)

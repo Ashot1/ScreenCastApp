@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "AmbientVoiceHelper",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v26)],
     products: [.executable(name: "AmbientVoiceHelper", targets: ["AmbientVoiceHelper"])],
     dependencies: [
         .package(path: ".."),

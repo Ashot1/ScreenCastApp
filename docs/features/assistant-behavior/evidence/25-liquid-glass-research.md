@@ -16,7 +16,7 @@
   - `GlassEffectContainer(spacing:)` — группирует стекло: стекло не может брать изображение у другого стекла, и так экономятся проходы отрисовки.
   - `glassEffectID(_:in:)`, `glassEffectUnion(id:namespace:)`, `glassEffectTransition(_:)` (`.matchedGeometry`, `.materialize`, `.identity`).
 - **Кнопки.**
-  - `.buttonStyle(.glass)`, `.glassProminent`; `.glass(_ Glass)` требует macOS 26.1.
+  - `.buttonStyle(.glass)`, `.glassProminent`; `GlassButtonStyle.init(_:)` требует macOS 26.1; статический `.glass(_:)` в SDK помечен 26.0 (поправка 25A, `target/verification/25a/p0-compile.txt`).
   - `.buttonBorderShape(.capsule)`.
   - На macOS кнопки размеров mini/small/medium остаются скруглёнными прямоугольниками, large и больше — капсулы; высоты элементов чуть больше, жёсткие высоты не задавать.
 - **Края и формы.**

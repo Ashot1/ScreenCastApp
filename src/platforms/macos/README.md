@@ -1,5 +1,9 @@
 # macOS / Swift
 
+## macOS 26 и слой оформления (25A / ADR-023)
+
+Приложение и голосовой помощник требуют macOS 26 (D72): `.macOS(.v26)` (PackageDescription 6.2), `MACOSX_DEPLOYMENT_TARGET = 26.0` в Xcode и `scripts/macos.sh`, CI на `macos-26`. `Design/Theme.swift` — помощник `Color(light:dark:)` на `NSColor(name:dynamicProvider:)`, четыре смысловые пары (готово, устарело, ошибка, уточнение; в тёмной теме — системные цвета) и оттенок `Theme.ink`. `Design/Styles.swift` — `AmbientInsetGroupBoxStyle` и `View.ambientTheme()`; модификатор стоит на трёх корнях со своей средой: окно `memory`, `Settings` и `NSHostingView` ленты у края. Новый отдельный корень (`NSHostingView`, другая сцена) получает `.ambientTheme()` сам. Роли шрифтов, радиусы и компоненты появляются в задачах их первых потребителей. `LocalizationTests` сверяет наборы ключей EN и RU. Пробы R1–R4 и снимки: `target/verification/25a/`.
+
 ## Todoist (17A / ADR-018)
 
 `TodoistSources.swift` (адаптер общего каркаса, черновик «имя + токен», модели метаданных `TodoistPresence`/`TodoistFields`/`TodoistMetadata`) и `TodoistSourcesView.swift` (метаданные, покрытие, объект с буквальным Markdown без рендеринга, `TodoistSettingsView`, `IntegrationPresentation`). Аккаунт не вводится: Core записывает его при первом чтении, общая модель перечитывает профили в конце чтения; сохранение профиля (`saveTodoistProfile`) не передаёт аккаунт. Исключение аккаунта доступно после записи. Секрет `IntegrationSecret.todoistToken` (ключ `todoist_token`, внутренние ключи и проверка формы — как у `githubToken`) в общем конверте Keychain. Пятый переключатель `BuiltInIntegration.todoist`, цитата `IntegrationCitation.todoist` и карточка 08B. Тесты: `IntegrationSourcesTests` (общие наборы с `.todoist`, loopback `GET /user` → задача, проект, комментарии → предпросмотр → сохранение → 08B, пауза 429 с большим сроком из тела), `IntegrationSwitchesTests`.
@@ -71,7 +75,7 @@ yarn test:swift
 yarn build:macos
 ```
 
-Команды выполняются из корня. Нужны Xcode/Swift 6.4 и Rust 1.99 с Clippy/rustfmt (CI: 1.99.1). Language mode Swift 6, deployment target macOS 14. Rust также собирается с `MACOSX_DEPLOYMENT_TARGET=14.0`. Homebrew toolchain, чья готовая std собрана для более новой macOS, не подходит для такого bundle: нужен официальный toolchain с совместимой std, а не подавление предупреждений линковки.
+Команды выполняются из корня. Нужны Xcode/Swift 6.4 и Rust 1.99 с Clippy/rustfmt (CI: 1.99.1). Language mode Swift 6, deployment target macOS 26 (ADR-023, D72: системное стекло Liquid Glass есть только с macOS 26). Пакеты используют PackageDescription 6.2, где появился `.v26`. Rust также собирается с `MACOSX_DEPLOYMENT_TARGET=26.0`. Homebrew toolchain, чья готовая std собрана для более новой macOS, не подходит для такого bundle: нужен официальный toolchain с совместимой std, а не подавление предупреждений линковки.
 
 `Ambient.xcodeproj` — настоящий app target, использующий локальный Swift package. Сборка Debug подписывается ad-hoc с Hardened Runtime и собирается без отдельной отладочной библиотеки (`ENABLE_DEBUG_DYLIB = NO`): на macOS 27 загрузчик отказывается грузить ad-hoc `Ambient.debug.dylib` в ad-hoc процесс с Hardened Runtime («different Team IDs»), и приложение не запускалось. Превью Xcode в проекте нет, поэтому отладочная библиотека не нужна; весь код и экспорты ABI — в одном исполняемом файле `Contents/MacOS/Ambient`. Cargo вызывается build phase перед линковкой статической `ambient_bridge`; повторная сборка использует Cargo cache. Локальная development-сборка предназначена для архитектуры текущего Mac. Результат: `target/macos/Build/Products/Debug/Ambient.app`. Bundle ID `dev.ambient.foundation` — явный development identifier. Подпись ad hoc, без notarization и распространения. Запуск: `open target/macos/Build/Products/Debug/Ambient.app`.
 
@@ -95,7 +99,7 @@ RUSTUP_HOME="$PWD/target/toolchains/rustup" CARGO_HOME="$PWD/target/cargo-home" 
 )
 ```
 
-PATH меняется только внутри subshell. Дистрибутив и компоненты проверяет официальный rustup; checksum загрузчика проверяется до запуска. Для Intel нужен соответствующий официальный `x86_64-apple-darwin` загрузчик. Минимум ARM64 std официального toolchain — macOS 11; фактический deployment target приложения остаётся 14.
+PATH меняется только внутри subshell. Дистрибутив и компоненты проверяет официальный rustup; checksum загрузчика проверяется до запуска. Для Intel нужен соответствующий официальный `x86_64-apple-darwin` загрузчик. Минимум ARM64 std официального toolchain — macOS 11; фактический deployment target приложения — 26.
 
 `MemorySession` владеет одним непрозрачным handle и выполняет синхронные C-вызовы на собственном actor. `AssistantModel` на MainActor хранит выбранные страницы для отображения, выбранный ID и один отдельный редактируемый черновик с исходной ревизией. Перед завершением app ждёт принятую операцию и закрывает handle; callbacks и Rust workers отсутствуют. Native localizable resources поддерживают English и русский.
 
@@ -103,7 +107,7 @@ PATH меняется только внутри subshell. Дистрибутив
 
 `yarn verify` включает Swift behavior/integration tests на реальной временной SQLite. `yarn build:macos` отдельно проверяет packaging `.app`. В ограниченной среде без разрешения на вложенный `sandbox-exec` SwiftPM принимает `yarn test:swift --disable-sandbox` / `yarn check:swift --disable-sandbox`; это параметр инструмента сборки, не разрешение продукта. Xcode build требует обычного доступа к native SDK/cache. Formatter входит в Xcode; строгие правила проекта сохраняются.
 
-Запрос прав наблюдения/передачи, реальное чтение через ScreenCaptureKit/Accessibility, карточки и автоматическое включение автозапуска после полной настройки остаются для интеграции 06 после 01/03; явное управление автозапуском описано ниже в06E. Проверки этой основы не подтверждают G5, полную G7, работу на macOS 14 устройстве или Windows parity. UI визуально не проверялся: отдельного запроса на это не было.
+Запрос прав наблюдения/передачи, реальное чтение через ScreenCaptureKit/Accessibility, карточки и автоматическое включение автозапуска после полной настройки остаются для интеграции 06 после 01/03; явное управление автозапуском описано ниже в06E. Проверки этой основы не подтверждают G5, полную G7, работу на устройстве с macOS 26 или Windows parity. UI визуально не проверялся: отдельного запроса на это не было.
 
 ## Строка меню и локальные разрешения (06C)
 

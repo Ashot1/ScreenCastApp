@@ -82,7 +82,8 @@ import SwiftUI
             window.contentView = NSHostingView(
                 rootView: ScrollView {
                     AssistanceCardView(model: model, chatGPT: chatGPT, edge: true).padding(16)
-                })
+                }
+                .ambientTheme())
             panel = window
         }
         guard let panel else { return }

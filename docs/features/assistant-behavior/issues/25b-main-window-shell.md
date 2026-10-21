@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25A.
 
-**Status:** blocked
+**Status:** ready — 25A принята; исполнитель запускается оркестратором (D80)
 
 - [ ] Перенос `AssistantView` в каркас (диалоги, проверки), `CaseSidebar`, `CaseDetailView` без изменений поведения.
 - [ ] Привязка выбора по ADR-023 (`get`/`set`, раздел по `.onChange` корня); тест не нужен для привязки, но путь «Отмена» в окне несохранённого не меняет раздел.

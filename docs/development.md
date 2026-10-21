@@ -3,7 +3,7 @@
 ## Инструменты
 
 - Node 22.23.1, Yarn 1.22.22 — только генерация правил и её тесты. Зависимости закреплены в package.json/yarn.lock.
-- Rust: CI закрепляет 1.99.1 с rustfmt/Clippy. Cargo edition 2024, `rust-version = 1.99`. Основа проверена официальным 1.99.1 из изолированного `target/`; глобальные настройки не менялись. Локальный Homebrew toolchain имеет std для более новой macOS и не подходит для приложения с минимумом macOS 14. [Установка и команды](../src/platforms/macos/README.md).
+- Rust: CI закрепляет 1.99.1 с rustfmt/Clippy. Cargo edition 2024, `rust-version = 1.99`. Основа проверена официальным 1.99.1 из изолированного `target/`; глобальные настройки не менялись. Локальный Homebrew toolchain имеет std для более новой macOS и не подходит для приложения с минимумом macOS 26. [Установка и команды](../src/platforms/macos/README.md).
 - macOS: Xcode SDK + Swift 6.4, language mode 6. `swift format` входит в toolchain; полный project config — `.swift-format`. `.swift-version` записывает baseline, но сам по себе не переключает Xcode.
 - Windows native shell: .NET/SDK ещё не выбраны; переносимость Rust проверяется отдельно.
 
