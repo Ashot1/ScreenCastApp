@@ -63,9 +63,9 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         case pause(Bool)
     }
     private var inFlight: (readingPause: Bool, task: Task<Bool, Never>)?
-    private var tasksAfter: UInt64 = 0
-    private var evidenceAfter: UInt64 = 0
-    private var linksAfter: UInt64 = 0
+    private(set) var tasksAfter: UInt64 = 0
+    private(set) var evidenceAfter: UInt64 = 0
+    private(set) var linksAfter: UInt64 = 0
     private var decisionsAfter: UInt64 = 0
     private var stepsAfter: UInt64 = 0
     private var dependenciesAfter: UInt64 = 0

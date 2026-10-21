@@ -77,6 +77,9 @@ public struct MemorySnapshot: Equatable, Sendable {
     public let checks: MemoryPage<MemoryCheck>
     public let dependencies: MemoryPage<MemoryDependency>
     public let references: MemoryPage<MemoryReference>
+    /// Groups only the loaded task page: Core pages by ID across both lifecycles.
+    var openTasks: [MemoryTask] { tasks.items.filter { $0.lifecycle == .open } }
+    var completedTasks: [MemoryTask] { tasks.items.filter { $0.lifecycle == .completed } }
 }
 public enum MemoryFailure: Error, Equatable, Sendable {
     case opening, storage, schema, invalidInput, native, closed, stale, deleted, limit, completed,

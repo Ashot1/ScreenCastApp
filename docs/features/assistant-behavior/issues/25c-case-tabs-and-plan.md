@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25B.
 
-**Status:** blocked
+**Status:** ready — 25B принята; исполнитель запускается оркестратором (D80)
 
 - [ ] `CaseTab` — сегментный `Picker`, содержимое условно; вкладки «Заметки», «Связи», «Источники», «Помощь» пока показывают прежние разделы, редактор шага встроенный.
 - [ ] Отмена источников: `didSet` у `snapshot` (ID и ревизия `selectedTask`) и `manualPause` вызывают `cancelSourceViews()`; на корне — `assistanceReady == false` и `.onDisappear` (по итогу R3); из экранов источников убраны их обработчики отмены.

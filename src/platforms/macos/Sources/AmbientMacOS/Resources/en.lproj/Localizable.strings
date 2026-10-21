@@ -3,6 +3,7 @@
 "status.paused" = "Paused";
 "status.stoppedAnalysis" = "Observation unavailable — saved task help in window";
 "status.pauseUnknown" = "Stopped — saved pause unknown";
+"status.closing" = "Quitting…";
 "intent.title" = "Intention";
 "intent.editor" = "Task intention";
 "intent.unsaved" = "Unsaved changes";
@@ -35,7 +36,6 @@
 "permissions.granted" = "Granted";
 "permissions.notGranted" = "Not granted";
 "permissions.check" = "Check permissions";
-"memory.title" = "Task memory";
 "memory.manage" = "Manage task memory";
 "memory.help" = "Tasks and notes stay on this Mac until you delete them. This does not erase backups.";
 "tasks.empty" = "No saved tasks.";
@@ -43,7 +43,7 @@
 "tasks.new" = "New task";
 "tasks.next" = "Next page";
 "tasks.first" = "First page";
-"tasks.selected" = "Selected task";
+"tasks.completed" = "Completed";
 "switch.title" = "Save your changes?";
 "switch.message" = "Save or discard the draft before switching tasks.";
 "switch.save" = "Save and switch";

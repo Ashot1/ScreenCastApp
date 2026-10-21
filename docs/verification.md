@@ -1,5 +1,22 @@
 # Результаты проверки основы
 
+## Приёмка 25B — 21 октября 2026
+
+Каркас главного окна ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25b-parent-inspection.md)).
+
+- **Исполнитель:**
+  - yarn verify 93 Swift, feature Swift 141;
+  - RED→GREEN `CaseGroupsTests`;
+  - проба R5: после «Отмены» список возвращается к строке модели, 3 из 3 запусков;
+  - перечень проверок 111 → 114, все изменения объяснены;
+  - аудит и подписи.
+- **Оркестратор:**
+  - свежий yarn verify 16:56–17:00Z, exit 0, 358 Rust / 93 Swift;
+  - хэши исходников и Mach-O совпадают;
+  - 23 прежние контрольные сборки (400 файлов) не изменились;
+  - новая `Ambient-shell-25b.app`.
+- **Не проверено:** вид окна (смотрит пользователь, D77), CI на `macos-26`, устройство с macOS 26.
+
 ## Приёмка 25A — 21 октября 2026
 
 Пробы, macOS 26 и слой оформления ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25a-parent-inspection.md)).

@@ -11,7 +11,7 @@ import SwiftUI
                 .task { await delegate.chatGPT.reload() }
                 .ambientTheme()
         }
-        .defaultSize(width: 660, height: 700)
+        .defaultSize(width: 940, height: 800)
         Settings {
             AssistantSettingsView(model: delegate.model, chatGPT: delegate.chatGPT)
                 .ambientTheme()
