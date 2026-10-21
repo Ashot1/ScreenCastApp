@@ -88,6 +88,14 @@ struct Proposal: Equatable, Sendable, Decodable, Identifiable {
         case stepID = "step_id"
     }
 }
+extension [Proposal] {
+    /// The one expanded feed row (ADR-023 #20): the reply target, otherwise the row the window's
+    /// user clicked, otherwise the first fresh row. Each window passes its own rows and click.
+    func expandedID(reply: ProposalTarget?, clicked: UInt64?) -> UInt64? {
+        first { $0.target == reply }?.id ?? first { $0.id == clicked }?.id
+            ?? first { !$0.stale }?.id
+    }
+}
 struct AssistanceCitation: Equatable, Sendable, Decodable, Identifiable {
     let reference: ProposalCitationReference
     let text: String

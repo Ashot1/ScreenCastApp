@@ -22,6 +22,8 @@ enum VoiceReplyFailure: Error, Equatable {
     private(set) var failure: VoiceReplyFailure?
     private(set) var silence = false
     private(set) var elapsed: TimeInterval = 0
+    /// Recording stops here (or at the audio byte cap); the reply view shows progress toward it.
+    static let recordingLimit: TimeInterval = 60
     private(set) var modelDirectory: URL?
     var busy: Bool { phase != .idle || work != nil }
     var canRecord: Bool { !busy && failure != .cleanup && modelDirectory != nil }
@@ -168,7 +170,7 @@ enum VoiceReplyFailure: Error, Equatable {
                 do {
                     let bytes = try await self.workspace.audioSize(lease)
                     guard self.generation == token, self.phase == .recording else { return }
-                    if bytes >= VoiceAudio.maximumBytes || self.elapsed >= 60 {
+                    if bytes >= VoiceAudio.maximumBytes || self.elapsed >= Self.recordingLimit {
                         self.recordingEnded(true, token: token)
                     }
                 } catch { self.abort(.recorder) }

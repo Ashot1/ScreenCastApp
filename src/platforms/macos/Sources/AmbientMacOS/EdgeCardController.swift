@@ -67,9 +67,14 @@ import SwiftUI
         if panel == nil {
             let window = NSPanel(
                 contentRect: .zero,
-                styleMask: [.titled, .closable, .nonactivatingPanel], backing: .buffered,
-                defer: true)
+                styleMask: [.titled, .closable, .nonactivatingPanel, .fullSizeContentView],
+                backing: .buffered, defer: true)
             window.title = String(localized: "assistance.title", bundle: .module)
+            // Still titled: a borderless panel cannot become key, and the reply editor must type.
+            window.titlebarAppearsTransparent = true
+            window.titleVisibility = .hidden
+            window.isOpaque = false
+            window.backgroundColor = .clear
             window.isReleasedWhenClosed = false
             window.hidesOnDeactivate = false
             window.isFloatingPanel = true
@@ -80,10 +85,13 @@ import SwiftUI
             ]
             window.delegate = self
             window.contentView = NSHostingView(
-                rootView: ScrollView {
-                    AssistanceCardView(model: model, chatGPT: chatGPT, edge: true).padding(16)
-                }
-                .ambientTheme())
+                rootView: AssistanceCardView(model: model, chatGPT: chatGPT, edge: true)
+                    .background {
+                        // The glass fills the whole panel, title bar included (25A R2): a clear
+                        // area would still take clicks, so no part of the panel stays empty.
+                        Color.clear.glassEffect(in: .rect(cornerRadius: 30)).ignoresSafeArea()
+                    }
+                    .ambientTheme())
             panel = window
         }
         guard let panel else { return }

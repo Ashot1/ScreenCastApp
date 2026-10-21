@@ -19,36 +19,33 @@ public struct AssistantView: View {
             CaseSidebar(model: model, chatGPT: chatGPT, section: $section)
                 .navigationSplitViewColumnWidth(244)
         } detail: {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    if let failure = model.failure {
-                        Callout(
-                            tone: Theme.error, systemImage: "exclamationmark.circle",
-                            title: Text("error.title", bundle: .module),
-                            message: Text(failure.message)
-                        ) {
-                            Button {
-                                Task { await model.reload() }
-                            } label: {
-                                Text("error.retry", bundle: .module)
+            Group {
+                switch section {
+                // The feed owns its scroll (one scroll, per-window position by proposal ID).
+                case .suggestions:
+                    suggestions.safeAreaInset(edge: .top) {
+                        if model.failure != nil {
+                            memoryFailure.padding(.horizontal, 36).padding(.top, 16)
+                        }
+                    }
+                case .task:
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            memoryFailure
+                            if let snapshot = model.snapshot {
+                                CaseDetailView(
+                                    model: model, chatGPT: chatGPT, snapshot: snapshot,
+                                    linkTarget: $linkTarget, deletion: $deletion, tab: $tab,
+                                    editingTask: $editingTask, editingStep: $editingStep)
+                                Text("memory.help", bundle: .module).font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
                         }
-                    }
-                    switch section {
-                    case .suggestions: suggestions
-                    case .task:
-                        if let snapshot = model.snapshot {
-                            CaseDetailView(
-                                model: model, chatGPT: chatGPT, snapshot: snapshot,
-                                linkTarget: $linkTarget, deletion: $deletion, tab: $tab,
-                                editingTask: $editingTask, editingStep: $editingStep)
-                            Text("memory.help", bundle: .module).font(.caption).foregroundStyle(
-                                .secondary)
-                        }
+                        .padding(.horizontal, 36).padding(.vertical, 32)
                     }
                 }
-                .padding(.horizontal, 36).padding(.vertical, 32)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(nsColor: .textBackgroundColor))
         }
         .toolbar(removing: .title)
@@ -146,6 +143,21 @@ public struct AssistantView: View {
     private func closeEditModes() {
         editingTask = false
         editingStep = false
+    }
+    @ViewBuilder private var memoryFailure: some View {
+        if let failure = model.failure {
+            Callout(
+                tone: Theme.error, systemImage: "exclamationmark.circle",
+                title: Text("error.title", bundle: .module),
+                message: Text(failure.message)
+            ) {
+                Button {
+                    Task { await model.reload() }
+                } label: {
+                    Text("error.retry", bundle: .module)
+                }
+            }
+        }
     }
     @ViewBuilder private var suggestions: some View {
         if !chatGPT.feed.isEmpty || !chatGPT.replyDraft.isEmpty || chatGPT.assisting {

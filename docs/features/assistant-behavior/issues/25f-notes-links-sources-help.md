@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25E.
 
-**Status:** blocked
+**Status:** ready — 25E принята; исполнитель запускается оркестратором (D80)
 
 - [ ] `NotesTab` (из `EvidenceRow`) с меню «⋯»: изменить, перенести, удалить — прежние действия.
 - [ ] `LinksTab` со статусом цели и датой `actionAtUTC`.

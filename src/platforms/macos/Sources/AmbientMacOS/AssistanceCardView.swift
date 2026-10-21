@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Each window owns its scroll position; both surfaces share Core rows and one independent draft.
+/// Each window owns its scroll position and its clicked row; both surfaces share Core rows and one
+/// independent draft.
 struct AssistanceCardView: View {
     let model: AssistantModel
     @Bindable var chatGPT: ChatGPTModel
     var edge = false
     @State private var scrollAnchor: UInt64?
-    @State private var expandedProposal: UInt64?
+    @State private var clickedProposal: UInt64?
+    @State private var detailsProposal: UInt64?
     @FocusState private var editingReply: Bool
     private var rows: [Proposal] {
         if edge {
@@ -16,43 +18,40 @@ struct AssistanceCardView: View {
         return chatGPT.feed
     }
     var body: some View {
+        // The one scroll of the feed: the hosts do not wrap it, so the position stays per window.
+        ScrollView {
+            content.padding(.horizontal, edge ? 16 : 36).padding(.vertical, edge ? 16 : 32)
+        }
+        .scrollPosition(id: $scrollAnchor, anchor: .top)
+    }
+    private var content: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("feed.title", bundle: .module).font(.headline)
-                Spacer()
-                if edge {
-                    Button {
-                        Task { await chatGPT.hideEdge() }
-                    } label: {
-                        Text("edge.hide", bundle: .module)
-                    }
-                } else {
-                    Button {
-                        Task { await chatGPT.refreshCurrentResult() }
-                    } label: {
-                        Text("feed.reload", bundle: .module)
-                    }
-                }
-            }
+            header
             if !chatGPT.assistanceReady || model.manualPause != false {
-                Text("feed.unavailable", bundle: .module).font(.caption).foregroundStyle(.secondary)
+                Label {
+                    Text("feed.unavailable", bundle: .module)
+                } icon: {
+                    Image(systemName: "info.circle")
+                }
+                .font(.caption).foregroundStyle(.secondary)
             }
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
-                    ForEach(rows) { proposal in
-                        proposalRow(proposal).id(proposal.id)
-                    }
-                }.scrollTargetLayout()
-            }
-            .scrollPosition(id: $scrollAnchor, anchor: .top)
-            .frame(minHeight: 80, maxHeight: edge ? 320 : 440)
+            let expanded = rows.expandedID(reply: chatGPT.replyParent, clicked: clickedProposal)
+            LazyVStack(alignment: .leading, spacing: 8) {
+                ForEach(rows) { proposal in
+                    Group {
+                        if proposal.id == expanded { card(proposal) } else { row(proposal) }
+                    }.id(proposal.id)
+                }
+            }.scrollTargetLayout()
             if rows.isEmpty { Text("feed.empty", bundle: .module).foregroundStyle(.secondary) }
             if chatGPT.replyParent != nil || !chatGPT.replyDraft.isEmpty {
                 replyEditor
             }
             if let preview = chatGPT.assistancePreview {
                 if preview.mode == .newContext {
-                    Text("feed.replace", bundle: .module).font(.caption)
+                    Callout(
+                        tone: Theme.stale, systemImage: "exclamationmark.triangle",
+                        message: Text("feed.replace", bundle: .module))
                 }
                 DisclosureGroup {
                     ScrollView {
@@ -66,54 +65,146 @@ struct AssistanceCardView: View {
                     Task { await chatGPT.sendPreparedAssistance() }
                 } label: {
                     Text("assistance.send", bundle: .module)
-                }.disabled(chatGPT.busy || model.manualPause != false)
+                }
+                .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                .disabled(chatGPT.busy || model.manualPause != false)
             }
             if chatGPT.assisting {
-                Text("reply.sending", bundle: .module)
-                Button {
-                    Task { await chatGPT.cancel() }
-                } label: {
-                    Text("check.cancel", bundle: .module)
-                }.disabled(chatGPT.state == .cancelling)
+                WorkRow(
+                    title: Text("reply.sending", bundle: .module),
+                    cancel: { Task { await chatGPT.cancel() } },
+                    disabled: chatGPT.state == .cancelling
+                )
+                .background(fill(0.62), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             if let failure = chatGPT.replyFailure ?? chatGPT.assistanceFailure {
-                Text(
-                    LocalizedStringKey(failure == .limit ? "feed.limit" : failure.key),
-                    bundle: .module
-                ).foregroundStyle(.red)
+                Callout(
+                    tone: Theme.error, systemImage: "exclamationmark.circle",
+                    title: Text("error.title", bundle: .module),
+                    message: Text(
+                        LocalizedStringKey(failure == .limit ? "feed.limit" : failure.key),
+                        bundle: .module))
             }
             if model.copied { Text("plan.copied", bundle: .module).font(.caption) }
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
-    private func proposalRow(_ proposal: Proposal) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("edge.task", bundle: .module)
-                Text(proposal.task.taskID, format: .number)
-            }.font(.caption)
-            HStack {
-                Text(LocalizedStringKey(proposal.kind.key), bundle: .module).font(
-                    .subheadline.bold())
-                if !proposal.visible { Text("feed.closed", bundle: .module).font(.caption) }
+    private var header: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            if edge {
+                Text("feed.title", bundle: .module).font(.headline)
+                    .accessibilityAddTraits(.isHeader)
+                // ADR-023 #21: the edge header counts the rows it shows.
+                Text(rows.count, format: .number).font(.headline).foregroundStyle(.secondary)
                 Spacer()
+                Button {
+                    Task { await chatGPT.hideEdge() }
+                } label: {
+                    Text("edge.hide", bundle: .module)
+                }.buttonStyle(.glass)
+            } else {
+                Text("feed.title", bundle: .module).font(.system(size: 26, weight: .semibold))
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                Button {
+                    Task { await chatGPT.refreshCurrentResult() }
+                } label: {
+                    Text("feed.reload", bundle: .module)
+                }.buttonStyle(.bordered).buttonBorderShape(.capsule)
+            }
+        }
+    }
+    /// The case text when the case is on the loaded page, otherwise the previous number.
+    private func caseTitle(_ proposal: Proposal) -> String {
+        model.snapshot?.tasks.items.first { $0.id == proposal.task.taskID }?.text
+            ?? caseNumber(proposal)
+    }
+    private func caseNumber(_ proposal: Proposal) -> String {
+        "\(String(localized: "edge.task", bundle: .module)) \(proposal.task.taskID.formatted())"
+    }
+    private func kindPill(_ proposal: Proposal) -> Pill {
+        Pill(
+            text: Text(LocalizedStringKey(proposal.kind.key), bundle: .module),
+            tone: proposal.kind == .clarification ? Theme.clarification : nil)
+    }
+    /// The design's cards are opaque on the edge glass and quiet on the window's white sheet.
+    private func fill(_ opacity: Double) -> AnyShapeStyle {
+        edge ? AnyShapeStyle(.background.opacity(opacity)) : AnyShapeStyle(.fill.quaternary)
+    }
+    private func actionsDisabled(_ proposal: Proposal) -> Bool {
+        chatGPT.busy || chatGPT.preparingReply || !chatGPT.assistanceReady || proposal.stale
+            || model.manualPause != false
+    }
+    private var newDisabled: Bool {
+        chatGPT.busy || !chatGPT.assistanceReady || model.manualPause != false
+    }
+    /// A collapsed row: a click expands it in this window; its one action is the card's main one.
+    private func row(_ proposal: Proposal) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                clickedProposal = proposal.id
+            } label: {
+                HStack(spacing: 8) {
+                    if proposal.stale {
+                        Pill(text: Text("feed.outdated", bundle: .module), tone: Theme.stale)
+                    } else {
+                        kindPill(proposal)
+                    }
+                    if !proposal.visible { Pill(text: Text("feed.closed", bundle: .module)) }
+                    Text(verbatim: proposal.message).lineLimit(1).truncationMode(.tail)
+                    Spacer(minLength: 0)
+                }.contentShape(Rectangle())
+            }
+            .buttonStyle(.plain).help(Text(verbatim: proposal.message))
+            Group {
+                if proposal.stale {
+                    newButton(proposal).disabled(newDisabled)
+                } else if proposal.kind == .clarification {
+                    replyButton(proposal).disabled(actionsDisabled(proposal))
+                } else {
+                    continueButton(proposal).disabled(actionsDisabled(proposal))
+                }
+            }.buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 10)
+        .background(fill(0.62), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+    private func card(_ proposal: Proposal) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                kindPill(proposal)
+                if !proposal.visible { Pill(text: Text("feed.closed", bundle: .module)) }
+                Text(verbatim: caseTitle(proposal)).font(.caption).foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .help(caseNumber(proposal))
+                Spacer(minLength: 4)
                 Button {
                     Task { await chatGPT.setVisibility(proposal, visible: !proposal.visible) }
                 } label: {
                     Text(proposal.visible ? "edge.hide" : "edge.show", bundle: .module)
                 }
+                .buttonStyle(.borderless).controlSize(.small)
                 .disabled(
                     !proposal.visible
                         && (!chatGPT.assistanceReady || proposal.stale || chatGPT.busy))
+                menu(proposal)
             }
-            Text(verbatim: proposal.message).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: proposal.message).font(.title3)
+                .fixedSize(horizontal: false, vertical: true)
             if proposal.stale {
-                Text("feed.stale", bundle: .module).font(.caption).foregroundStyle(.secondary)
+                Callout(
+                    tone: Theme.stale, systemImage: "clock.arrow.circlepath",
+                    title: Text("feed.outdated", bundle: .module),
+                    message: Text("feed.stale", bundle: .module)
+                ) {
+                    newButton(proposal).disabled(newDisabled)
+                }
             }
             DisclosureGroup(
                 isExpanded: Binding(
-                    get: { expandedProposal == proposal.id },
+                    get: { detailsProposal == proposal.id },
                     set: { expanded in
-                        expandedProposal = expanded ? proposal.id : nil
+                        detailsProposal = expanded ? proposal.id : nil
                         if expanded { Task { await chatGPT.loadDetails(proposal) } }
                     })
             ) {
@@ -145,67 +236,94 @@ struct AssistanceCardView: View {
             } label: {
                 Text("feed.details", bundle: .module)
             }
-            VStack(alignment: .leading) {
-                Button {
-                    Task { await chatGPT.copy(proposal, using: model) }
-                } label: {
-                    Text("assistance.copy", bundle: .module)
-                }
-                if proposal.kind == .clarification {
-                    Button {
-                        chatGPT.chooseReply(proposal)
-                        editingReply = chatGPT.replyParent == proposal.target
-                    } label: {
-                        Text("feed.reply", bundle: .module)
-                    }
-                }
-                Button {
-                    Task { await chatGPT.prepareContinuation(proposal) }
-                } label: {
-                    Text("feed.continue", bundle: .module)
-                }
-            }.disabled(
-                chatGPT.busy || chatGPT.preparingReply || !chatGPT.assistanceReady || proposal.stale
-                    || model.manualPause != false)
-            VStack(alignment: .leading) {
-                Button {
-                    Task { await chatGPT.prepareNewContext(proposal) }
-                } label: {
-                    Text("feed.new", bundle: .module)
-                }.disabled(chatGPT.busy || !chatGPT.assistanceReady || model.manualPause != false)
-                Button {
-                    Task {
-                        await chatGPT.suppress(proposal)
-                        await model.reload()
-                    }
-                } label: {
-                    Text("edge.suppress", bundle: .module)
-                }.disabled(chatGPT.busy || proposal.stale)
-                Button {
-                    Task { await chatGPT.clearDiscussion(proposal) }
-                } label: {
-                    Text("feed.clear", bundle: .module)
-                }
+            // Long labels wrap to a column instead of clipping in the 420 pt edge panel.
+            ViewThatFits(in: .horizontal) {
+                HStack { actions(proposal) }
+                VStack(alignment: .leading) { actions(proposal) }
             }
+            .buttonStyle(.bordered).buttonBorderShape(.capsule)
+            .disabled(actionsDisabled(proposal))
         }
-        .padding(12).background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 10))
+        .padding(16)
+        .background(fill(0.9), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+    @ViewBuilder private func actions(_ proposal: Proposal) -> some View {
+        Button {
+            Task { await chatGPT.copy(proposal, using: model) }
+        } label: {
+            Text("assistance.copy", bundle: .module)
+        }.buttonStyle(.borderedProminent)
+        if proposal.kind == .clarification { replyButton(proposal) }
+        continueButton(proposal)
+    }
+    private func replyButton(_ proposal: Proposal) -> some View {
+        Button {
+            chatGPT.chooseReply(proposal)
+            editingReply = chatGPT.replyParent == proposal.target
+        } label: {
+            Text("feed.reply", bundle: .module)
+        }
+    }
+    private func continueButton(_ proposal: Proposal) -> some View {
+        Button {
+            Task { await chatGPT.prepareContinuation(proposal) }
+        } label: {
+            Text("feed.continue", bundle: .module)
+        }
+    }
+    private func newButton(_ proposal: Proposal) -> some View {
+        Button {
+            Task { await chatGPT.prepareNewContext(proposal) }
+        } label: {
+            Text("feed.new", bundle: .module)
+        }
+    }
+    private func menu(_ proposal: Proposal) -> some View {
+        Menu {
+            newButton(proposal).disabled(newDisabled)
+            Button {
+                Task {
+                    await chatGPT.suppress(proposal)
+                    await model.reload()
+                }
+            } label: {
+                Text("edge.suppress", bundle: .module)
+            }.disabled(chatGPT.busy || proposal.stale)
+            Divider()
+            Button(role: .destructive) {
+                Task { await chatGPT.clearDiscussion(proposal) }
+            } label: {
+                Text("feed.clear", bundle: .module)
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .menuStyle(.button).menuIndicator(.hidden)
+        .buttonStyle(.bordered).buttonBorderShape(.circle).controlSize(.small)
+        .accessibilityLabel(Text("feed.actions", bundle: .module))
     }
     private var replyEditor: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("reply.title", bundle: .module).font(.subheadline.bold())
+        VStack(alignment: .leading, spacing: 10) {
+            Text("reply.title", bundle: .module).font(.headline)
             if let proposal = chatGPT.replyProposal {
-                Text(verbatim: proposal.message).font(.caption)
+                Text(verbatim: proposal.message).font(.caption).foregroundStyle(.secondary)
             }
             if chatGPT.replyConflict {
-                Text("feed.draftConflict", bundle: .module).foregroundStyle(.secondary)
+                Callout(
+                    tone: Theme.stale, systemImage: "exclamationmark.triangle",
+                    message: Text("feed.draftConflict", bundle: .module))
             }
             if chatGPT.replyIsStale {
-                Text("reply.stale", bundle: .module).foregroundStyle(.secondary)
+                Callout(
+                    tone: Theme.stale, systemImage: "exclamationmark.triangle",
+                    message: Text("reply.stale", bundle: .module))
             }
             VoiceReplyView(chatGPT: chatGPT)
             // This editor has no content-revision identity and remains when its target disappears.
             TextEditor(text: Binding(get: { chatGPT.replyDraft }, set: { chatGPT.updateReply($0) }))
                 .frame(height: 100).focused($editingReply)
+                .scrollContentBackground(.hidden).padding(8)
+                .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityLabel(Text("reply.placeholder", bundle: .module))
                 .disabled(chatGPT.busy || chatGPT.voice.busy)
                 .onTapGesture { editingReply = true }
@@ -220,13 +338,21 @@ struct AssistanceCardView: View {
                 } label: {
                     Text("reply.no", bundle: .module)
                 }
+                Spacer()
                 Button {
                     Task { await chatGPT.discardReply() }
                 } label: {
                     Text("reply.discard", bundle: .module)
                 }
-            }.disabled(chatGPT.busy || chatGPT.voice.busy)
-            if chatGPT.preparingReply { Text("reply.preparing", bundle: .module).font(.caption) }
+            }
+            .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+            .disabled(chatGPT.busy || chatGPT.voice.busy)
+            if chatGPT.preparingReply {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("reply.preparing", bundle: .module).font(.caption)
+                }
+            }
             if let preview = chatGPT.replyPreview {
                 DisclosureGroup(isExpanded: $chatGPT.previewExpanded) {
                     ScrollView {
@@ -241,8 +367,12 @@ struct AssistanceCardView: View {
                 Task { await chatGPT.sendReply() }
             } label: {
                 Text("reply.send", bundle: .module)
-            }.disabled(!chatGPT.canSendReply || model.manualPause != false)
+            }
+            .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+            .disabled(!chatGPT.canSendReply || model.manualPause != false)
             Text("reply.persistence", bundle: .module).font(.caption).foregroundStyle(.secondary)
         }
+        .padding(16)
+        .background(fill(0.9), in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }

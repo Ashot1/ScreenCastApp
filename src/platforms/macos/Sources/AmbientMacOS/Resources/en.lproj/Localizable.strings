@@ -325,6 +325,8 @@
 "feed.new" = "Start over and show suggestions";
 "feed.continue" = "Continue this discussion";
 "feed.title" = "Suggestions";
+"feed.outdated" = "Outdated";
+"feed.actions" = "Suggestion actions";
 "assistance.help" = "Select up to 32 saved notes or source observations. The exact preview includes the saved intent and entire plan with checks, dependencies and useful references. Unsaved editor text is not sent; links are not opened.";
 "assistance.saved" = "Saved content only. Your editor draft stays separate.";
 "assistance.selected" = "Selected evidence";
