@@ -454,6 +454,9 @@ enum CasePage: Equatable {
             decisionsAfter = after
         }
     }
+    /// Quit starts here, before auth shutdown, so no input is accepted until `close()` runs;
+    /// a failed memory close still resets `closing` in `close()`.
+    public func beginClosing() { closing = true }
     public func close() async -> Bool {
         closing = true
         await localProjects.close()

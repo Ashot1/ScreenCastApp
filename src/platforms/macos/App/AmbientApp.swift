@@ -21,6 +21,7 @@ import SwiftUI
         } label: {
             AssistantMenuBarLabel(model: delegate.model)
         }
+        .menuBarExtraStyle(.menu)
     }
 }
 
@@ -44,6 +45,8 @@ import SwiftUI
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // Refuse input before the awaited auth shutdown.
+        model.beginClosing()
         edgeCard?.stop()
         Task { @MainActor in
             let authClosed = await chatGPT.shutdown()

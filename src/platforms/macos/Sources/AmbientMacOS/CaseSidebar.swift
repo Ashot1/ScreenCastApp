@@ -151,16 +151,13 @@ struct SidebarStatus: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 6) {
-                StatusRing(kind: ring)
-                Text(
-                    LocalizedStringKey(model.closing ? "status.closing" : model.statusKey),
-                    bundle: .module
-                )
-                .font(.subheadline.weight(.semibold))
+                StatusRing(kind: model.statusKind)
+                Text(LocalizedStringKey(model.statusKey), bundle: .module)
+                    .font(.subheadline.weight(.semibold))
             }
             Text("status.cloudUnavailable", bundle: .module)
                 .font(.caption).foregroundStyle(.secondary)
-            AssistantPauseButton(model: model).buttonStyle(.glass)
+            AssistantPauseButton(model: model).buttonStyle(.glass).labelStyle(.titleOnly)
             if model.manualPause == nil {
                 Button {
                     Task { await model.refreshManualPause() }
@@ -177,14 +174,5 @@ struct SidebarStatus: View {
         .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .contain)
         .task { await model.loadManualPause() }
-    }
-    /// The three saved-pause states of `statusKey` plus quitting.
-    private var ring: StatusRing.Kind {
-        if model.closing { return .closing }
-        switch model.manualPause {
-        case true: return .paused
-        case false: return .assistance
-        case nil: return .unknown
-        }
     }
 }

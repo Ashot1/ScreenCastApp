@@ -1,5 +1,25 @@
 # Результаты проверки основы
 
+## Приёмка 25H — 22 октября 2026
+
+Строка меню и выход, последняя задача ADR-023 ([приёмка](../target/verification/orchestration/25h-parent-inspection.md)).
+
+- **Исполнитель:**
+  - yarn verify 100 Swift, feature Swift 148;
+  - RED→GREEN `beginClosingStopsInputBeforeMemoryCloses`;
+  - проба H1: метка и иконки меню на macOS 27;
+  - перечень проверок 114 → 114;
+  - аудит и подписи.
+- **Оркестратор:**
+  - свежий yarn verify 21:20–21:23Z (21 октября UTC), exit 0, 358 Rust / 100 Swift;
+  - хэши совпадают;
+  - 29 прежних контрольных сборок (532 файла) целы;
+  - новая `Ambient-menu-25h.app`.
+- **Не проверено:**
+  - вид интерфейса (финальная точка пользователя, D77);
+  - выход целиком на живом приложении;
+  - CI на `macos-26`.
+
 ## Приёмка 25G — 21 октября 2026
 
 Настройки с боковой панелью ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25g-parent-inspection.md)).

@@ -47,6 +47,14 @@ public struct AssistantView: View {
                     }
                 }
             }
+            // Quit progress lives in the open window only; no dimming or own window (D75).
+            .safeAreaInset(edge: .top) {
+                if model.closing {
+                    ProgressView { Text("status.closing", bundle: .module) }
+                        .progressViewStyle(.linear)
+                        .padding(.horizontal, 36).padding(.top, 16)
+                }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color(nsColor: .textBackgroundColor))
         }
@@ -186,7 +194,7 @@ struct AssistantStatusView: View {
                 Image(systemName: "pause.circle.fill")
             }.font(.headline)
             Text("status.cloudUnavailable", bundle: .module)
-            AssistantPauseButton(model: model)
+            AssistantPauseButton(model: model).labelStyle(.titleOnly)
             if model.manualPause == nil {
                 Button {
                     Task { await model.refreshManualPause() }

@@ -505,6 +505,26 @@ extension MemorySession {
     #expect(await model.close())
 }
 
+@MainActor @Test func beginClosingStopsInputBeforeMemoryCloses() async throws {
+    let directory = try DatabaseDirectory()
+    defer { try? directory.remove() }
+    let session = MemorySession(databaseURL: directory.databaseURL)
+    let a = try await session.createTask("A")
+    let b = try await session.createTask("B")
+    let model = AssistantModel(session: session)
+    await model.reload()
+    await model.loadManualPause()
+    #expect(model.canToggleManualPause)
+    #expect(model.statusKey == "status.stoppedAnalysis")
+    model.beginClosing()
+    #expect(model.closing)
+    #expect(model.statusKey == "status.closing")
+    #expect(!model.canToggleManualPause)
+    await model.requestSelection(.task(b.id))
+    #expect(model.snapshot?.selectedTask?.id == a.id)
+    #expect(await model.close())
+}
+
 @MainActor @Test(arguments: [false, true])
 func closeWaitsForAcceptedPauseAndSuppressesLatePublication(writing: Bool) async throws {
     let directory = try DatabaseDirectory()
