@@ -82,7 +82,9 @@ struct SelectedAssistanceView: View {
                     .disabled(chatGPT.state == .cancelling)
                 }
                 if let failure = chatGPT.assistanceFailure {
-                    Text(LocalizedStringKey(failure.key), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failure.key), bundle: .module))
                 }
 
             }.frame(maxWidth: .infinity, alignment: .leading)

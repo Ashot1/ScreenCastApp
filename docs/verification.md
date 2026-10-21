@@ -1,5 +1,17 @@
 # Результаты проверки основы
 
+## Приёмка 25F — 21 октября 2026
+
+Вкладки заметок, связей, источников и помощи ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25f-parent-inspection.md)).
+
+- **Исполнитель:** yarn verify 99 Swift, feature Swift 147; перечень проверок 112 → 113; аудит и подписи. Новой логики нет, новых тестов тоже.
+- **Оркестратор:**
+  - свежий yarn verify 20:24–20:28Z, exit 0, 358 Rust / 99 Swift;
+  - хэши совпадают;
+  - 27 прежних контрольных сборок (488 файлов) целы;
+  - новая `Ambient-tabs-25f.app`.
+- **Не проверено:** вид вкладок (смотрит пользователь, D77), CI на `macos-26`.
+
 ## Приёмка 25E — 21 октября 2026
 
 Лента и лента у края ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25e-parent-inspection.md)).

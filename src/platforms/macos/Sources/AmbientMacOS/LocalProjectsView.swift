@@ -116,7 +116,9 @@ struct LocalProjectsView: View {
                 if projects.saved { Text("source.saved", bundle: .module) }
                 Text("source.historical", bundle: .module).font(.caption)
                 if let key = projects.failureKey {
-                    Text(LocalizedStringKey(key), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(key), bundle: .module))
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
         }

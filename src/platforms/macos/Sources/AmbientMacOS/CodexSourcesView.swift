@@ -137,7 +137,9 @@ struct CodexSourcesView: View {
                 }
                 Text("codex.coverage", bundle: .module).font(.caption)
                 if let key = source.failureKey {
-                    Text(LocalizedStringKey(key), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(key), bundle: .module))
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
         }

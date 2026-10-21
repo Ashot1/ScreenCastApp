@@ -125,16 +125,15 @@ struct IntegrationSourcesView<Adapter: IntegrationPresentation>: View {
                 }
                 if source.saved { Text("integration.saved", bundle: .module) }
                 if let failure = source.failureKey {
-                    Text(LocalizedStringKey(failure), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failure), bundle: .module))
                 }
                 ForEach(source.savedMetadata) { Adapter.metadataView($0.metadata) }
-                if let after = source.metadataNext {
-                    Button {
-                        Task { await source.loadMetadata(task: task, after: after) }
-                    } label: {
-                        Text("tasks.next", bundle: .module)
-                    }
-                }
+                PageControls(
+                    next: source.metadataNext.map { after in
+                        { Task { await source.loadMetadata(task: task, after: after) } }
+                    })
             }
         } label: {
             text("title")

@@ -55,6 +55,7 @@
 "switch.discard" = "Discard and switch";
 "switch.cancel" = "Cancel";
 "notes.title" = "Notes";
+"notes.actions" = "Note actions";
 "notes.empty" = "No notes.";
 "notes.add" = "Add note";
 "notes.editor" = "Note text";
@@ -81,6 +82,7 @@
 "links.remove" = "Not related";
 "links.rejected" = "Not related (your decision)";
 "links.related" = "Related";
+"links.since %@" = "Linked %@";
 "delete.title" = "Delete this memory?";
 "delete.message" = "Its content will be removed. Known deleted sources will not be imported again automatically.";
 "delete.confirm" = "Delete";

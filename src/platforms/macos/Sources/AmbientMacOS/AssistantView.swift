@@ -7,6 +7,7 @@ public struct AssistantView: View {
     @State private var deletion: CaseDeletion?
     @State private var section = MainSection.task
     @State private var tab = CaseTab.plan
+    @State private var source = BuiltInIntegration.localProjects
     // Edit modes of the case text and of the step: here, so a section switch keeps them.
     @State private var editingTask = false
     @State private var editingStep = false
@@ -36,6 +37,7 @@ public struct AssistantView: View {
                                 CaseDetailView(
                                     model: model, chatGPT: chatGPT, snapshot: snapshot,
                                     linkTarget: $linkTarget, deletion: $deletion, tab: $tab,
+                                    source: $source,
                                     editingTask: $editingTask, editingStep: $editingStep)
                                 Text("memory.help", bundle: .module).font(.caption)
                                     .foregroundStyle(.secondary)

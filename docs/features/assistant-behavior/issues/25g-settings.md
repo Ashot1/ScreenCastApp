@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25F.
 
-**Status:** blocked
+**Status:** ready — 25F принята; исполнитель запускается оркестратором (D80)
 
 - [ ] Сцена `Settings` с `NavigationSplitView` или запасной `Window(id:)` с `openWindow(id:)` — по итогу R1.
 - [ ] Вынос блоков в разделы без изменения поведения (подтверждение восстановления ChatGPT, проверки, плагины, секреты).

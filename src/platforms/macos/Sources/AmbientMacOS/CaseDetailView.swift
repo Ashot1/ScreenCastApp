@@ -31,6 +31,7 @@ struct CaseDetailView: View {
     @Binding var linkTarget: UInt64?
     @Binding var deletion: CaseDeletion?
     @Binding var tab: CaseTab
+    @Binding var source: BuiltInIntegration
     @Binding var editingTask: Bool
     @Binding var editingStep: Bool
     var body: some View {
@@ -75,15 +76,9 @@ struct CaseDetailView: View {
         .pickerStyle(.segmented).labelsHidden()
         switch shownTab(task) {
         case .plan: ManualPlanView(model: model, snapshot: snapshot)
-        case .notes:
-            Button {
-                Task { await model.requestSelection(.newNote) }
-            } label: {
-                Text("notes.add", bundle: .module)
-            }.disabled(task.lifecycle == .completed)
-            notes
-        case .links: links
-        case .sources: sources(task)
+        case .notes: NotesTab(model: model, snapshot: snapshot, task: task, deletion: $deletion)
+        case .links: LinksTab(model: model, snapshot: snapshot, linkTarget: $linkTarget)
+        case .sources: SourcesTab(model: model, chatGPT: chatGPT, task: task, source: $source)
         case .help:
             SelectedAssistanceView(
                 model: model, chatGPT: chatGPT, task: task,
@@ -93,136 +88,6 @@ struct CaseDetailView: View {
     /// A completed case has no sources or help; its hidden tab shows the plan.
     private func shownTab(_ task: MemoryTask) -> CaseTab {
         CaseTab.tabs(for: task).contains(tab) ? tab : .plan
-    }
-    @ViewBuilder private func sources(_ task: MemoryTask) -> some View {
-        if model.integrations.isEnabled(.localProjects) {
-            LocalProjectsView(
-                model: model, chatGPT: chatGPT, task: task,
-                projects: model.localProjects)
-        } else {
-            IntegrationDisabledView(kind: .localProjects)
-        }
-        if model.integrations.isEnabled(.codex) {
-            CodexSourcesView(
-                model: model, chatGPT: chatGPT, task: task,
-                source: model.codexSources)
-        } else {
-            IntegrationDisabledView(kind: .codex)
-        }
-        if model.integrations.isEnabled(.github) {
-            IntegrationSourcesView(
-                model: model, chatGPT: chatGPT, task: task,
-                source: model.githubSources)
-        } else {
-            IntegrationDisabledView(kind: .github)
-        }
-        if model.integrations.isEnabled(.jira) {
-            IntegrationSourcesView(
-                model: model, chatGPT: chatGPT, task: task,
-                source: model.jiraSources)
-        } else {
-            IntegrationDisabledView(kind: .jira)
-        }
-        if model.integrations.isEnabled(.todoist) {
-            IntegrationSourcesView(
-                model: model, chatGPT: chatGPT, task: task,
-                source: model.todoistSources)
-        } else {
-            IntegrationDisabledView(kind: .todoist)
-        }
-    }
-    private var notes: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("notes.title", bundle: .module).font(.title3.bold())
-            if snapshot.evidence.items.isEmpty {
-                Text("notes.empty", bundle: .module).foregroundStyle(.secondary)
-            }
-            ForEach(snapshot.evidence.items) { note in
-                EvidenceRow(
-                    note: note, targets: snapshot.tasks.items.filter { $0.id != note.taskID },
-                    disabled: model.hasUnsavedChanges,
-                    edit: { Task { await model.requestSelection(.note(note.id)) } },
-                    delete: { deletion = .note(note.id) },
-                    move: { target in Task { await model.moveNote(note.id, to: target) } })
-            }
-            PageControls(
-                first: model.evidenceAfter == 0
-                    ? nil : { Task { await model.pageNotes(after: 0) } },
-                next: snapshot.evidence.nextAfter.map { next in
-                    { Task { await model.pageNotes(after: next) } }
-                })
-            ForEach(snapshot.decisions.items) { decision in
-                HStack {
-                    Text("decision.moved", bundle: .module)
-                    Text(
-                        decision.accepted ? "notes.confirmation" : "links.rejected", bundle: .module
-                    )
-                }.font(.caption).foregroundStyle(.secondary)
-            }
-            PageControls(
-                next: snapshot.decisions.nextAfter.map { next in
-                    { Task { await model.pageDecisions(after: next) } }
-                })
-        }
-    }
-    private var links: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("links.title", bundle: .module).font(.title3.bold())
-            if snapshot.links.items.isEmpty {
-                Text("links.empty", bundle: .module).foregroundStyle(.secondary)
-            }
-            ForEach(snapshot.links.items) { link in
-                HStack {
-                    Button {
-                        Task { await model.requestSelection(.task(link.otherTaskID)) }
-                    } label: {
-                        Text(verbatim: link.otherTask.text).lineLimit(2)
-                    }
-                    Spacer()
-                    if link.related {
-                        Button {
-                            Task { await model.removeLink(link) }
-                        } label: {
-                            Text("links.remove", bundle: .module)
-                        }
-                        .disabled(model.hasUnsavedChanges)
-                    } else {
-                        Text("links.rejected", bundle: .module).font(.caption).foregroundStyle(
-                            .secondary)
-                    }
-                }
-            }
-            PageControls(
-                first: model.linksAfter == 0 ? nil : { Task { await model.pageLinks(after: 0) } },
-                next: snapshot.links.nextAfter.map { next in
-                    { Task { await model.pageLinks(after: next) } }
-                })
-            Picker(selection: $linkTarget) {
-                Text("links.target", bundle: .module).tag(Optional<UInt64>.none)
-                ForEach(
-                    snapshot.tasks.items.filter {
-                        $0.id != snapshot.selectedTask?.id && $0.lifecycle == .open
-                    }
-                ) {
-                    task in
-                    Text(verbatim: String(task.text.prefix(80))).tag(Optional(task.id))
-                }
-            } label: {
-                Text("links.target", bundle: .module)
-            }
-            Button {
-                if let target = snapshot.tasks.items.first(where: { $0.id == linkTarget }) {
-                    Task { await model.link(to: target, related: true) }
-                }
-            } label: {
-                Text("links.add", bundle: .module)
-            }
-            .disabled(
-                model.hasUnsavedChanges
-                    || !snapshot.tasks.items.contains {
-                        $0.id == linkTarget && $0.id != snapshot.selectedTask?.id
-                    })
-        }
     }
 }
 
@@ -319,104 +184,5 @@ private struct CaseHeader: View {
         .menuStyle(.button).menuIndicator(.hidden)
         .buttonStyle(.bordered).buttonBorderShape(.circle)
         .accessibilityLabel(Text("case.actions", bundle: .module))
-    }
-}
-
-private struct EvidenceRow: View {
-    let note: MemoryEvidence
-    let targets: [MemoryTask]
-    let disabled: Bool
-    let edit: () -> Void
-    let delete: () -> Void
-    let move: (MemoryTask) -> Void
-    @State private var targetID: UInt64?
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(verbatim: note.text).textSelection(.enabled)
-            HStack {
-                Text(kindKey, bundle: .module)
-                Text(completenessKey, bundle: .module)
-            }.font(.caption).foregroundStyle(.secondary)
-            if let time = note.observedAtUTC {
-                HStack {
-                    Text("notes.time", bundle: .module)
-                    Text(
-                        Date(timeIntervalSince1970: TimeInterval(time)),
-                        format: .dateTime.year().month().day().hour().minute())
-                }.font(.caption)
-            } else {
-                Text("notes.unknownTime", bundle: .module).font(.caption)
-            }
-            switch note.origin {
-            case .user: Text("notes.user", bundle: .module).font(.caption)
-            case .external(let key, let version):
-                if IntegrationKind(namespace: key.namespace) != nil {
-                    Text("integration.history", bundle: .module).font(.caption)
-                }
-                DisclosureGroup {
-                    LabeledContent {
-                        Text(verbatim: key.namespace).textSelection(.enabled)
-                    } label: {
-                        Text("sources.namespace", bundle: .module)
-                    }
-                    LabeledContent {
-                        Text(verbatim: key.scope).textSelection(.enabled)
-                    } label: {
-                        Text("sources.scope", bundle: .module)
-                    }
-                    LabeledContent {
-                        Text(verbatim: key.objectID).textSelection(.enabled)
-                    } label: {
-                        Text("sources.object", bundle: .module)
-                    }
-                    if let version {
-                        LabeledContent {
-                            Text(verbatim: version).textSelection(.enabled)
-                        } label: {
-                            Text("sources.version", bundle: .module)
-                        }
-                    } else {
-                        Text("sources.unknownVersion", bundle: .module)
-                    }
-                } label: {
-                    Text("notes.external", bundle: .module)
-                }
-            }
-            HStack {
-                Button(action: edit) { Text("notes.edit", bundle: .module) }
-                Button(role: .destructive, action: delete) { Text("notes.delete", bundle: .module) }
-                    .disabled(disabled)
-            }
-            Picker(selection: $targetID) {
-                Text("notes.move", bundle: .module).tag(Optional<UInt64>.none)
-                ForEach(targets) { task in
-                    Text(verbatim: String(task.text.prefix(80))).tag(Optional(task.id))
-                }
-            } label: {
-                Text("notes.move", bundle: .module)
-            }
-            Button {
-                if let target = targets.first(where: { $0.id == targetID }) { move(target) }
-            } label: {
-                Text("notes.moveAction", bundle: .module)
-            }
-            .disabled(disabled || !targets.contains { $0.id == targetID })
-        }
-        .padding().frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-    }
-    private var kindKey: LocalizedStringKey {
-        switch note.kind {
-        case .sourceFact: "notes.fact"
-        case .assumption: "notes.assumption"
-        case .userConfirmation: "notes.confirmation"
-        }
-    }
-    private var completenessKey: LocalizedStringKey {
-        switch note.completeness {
-        case .unknown: "notes.unknown"
-        case .partial: "notes.partial"
-        case .complete: "notes.complete"
-        }
     }
 }
