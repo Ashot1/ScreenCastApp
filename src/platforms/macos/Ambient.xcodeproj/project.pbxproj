@@ -92,6 +92,7 @@
                 COMBINE_HIDPI_IMAGES = YES;
                 CURRENT_PROJECT_VERSION = 1;
                 ENABLE_APP_SANDBOX = NO;
+                ENABLE_DEBUG_DYLIB = NO;
                 ENABLE_HARDENED_RUNTIME = YES;
                 ENABLE_USER_SCRIPT_SANDBOXING = NO;
                 GENERATE_INFOPLIST_FILE = YES;

@@ -1,5 +1,22 @@
 # Результаты проверки основы
 
+## Исправление запуска на macOS 27 — 21 октября 2026
+
+Пользователь впервые открыл собранное приложение, и оно не запустилось. В отчёте macOS о сбое загрузчик отказался грузить `@rpath/Ambient.debug.dylib`: «code signature … not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs».
+
+Причина:
+- сборка Debug выносила код приложения в отдельную библиотеку `Ambient.debug.dylib` (умолчание Xcode `ENABLE_DEBUG_DYLIB`);
+- обе части подписывались ad-hoc с Hardened Runtime;
+- проверка библиотек macOS 27 такую библиотеку не допускает.
+
+Раньше дефект не проявлялся, потому что агенты по правилам не запускали приложение, а проверки ограничивались `codesign --verify`.
+
+Проверка гипотезы: сборка в отдельную папку с `ENABLE_DEBUG_DYLIB=NO` запустилась и проработала больше 3 s без ошибок загрузчика.
+
+Исправление: `ENABLE_DEBUG_DYLIB = NO` для Debug в `Ambient.xcodeproj`. Подпись ad-hoc и Hardened Runtime сохранены; `Contents/MacOS` содержит один файл `Ambient`; 56 экспортов ABI в нём; codesign strict/deep PASS. Полный `yarn verify` после исправления (15:32–15:35Z): exit 0, Swift 91 тест.
+
+**Последствие для аудита:** дальнейшие аудиты ищут экспорты в `Contents/MacOS/Ambient`, а не в `Ambient.debug.dylib`, и проверяют, что отладочной библиотеки нет. Старые контрольные сборки с `Ambient.debug.dylib` на macOS 27 не запускаются и остаются только эталонами файлов.
+
 ## Приёмка 17A — 21 октября 2026
 
 Принят Todoist на общем движке интеграций ([ADR-018](decisions/0018-selected-todoist-task.md)):

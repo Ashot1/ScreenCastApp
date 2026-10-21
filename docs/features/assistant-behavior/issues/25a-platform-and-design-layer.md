@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка [17A](17a-selected-todoist-task.md) — общие файлы macOS.
 
-**Status:** blocked — контракт принят; по D79 интерфейс дорабатывается после остальных функциональных задач; исполнитель не создан
+**Status:** ready — 17A принята; пользователь дал слово на запуск (D80); исполнитель запускается оркестратором. В Debug нет `Ambient.debug.dylib` (исправление запуска 21 октября): экспорты и аудит — в `Contents/MacOS/Ambient`
 
 - [ ] Пробы R1–R4 в `target/verification/25a/probes/`: компиляция стеклянных API при `.v26`; R1 настройки с боковой панелью; R2 лента у края со стеклом и вводом; R3 главное окно и `.onDisappear` при закрытии; R4 метка и иконки меню. Проверены программно и снимками экрана проб (D78); итог и снимки — в `target/verification/25a/`.
 - [ ] `Package.swift` 6.2 и `.v26`; `VoiceHelper/Package.swift` `.v26`; `VoiceHelper/Info.plist` 26.0; оба `MACOSX_DEPLOYMENT_TARGET` в xcodeproj; `scripts/macos.sh:6`; CI на раннере macOS 26+ (иначе BLOCKED).
