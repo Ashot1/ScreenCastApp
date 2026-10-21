@@ -1,0 +1,30 @@
+[
+  {
+    "thread_id": "01a15064-de4e-70f0-8cae-6f694fa81747",
+    "turn_id": "01a15064-e27e-78b2-8601-10f7d1d9af04",
+    "history_mode": "paginated",
+    "delegated_wrapper_chars": 4902,
+    "original_input_chars": 4770,
+    "original_input_sha256": "36a25c787f3fc56d2f80b75f0abe79f8f7a7705279f325582c05cee19a9cc2db",
+    "expected_task_prefix": true,
+    "input_read_without_normalization": true,
+    "saved_plan_count": 0,
+    "saved_assistant_commentary_count": 14,
+    "coverage": "local_records_only",
+    "terminal": "completed"
+  },
+  {
+    "thread_id": "01a15065-10a1-78b3-9ac8-330bcd8c2a13",
+    "turn_id": "01a15065-1546-78f3-ad7c-ec8886397621",
+    "history_mode": "paginated",
+    "delegated_wrapper_chars": 4910,
+    "original_input_chars": 4778,
+    "original_input_sha256": "726a9288a4c582b1ca7296899bb454e5e2c0845d5a8cf2cff01cf54e0fc9586c",
+    "expected_task_prefix": true,
+    "input_read_without_normalization": true,
+    "saved_plan_count": 0,
+    "saved_assistant_commentary_count": 8,
+    "coverage": "local_records_only",
+    "terminal": "completed"
+  }
+]

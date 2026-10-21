@@ -1,0 +1,52 @@
+{
+  "thread_id": "01a14bcd-17ea-7393-b123-a913316ead11",
+  "expected_turn_id": "01a15062-86ca-7f80-9e56-4e361c48ecfa",
+  "expected_user_message_id": "01a15062-88ff-7ec1-b375-3e944c9eadae",
+  "file_bytes_observed": 8445574,
+  "probe_limit_bytes": 16777216,
+  "unknown_record_types": [
+    "compacted"
+  ],
+  "compacted_record_count": 3,
+  "compacted_payload_field_names": [
+    "compaction_response_id",
+    "first_window_id",
+    "latest_token_usage_record",
+    "message",
+    "previous_window_id",
+    "replacement_history",
+    "replacement_history_metadata",
+    "resume_metadata",
+    "retained_context",
+    "window_id",
+    "window_number"
+  ],
+  "compacted_record_lines": [
+    574,
+    1028,
+    1533
+  ],
+  "target_record_count": 1,
+  "strict_reader_status": "BLOCKED: unsupported_record_type",
+  "compacted_ignored_by_reader": false,
+  "reader_code_changed": false,
+  "raw_history_exported": false,
+  "selected_event_line": 1338,
+  "selected_item_type": "UserMessage",
+  "selected_item_field_names": [
+    "client_id",
+    "content",
+    "id",
+    "type"
+  ],
+  "selected_thread_id_matches": true,
+  "selected_turn_id_matches": true,
+  "selected_message_id_matches": true,
+  "selected_content_has_known_phrase": true,
+  "selected_content_chars": 675,
+  "selected_content_sha256": "22360321f51fcd691796d6b9568282735840d8d61f85dffd9dd7cc94c45bfef5",
+  "adjacent_response_item_is_user_message": true,
+  "selected_content_equals_adjacent_response_item": true,
+  "compaction_later_in_target_turn": true,
+  "result_scope": "raw selected record diagnosis only; not reconstructed canonical history"
+}

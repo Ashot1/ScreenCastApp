@@ -1,0 +1,11 @@
+# Fast через подписку: повторная проверка — 19 октября 2026
+
+External Researcher проверил текущую официальную документацию и сформированный стендом запрос. Новых inference/auth/account вызовов не было. Исторические семь POST,1021 известных токенов и три неизвестных исхода не пересчитаны.
+
+Responses документирует `service_tier: "priority"` и `"fast"` как эквивалентный выбор Fast для поддерживаемых моделей. Возвращённое поле обозначает фактический режим. Возможное понижение при ограничении скорости роста нагрузки документировано, но причина наблюдаемых у Ambient ответов `default` этим не установлена. [Fast mode](https://developers.openai.com/api/docs/guides/fast-mode).
+
+SIWC подтверждает OAuth и Responses с `store:false`/`stream:true`, но не обещает Fast каждому аккаунту и не задаёт отдельный заголовок или scope его включения. Ошибка `subscription_sharing_unsupported_capability` с `error.param` может обозначать неподдерживаемый service-tier override; успешный ответ `default` не является такой ошибкой. По нему нельзя установить ни гарантированную поддержку, ни запрет Fast. [Models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference), [ограничения](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations), [ошибки](https://developers.openai.com/siwc/token-sharing-open-source/errors-and-recovery).
+
+Настройки `/fast` продукта Codex не доказывают режим прямого SIWC-запроса Ambient. Официальный DevKit не добавляет скрытого Fast-заголовка и оставляет Platform organization/project пустыми. [Codex Speed](https://developers.openai.com/codex/speed), [DevKit](https://github.com/openai/sign-in-with-chatgpt-devkit/blob/main/packages/local/src/responses.ts#L14).
+
+Стенд уже отправляет `priority`; нового обоснования повторить тот же POST нет. Документированный read-only endpoint для объяснения понижения не найден. Повтор каталога покажет лишь advertised capability. Следующая внешняя зависимость — разъяснение OpenAI по существующим запросам: поддерживается ли Luna Fast у данного SIWC-клиента и почему обслужен `default`. Сообщения в поддержку не отправлялись. Fast не заменяется другим режимом; независимая разработка приложения продолжается.

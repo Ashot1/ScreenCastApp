@@ -1,0 +1,17 @@
+# Cursor Repository Workflow
+
+Invoke/read the `harmony-bootstrap` Skill for Cursor repository workflow,
+startup, specialized subagents, routine mechanics, delegation ownership, adoption
+gates, visual test execution, and verification.
+
+Do not duplicate the workflow here. This rule is only a native Cursor adapter
+that points to the Skill.
+
+Before creating a manual/generic implementation worker, invoke/read the
+`harmony-orchestration` Skill and apply the roles and delegation rules from
+`AGENTS.md`.
+
+Do not use `harmony-orchestration` for named specialized agents; their models
+come from their `.cursor/agents/*.md` definitions and are covered by
+`harmony-bootstrap`. Named specialized agents and routine mechanics never
+create subagents.

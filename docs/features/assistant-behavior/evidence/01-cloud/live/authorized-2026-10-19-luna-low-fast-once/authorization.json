@@ -1,0 +1,15 @@
+{
+  "authorization_source": "explicit_human_message_in_coordinator_thread",
+  "granted_at_local_date": "2026-10-19",
+  "status": "one_shot_consumed_before_execution",
+  "maximum_responses_posts": 1,
+  "model": "gpt-6-luna",
+  "reasoning_effort": "low",
+  "service_tier": "fast",
+  "case_id": "text-none",
+  "prior_attempt_id": "ce0627ad-9537-4888-aa15-88ccc3d96f40",
+  "prior_usage_status": "unknown",
+  "prior_unresolved_sha256": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+  "credit_guard": "existing_user_reported_no_credit_setting",
+  "permits_further_model_requests": false
+}

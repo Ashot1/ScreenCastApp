@@ -1,0 +1,28 @@
+Date: 2026-10-18
+Launch mode: direct executable inside the signed app bundle; not a successful LaunchServices launch.
+
+$ tests/feasibility/03-native/.build/NativeContentProbe.app/Contents/MacOS/NativeContentProbe --preflight
+accessibility=false
+screenCapture=false
+listenEvents=false
+mode=preflight
+exitCode=2
+process exit: 2
+
+$ tests/feasibility/03-native/.build/NativeContentProbe.app/Contents/MacOS/NativeContentProbe --window 2147483647 --expected-bundle-id dev.ambient.fixture
+accessibility=false
+screenCapture=false
+listenEvents=false
+result=blocked-accessibility
+exitCode=2
+process exit: 2
+No target or AX request was made in this branch.
+
+$ tests/feasibility/03-native/.build/NativeContentProbe.app/Contents/MacOS/NativeContentProbe --unexpected private-input-must-not-be-logged
+accessibility=false
+screenCapture=false
+listenEvents=false
+result=invalid-arguments
+exitCode=64
+process exit: 64
+The unchecked input was not echoed by the client.

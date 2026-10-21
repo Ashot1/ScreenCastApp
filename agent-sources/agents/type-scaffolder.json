@@ -1,0 +1,45 @@
+{
+   "description": "Finds, derives, adds, changes or removes transport/domain/form types from a contract; never component Props. Verifies component-local non-Props type changes read only.",
+   "environments": {
+      "codex": {
+         "tier": "basic",
+         "settings": {
+            "name": "type_scaffolder",
+            "sandbox_mode": "workspace-write"
+         }
+      },
+      "claude": {
+         "tier": "basic",
+         "settings": {
+            "name": "type-scaffolder",
+            "disallowedTools": ["Agent"]
+         }
+      },
+      "cursor": {
+         "tier": "basic",
+         "settings": {
+            "name": "type-scaffolder"
+         },
+         "prefix": "# Type Scaffolder\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "basic",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "ask",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "deny",
+               "websearch": "deny"
+            }
+         }
+      }
+   }
+}

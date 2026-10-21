@@ -1,0 +1,13 @@
+# Одноразовый локальный ASR helper
+
+Этот package собирает только `AmbientVoiceHelper`: отдельный native процесс для законченного bounded WAV, без AppKit UI, микрофона, облачных credentials или транспортного вызова. Общий `VoiceSupport` содержит договор stdin/result, проверку WAV/inventory и leases. Владение записью, child exit и очисткой остаётся в основном macOS модуле.
+
+`Package.swift` использует официальный FluidAudio URL, exact revision `503b4bd1bbf7220882de39fe8ae6716aae4132da` (0.17.7), `traits: []`, Swift >=6.2 и macOS14. Upstream source/manifest не меняются. SwiftPM cache/config/security и отдельная сборка находятся в `target/voice`. После повторной проверки20 октября2026 источник штатно разрешается с официального GitHub URL, без временного mirror; SwiftPM identity — `fluidaudio`, exact revision прежняя. Штатный Nemo XCFramework может скачиваться при resolution, но не линкуется и не копируется в app. Полные логи нужны отдельно от краткого результата Xcode.
+
+`yarn build:macos` через существующий `scripts/macos.sh voice` создаёт background bundle в `Ambient.app/Contents/Helpers/AmbientVoiceHelper.app`, копирует executable, оба resource bundles и notices и подписывает helper до внешнего приложения. Собственный bundle нужен для штатного SwiftPM `Bundle.module`: CLI в голом Contents/Helpers не находит resources внешнего app. Audio Input entitlement helper не получает; он читает только готовый WAV. Main app содержит usage description EN/RU и свой Audio Input entitlement.
+
+Helper читает закрытый запрос максимум8KiB из length-prefixed stdin (4-byte big endian), затем отдельный C EOF watcher завершает процесс при смерти родителя. Он независимо открывает существующий lease, получает shared lock и подтверждает исходные пути/inode/owner/type/nlink до чтения audio.wav. Result — private `result.json`, максимум32KiB, текст до16KiB UTF8 или закрытый код ошибки. stdout/stderr не являются result channel.
+
+Внутри общего300s supervisor deadline проверяется21 файл inventory04 (483105645 bytes), включается `ModelHub.offlineMode`, затем `loadLocal(.v3, .int8)` и nonstreaming ASR с v3 dimensions. Выбранный пользователем каталог не ищется автоматически и не изменяется приложением; веса не включены и не скачиваются. Нулевой PCM после проверки моделей возвращает silence. Проверка hashes не гарантирует атомарность файлов на всём интервале CoreML load.
+
+`Notices` содержит неизменённые Apache2/BSD уведомления runtime и отдельное описание CC BY4 весов/конверсии. Два штатных TTS dictionary файла FluidAudio — ресурсы пакета, не TTS-веса. Tests/VoiceTestChild находится вне этого package и не попадает в поставку.

@@ -1,0 +1,47 @@
+{
+   "description": "Read-only scout that maps related code, reusable helpers, ownership boundaries, and local context before the approach is chosen or dependent edits start.",
+   "environments": {
+      "codex": {
+         "tier": "basic",
+         "settings": {
+            "name": "codebase_scout",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "basic",
+         "settings": {
+            "name": "codebase-scout",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"],
+            "permissionMode": "plan"
+         }
+      },
+      "cursor": {
+         "tier": "basic",
+         "settings": {
+            "name": "codebase-scout",
+            "readonly": true
+         },
+         "prefix": "# Codebase Scout\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "basic",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "deny",
+               "websearch": "deny"
+            }
+         }
+      }
+   }
+}

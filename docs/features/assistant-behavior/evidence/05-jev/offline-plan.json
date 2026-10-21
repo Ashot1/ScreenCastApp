@@ -1,0 +1,72 @@
+{
+  "status": "prepared_offline",
+  "network_calls": 0,
+  "cases": [
+    {
+      "case_id": "P-en",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 4102
+    },
+    {
+      "case_id": "P-ru",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 4102
+    },
+    {
+      "case_id": "P-image",
+      "model": "jev-1.14.0",
+      "image_count": 2,
+      "image_bytes": 5443
+    },
+    {
+      "case_id": "A-en",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 3648
+    },
+    {
+      "case_id": "A-ru",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 3648
+    },
+    {
+      "case_id": "A-image",
+      "model": "jev-1.14.0",
+      "image_count": 2,
+      "image_bytes": 4989
+    },
+    {
+      "case_id": "M-en",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 4578
+    },
+    {
+      "case_id": "M-ru",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 4578
+    },
+    {
+      "case_id": "M-image",
+      "model": "jev-1.14.0",
+      "image_count": 2,
+      "image_bytes": 5919
+    },
+    {
+      "case_id": "R-en",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 1753
+    },
+    {
+      "case_id": "C-en",
+      "model": "jev-1.14.0",
+      "image_count": 1,
+      "image_bytes": 2625
+    }
+  ]
+}

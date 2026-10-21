@@ -1,0 +1,210 @@
+{
+  "responses_posts": 1,
+  "oauth_token_posts": 0,
+  "model_discovery_gets": 1,
+  "browser_calls": 0,
+  "historical_files_compared": 21,
+  "historical_files_unchanged": true,
+  "historical_before": {
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/authorization.json": "20033710132feb12512970d402eaf69d24122ccafa6f4fcdd5260173c62055d1",
+    "authorized-2026-10-19-luna-low-fast-once/execution-summary.json": "c891db5445ccb092443641b6d9776575ea4b70135e493921c2214f9f4fec593a",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-2-authorization.json": "ff9e4d60cda71a771f73be265b25d81fc1b371e560c114f77f8c8108b796e425",
+    "bounded-diagnostic-2026-10-19/attempt-2-summary.json": "7ee760faa8bfcd6f8a7cc33f1c2b587deddcac96360a718fb7251ec1401b5e79",
+    "bounded-diagnostic-2026-10-19/attempt-2/8a06d868-8220-4982-af11-21d7e8e8247e.json": "d1e34fe31409ed44f54e55e805bfa63c50f0e7930b0a1b7c44fdecaa271978d5",
+    "bounded-diagnostic-2026-10-19/attempt-3-authorization.json": "ad13b535a160bd48abd247b7bf8232159f57bc5c25724d36b9f1fa0271e609d8",
+    "bounded-diagnostic-2026-10-19/attempt-3-summary.json": "29282507a0102ff3506382b3bc0bfc9608bfa0651ac6e2bb14bc3cb0b81f20f2",
+    "bounded-diagnostic-2026-10-19/attempt-3/16775924-7946-4058-a9d8-e749e8b0c4bb.json": "7b370d6c1990621abf0b99aa74edf6862a8a6d3b08d47d09dd4c515c977bc3c8",
+    "bounded-diagnostic-2026-10-19/authorization.json": "c306773a728c9b99e1edd63d454670988929045bfafbde66fa4441ec20eb4941",
+    "bounded-diagnostic-2026-10-19/counter.json": "eff3276868889ce0235f8101332717987f4e729d72e1ec5c664859d3fb359569",
+    "bounded-diagnostic-2026-10-19/summary.json": "422741932e3c3181bbce29cdae968f5e383c1d0c6ddfbccfacbe188866144319",
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "delta-diagnostic-2026-10-19-once/attempt/38ac7901-2e48-44fb-ba06-316ce0ef2a3d.json": "ca0179494ca2524e132f3bdbba6f921bd6bb897f30dc24a530c7588c90aae138",
+    "delta-diagnostic-2026-10-19-once/authorization.json": "89dab18a6e219e7f422d141971f7b869e18c3bbb0cf5e15468f745b0db0e20e5",
+    "delta-diagnostic-2026-10-19-once/counter.json": "9b446acc288846ddc5adc9f4b6578c37b0918f8fd9a38f0c80801f0d9389060d",
+    "delta-diagnostic-2026-10-19-once/summary.json": "f8e0a38ce33ffe623a35c9e2b7f94bb36b0391ac09e2f11eaded5d0255238309",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89"
+  },
+  "historical_after": {
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/authorization.json": "20033710132feb12512970d402eaf69d24122ccafa6f4fcdd5260173c62055d1",
+    "authorized-2026-10-19-luna-low-fast-once/execution-summary.json": "c891db5445ccb092443641b6d9776575ea4b70135e493921c2214f9f4fec593a",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-2-authorization.json": "ff9e4d60cda71a771f73be265b25d81fc1b371e560c114f77f8c8108b796e425",
+    "bounded-diagnostic-2026-10-19/attempt-2-summary.json": "7ee760faa8bfcd6f8a7cc33f1c2b587deddcac96360a718fb7251ec1401b5e79",
+    "bounded-diagnostic-2026-10-19/attempt-2/8a06d868-8220-4982-af11-21d7e8e8247e.json": "d1e34fe31409ed44f54e55e805bfa63c50f0e7930b0a1b7c44fdecaa271978d5",
+    "bounded-diagnostic-2026-10-19/attempt-3-authorization.json": "ad13b535a160bd48abd247b7bf8232159f57bc5c25724d36b9f1fa0271e609d8",
+    "bounded-diagnostic-2026-10-19/attempt-3-summary.json": "29282507a0102ff3506382b3bc0bfc9608bfa0651ac6e2bb14bc3cb0b81f20f2",
+    "bounded-diagnostic-2026-10-19/attempt-3/16775924-7946-4058-a9d8-e749e8b0c4bb.json": "7b370d6c1990621abf0b99aa74edf6862a8a6d3b08d47d09dd4c515c977bc3c8",
+    "bounded-diagnostic-2026-10-19/authorization.json": "c306773a728c9b99e1edd63d454670988929045bfafbde66fa4441ec20eb4941",
+    "bounded-diagnostic-2026-10-19/counter.json": "eff3276868889ce0235f8101332717987f4e729d72e1ec5c664859d3fb359569",
+    "bounded-diagnostic-2026-10-19/summary.json": "422741932e3c3181bbce29cdae968f5e383c1d0c6ddfbccfacbe188866144319",
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "delta-diagnostic-2026-10-19-once/attempt/38ac7901-2e48-44fb-ba06-316ce0ef2a3d.json": "ca0179494ca2524e132f3bdbba6f921bd6bb897f30dc24a530c7588c90aae138",
+    "delta-diagnostic-2026-10-19-once/authorization.json": "89dab18a6e219e7f422d141971f7b869e18c3bbb0cf5e15468f745b0db0e20e5",
+    "delta-diagnostic-2026-10-19-once/counter.json": "9b446acc288846ddc5adc9f4b6578c37b0918f8fd9a38f0c80801f0d9389060d",
+    "delta-diagnostic-2026-10-19-once/summary.json": "f8e0a38ce33ffe623a35c9e2b7f94bb36b0391ac09e2f11eaded5d0255238309",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89"
+  },
+  "assessment": {
+    "expected_kind": "suggestion",
+    "matches_expected_kind": true,
+    "evidence_ids_valid": true,
+    "evidence_id_count": 1,
+    "semantic_assessment": "Not independently performed; returned diagnostic result omits model text. No lexical heuristic presented as semantic proof."
+  },
+  "result": {
+    "attempt_id": "103b41cb-2e0a-419e-84cb-6813b956d1e4",
+    "case_id": "text-suggestion",
+    "requested_configuration": {
+      "model": "gpt-6-luna",
+      "reasoning_effort": "high",
+      "service_tier": "priority"
+    },
+    "returned_configuration": {
+      "model": "gpt-6-luna",
+      "service_tier": null,
+      "reasoning_effort": "high"
+    },
+    "started_at": "2026-10-19T00:07:33.208Z",
+    "request_sha256": "50899908e53a0d11d1d871dec0d8085feaa7de09b2e6ea5c23e96e9226e54310",
+    "credit_guard": {
+      "source": "user_reported",
+      "confirmed": true
+    },
+    "status": "configuration_mismatch",
+    "usage": {
+      "input_tokens": 171,
+      "output_tokens": 117,
+      "total_tokens": 288,
+      "input_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "output_tokens_details": {
+        "reasoning_tokens": 53
+      }
+    },
+    "usage_status": "reported",
+    "validation_metadata": {
+      "terminal_fields": {
+        "output": "array",
+        "model": "string",
+        "service_tier": "string",
+        "reasoning": "object",
+        "status": "string"
+      },
+      "configuration": {
+        "model": "matching",
+        "service_tier": "default",
+        "reasoning_effort": "matching"
+      },
+      "terminal_output_count": 0,
+      "output_count": 2,
+      "message_count": 1,
+      "reasoning_count": 1,
+      "message_fields": {
+        "role": "string",
+        "status": "string",
+        "content": "array"
+      },
+      "content_count": 1,
+      "proposal_keys": {
+        "kind": true,
+        "message": true,
+        "rationale": true,
+        "evidence_ids": true,
+        "unexpected": false
+      },
+      "evidence_id_count": 1
+    },
+    "output_source": "completed_items",
+    "proposal": {
+      "kind": "suggestion"
+    },
+    "stream_event_metadata": {
+      "event_counts": {
+        "response.created": 1,
+        "response.in_progress": 1,
+        "response.output_item.added": 2,
+        "response.output_item.done": 2,
+        "response.content_part.added": 1,
+        "response.content_part.done": 1,
+        "response.output_text.delta": 54,
+        "response.output_text.done": 1,
+        "response.completed": 1,
+        "response.failed": 0,
+        "response.incomplete": 0,
+        "error": 0,
+        "other": 1
+      },
+      "parts": [
+        {
+          "output_index": 1,
+          "content_index": 0,
+          "delta_count": 54,
+          "text_bytes": 313,
+          "done_count": 1,
+          "done_text_type": "string",
+          "done_text_bytes": 313
+        }
+      ],
+      "output_items_done": [
+        {
+          "index_valid": true,
+          "output_index": 0,
+          "item_type": "reasoning",
+          "item_status": "missing",
+          "content_type": "array",
+          "content_count": 0,
+          "content_types": {
+            "output_text": 0,
+            "refusal": 0,
+            "other": 0
+          },
+          "text_bytes": 0
+        },
+        {
+          "index_valid": true,
+          "output_index": 1,
+          "item_type": "message",
+          "item_status": "completed",
+          "content_type": "array",
+          "content_count": 1,
+          "content_types": {
+            "output_text": 1,
+            "refusal": 0,
+            "other": 0
+          },
+          "text_bytes": 313
+        }
+      ],
+      "invalid_index_count": 0,
+      "parts_truncated": false,
+      "output_items_truncated": false,
+      "invalid_delta_count": 0,
+      "delta_bytes_observed": 313,
+      "completed_item_count": 2,
+      "completed_item_bytes_observed": 452,
+      "completed_item_byte_limit": 65536,
+      "part_limit": 8,
+      "index_limit": 7
+    },
+    "post_dispatch": "sent",
+    "elapsed_ms": 3414,
+    "response_metadata": {
+      "http_status": 200,
+      "media_type": "absent",
+      "body_present": true,
+      "body_read_outcome": "terminal_event",
+      "bytes_observed": 28406,
+      "byte_limit": 2097152
+    },
+    "model_output_omitted": true
+  }
+}

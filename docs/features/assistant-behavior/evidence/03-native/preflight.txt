@@ -1,0 +1,23 @@
+Date: 2026-10-18
+Working directory: /Users/gojda/Projects/ScreenCastApp
+
+$ sw_vers
+ProductName: macOS
+ProductVersion: 27.0
+BuildVersion: 26A428
+exit: 0
+
+$ swift --version
+swift-driver version: 1.168.6 Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+exit: 0
+
+$ swift -e 'import ApplicationServices; import CoreGraphics; print("accessibility=\(AXIsProcessTrusted())"); print("screenCapture=\(CGPreflightScreenCaptureAccess())"); print("listenEvents=\(CGPreflightListenEventAccess())")'
+accessibility=false
+screenCapture=false
+listenEvents=false
+exit: 0
+
+Scope: permission preflight of the invoked process only. No prompt/request APIs,
+no AX content traversal, no capture, no event tap, no event synthesis, no network.
+This result is not a permission measurement of a signed Ambient application.

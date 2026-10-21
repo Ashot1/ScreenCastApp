@@ -1,0 +1,9 @@
+# GENERATED AGENT FILE. DO NOT EDIT.
+# Source: .agents/skills/grill-with-docs/agents/openai.yaml
+# Edit the source and run yarn agents:generate.
+
+interface:
+  display_name: "Grill with Docs"
+  short_description: "Grill a design and write its docs"
+policy:
+  allow_implicit_invocation: false

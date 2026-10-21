@@ -1,0 +1,73 @@
+{
+   "codex": {
+      "basic": {
+         "model": "gpt-6-luna",
+         "model_reasoning_effort": "high",
+         "service_tier": "fast"
+      },
+      "research": {
+         "model": "gpt-6.1-sol",
+         "model_reasoning_effort": "medium",
+         "service_tier": "default"
+      },
+      "verification": {
+         "model": "gpt-6-luna",
+         "model_reasoning_effort": "xhigh",
+         "service_tier": "fast"
+      },
+      "design": {
+         "model": "gpt-6.1-sol",
+         "model_reasoning_effort": "high",
+         "service_tier": "default"
+      }
+   },
+   "claude": {
+      "basic": {
+         "model": "claude-sonnet-5-5",
+         "effort": "medium"
+      },
+      "research": {
+         "model": "claude-sonnet-5-5",
+         "effort": "medium"
+      },
+      "verification": {
+         "model": "claude-sonnet-5-5",
+         "effort": "medium"
+      },
+      "design": {
+         "model": "claude-sonnet-5-5",
+         "effort": "high"
+      }
+   },
+   "cursor": {
+      "basic": {
+         "model": "composer-2.5[fast=true]"
+      },
+      "research": {
+         "model": "cursor-grok-4.6-medium"
+      },
+      "verification": {
+         "model": "cursor-grok-4.6-medium"
+      },
+      "design": {
+         "model": "cursor-grok-4.6-high"
+      }
+   },
+   "opencode": {
+      "basic": {
+         "model": "minimax-coding-plan/MiniMax-M3.1-Flash-Preview"
+      },
+      "research": {
+         "model": "minimax-coding-plan/MiniMax-M3",
+         "variant": "thinking"
+      },
+      "verification": {
+         "model": "minimax-coding-plan/MiniMax-M3",
+         "variant": "thinking"
+      },
+      "design": {
+         "model": "minimax-coding-plan/MiniMax-M3",
+         "variant": "thinking"
+      }
+   }
+}

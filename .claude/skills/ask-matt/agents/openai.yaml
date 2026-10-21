@@ -1,0 +1,9 @@
+# GENERATED AGENT FILE. DO NOT EDIT.
+# Source: .agents/skills/ask-matt/agents/openai.yaml
+# Edit the source and run yarn agents:generate.
+
+interface:
+  display_name: "Ask Matt"
+  short_description: "Find the right skill or workflow"
+policy:
+  allow_implicit_invocation: false

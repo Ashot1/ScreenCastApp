@@ -1,0 +1,27 @@
+# Independent local project; never part of this application repository.
+/prototype/
+# Build/tool output
+.scratch/
+node_modules/
+target/
+.build/
+.swiftpm/
+DerivedData/
+dist/
+coverage/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+__pycache__/
+*.pyc
+# Local data and secrets
+.env
+.env.*
+!.env.example
+captures/
+recordings/
+local-data/
+*.p12
+*.pfx
+*.key
+# Generated agent instructions are intentionally tracked.

@@ -1,0 +1,69 @@
+yarn run v1.22.22
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ yarn verify:portable && yarn check:swift && yarn lint:swift
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ yarn agents:check && yarn test:tooling && yarn check:core && yarn lint:core && yarn test:core
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ node scripts/generate-agent-sources.mjs --check
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+Agent files are up to date.
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ vitest run scripts/generate-agent-sources.test.js
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+
+ RUN  v4.0.18 /Users/gojda/Projects/ScreenCastApp
+
+ ✓ scripts/generate-agent-sources.test.js (8 tests) 723ms
+     ✓ CLI --check exits 1 for changed, missing and extra owned files, without repairing them  440ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:14:14
+   Duration  976ms (transform 42ms, setup 0ms, import 95ms, tests 723ms, environment 0ms)
+
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ cargo check --workspace --locked
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked -- -D warnings
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ cargo test --workspace --locked
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running unittests src/lib.rs (target/debug/deps/ambient_core-62405d71d6d2e077)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ambient_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ swift build --package-path src/platforms/macos -Xswiftc -warnings-as-errors -Xswiftc -strict-concurrency=complete
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+warning: /Users/gojda/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /Users/gojda/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+warning: /Users/gojda/Library/Caches/org.swift.swiftpm is not accessible or not writable, disabling user-level cache features.
+error: 'macos': Invalid manifest (compiled with: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc", "-vfsoverlay", "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/TemporaryDirectory.Ki6WHP/vfs.yaml", "-L", "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/ManifestAPI", "-lPackageDescription", "-Xlinker", "-rpath", "-Xlinker", "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/ManifestAPI", "-target", "arm64-apple-macosx14.0", "-plugin-path", "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing", "-sdk", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk", "-F", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks", "-I", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib", "-L", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib", "-swift-version", "6", "-I", "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/ManifestAPI", "-sdk", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk", "-package-description-version", "6.0.0", "/Users/gojda/Projects/ScreenCastApp/src/platforms/macos/Package.swift", "-o", "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/TemporaryDirectory.M3ns6T/macos-manifest"])
+sandbox-exec: sandbox_apply: Operation not permitted
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.
+error Command failed with exit code 1.
+info Visit https://yarnpkg.com/en/docs/cli/run for documentation about this command.

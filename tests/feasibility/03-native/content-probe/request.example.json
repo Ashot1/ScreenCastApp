@@ -1,0 +1,11 @@
+{
+  "pid": 2147483647,
+  "bundleID": "dev.ambient.fixture",
+  "documentURL": "file:///Users/gojda/Projects/ScreenCastApp/tests/feasibility/03-native/content-probe/fixture.txt",
+  "excludedBundleIDs": [],
+  "excludedHosts": [],
+  "excludedFolderPaths": [],
+  "mode": "read",
+  "query": "AMBIENT-G2-TEXT-20261018",
+  "navigation": null
+}

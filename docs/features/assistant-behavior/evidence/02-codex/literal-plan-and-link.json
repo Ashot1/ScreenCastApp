@@ -1,0 +1,19 @@
+{
+  "thread_id": "01a15064-de4e-70f0-8cae-6f694fa81747",
+  "turn_id": "01a15069-7d79-7e60-a55f-8b1a535a4658",
+  "source_kind": "response_item.function_call_output:codex_app.send_message_to_thread",
+  "history_mode": "paginated",
+  "coverage": "local_records_only",
+  "plan_representation": "ordinary saved message text",
+  "plan_exact_equal": true,
+  "plan_chars": 187,
+  "plan_utf8_bytes": 337,
+  "plan_sha256": "ab32e88e7eedf2b418419907e25a36179fc0617d4888afd00a573caa25386455",
+  "public_reference_url": "https://developers.openai.com/codex/app-server/",
+  "reference_exact_equal": true,
+  "reference_sha256": "2b17d8e596a31338146819db248f4628650d642d6c9160a7c7473e8bffe66636",
+  "normalization_applied": false,
+  "structured_plan_records": 0,
+  "profile_written": false,
+  "raw_history_exported": false
+}

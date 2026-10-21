@@ -1,0 +1,50 @@
+{
+  "dataset": "google/fleurs; public human speech only",
+  "normalization": "Unicode word tokens; lowercase; ё -> е; punctuation ignored; numerals not normalized",
+  "cases": [
+    {
+      "case": "ru_ru-short",
+      "reference": "Основной религией в Молдавии является православное христианство.",
+      "hypothesis": "Основной религией в Молдавии является православное христианство.",
+      "reference_words": 7,
+      "hypothesis_words": 7,
+      "word_edits": 0,
+      "wer": 0.0,
+      "diagnostic_stdout_bytes": 0,
+      "diagnostic_stderr_bytes": 0
+    },
+    {
+      "case": "ru_ru-long",
+      "reference": "Основной религией в Молдавии является православное христианство. Они по-прежнему стараются определить, насколько большим было столкновение и как пострадает Земля. Когда вы вначале отправились за границу, люди, скорее всего, относились к вам с терпением и пониманием, зная, что путешественникам нужно адаптироваться в новой стране. Бывший спикер палаты Ньют Гингрич, губернатор Техаса Рик Перри и конгресмен Мишель Бахман заняли четвертое, пятое и шестое места соответственно. Национальный парк Крюгера расположен на северо-востоке Южной Африки, вдоль границы с Мозамбиком на востоке, с Зимбабве на севере, его южной границей служит Крокодилова река.",
+      "hypothesis": "Основной религией в Молдавии является православное христианство. Они по-прежнему стараются определить, насколько большим было столкновение и как пострадает земля. Когда вы вначале отправились за границу, люди, скорее всего, относились к вам с терпением и пониманием, зная, что путешественникам нужно адаптироваться в новой стране. Бывший спикер палаты Ньют Гингрич, губернатор Техаса Эрик Перри и конгрессмен Мишель Бахман заняли 4, 5 и 6 места соответственно. Национальный парк Кругера расположен на северо-востоке Южной Африки, вдоль границы с Мозамбиком на востоке, Зимбабве на севере. Его южной границей служит крокодилова река",
+      "reference_words": 89,
+      "hypothesis_words": 88,
+      "word_edits": 7,
+      "wer": 0.07865168539325842,
+      "diagnostic_stdout_bytes": 0,
+      "diagnostic_stderr_bytes": 0
+    },
+    {
+      "case": "en_us-short",
+      "reference": "The main local beer is 'Number One', it is not a complex beer, but pleasant and refreshing. The other local beer is called \"Manta\".",
+      "hypothesis": "The main local beer is number one. It is not a complex beer but pleasant and refreshing. The other local beer is called Monta.",
+      "reference_words": 24,
+      "hypothesis_words": 24,
+      "word_edits": 1,
+      "wer": 0.041666666666666664,
+      "diagnostic_stdout_bytes": 0,
+      "diagnostic_stderr_bytes": 0
+    },
+    {
+      "case": "en_us-long",
+      "reference": "The main local beer is 'Number One', it is not a complex beer, but pleasant and refreshing. The other local beer is called \"Manta\". Insects were the first animals to take to the air. Their ability to fly helped them evade enemies more easily and find food and mates more efficiently. There are many beaches, due to Auckland's straddling of two harbours. The most popular ones are in three areas. After seeing the horrors and atrocities of war during World War I, nations desired to avoid such a situation again in the future. Robin Uthappa made the innings highest score, 70 runs in just 41 balls by hitting 11 fours and 2 sixes.",
+      "hypothesis": "The main local beer is number one. It is not a complex beer, but pleasant and refreshing. The other local beer is called manta. Insects were the first animals to take to the air. Their ability to fly helped them evade enemies more easily and find food and mates more efficiently. There are many beaches due to Auckland straddling of two harbors. The most popular ones are in three areas. After seeing the horrors and atrocities of war during World War One, nations desire to avoid such a situation again in the future. Robin Uh made the innings highest score, seventy runs in just forty one balls by hitting eleven fours and two sixes.",
+      "reference_words": 114,
+      "hypothesis_words": 114,
+      "word_edits": 10,
+      "wer": 0.08771929824561403,
+      "diagnostic_stdout_bytes": 0,
+      "diagnostic_stderr_bytes": 0
+    }
+  ]
+}

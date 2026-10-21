@@ -1,0 +1,41 @@
+{
+  "status": "prepared_offline",
+  "network_calls": 0,
+  "cases": [
+    {
+      "id": "text-suggestion",
+      "request_sha256": "1462b86a2f306f97be29120b7998c862d161490c385f1abefea85d99de992347",
+      "upper_bound_microusd": "5280720"
+    },
+    {
+      "id": "text-none",
+      "request_sha256": "5e6db1626159b7283d280bdbd469a45d65b14523fb16fa76ae07f5c8762c02f7",
+      "upper_bound_microusd": "5280720"
+    },
+    {
+      "id": "image-suggestion",
+      "request_sha256": "8bf2908fb048c7c2b87c2aef9fdd300b6a3571ed070f173fb007e86cb3de9756",
+      "upper_bound_microusd": "5280720"
+    },
+    {
+      "id": "image-none",
+      "request_sha256": "36899a7443c402ec9ba49f4ffd45f6b9945fc7d142641f6e7c614a810d103224",
+      "upper_bound_microusd": "5280720"
+    },
+    {
+      "id": "refusal",
+      "request_sha256": "58b9f02999b20c7b5655837c9fd3db0581c016fce8425cf0854c8473feba77e9",
+      "upper_bound_microusd": "5280720"
+    },
+    {
+      "id": "incomplete",
+      "request_sha256": "9f0db390e3b661aa7e056da3bc0c3fc0b99cb2ca8da6c436e4c2c3e963dd86be",
+      "upper_bound_microusd": "5250240"
+    },
+    {
+      "id": "cancel",
+      "request_sha256": "b64ee14558c991aeebf164f22bad6b3ac35f68c26aaae5143c48e74681f86793",
+      "upper_bound_microusd": "5280720"
+    }
+  ]
+}

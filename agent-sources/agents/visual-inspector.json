@@ -1,0 +1,46 @@
+{
+   "description": "Read-only mechanical executor for parent-supplied test cases (UI or API) in a user-requested check with many cases.",
+   "environments": {
+      "codex": {
+         "tier": "verification",
+         "settings": {
+            "name": "visual_inspector",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "verification",
+         "settings": {
+            "name": "visual-inspector",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"]
+         }
+      },
+      "cursor": {
+         "tier": "verification",
+         "settings": {
+            "name": "visual-inspector",
+            "readonly": true
+         },
+         "prefix": "# Visual Inspector\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "verification",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "deny",
+               "websearch": "deny"
+            }
+         }
+      }
+   }
+}

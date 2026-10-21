@@ -1,0 +1,3 @@
+AMBIENT-G2-TEXT-20261018
+Synthetic disposable native-content fixture. No personal or account data.
+The native reader must locate this marker through AX, not by reading this file directly.

@@ -1,0 +1,44 @@
+name: Native Swift foundation
+on:
+  push:
+    paths-ignore:
+      - 'prototype/**'
+  pull_request:
+    paths-ignore:
+      - 'prototype/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
+      - run: corepack enable
+      - name: Install official Swift 6.4 toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://download.swift.org/swift-6.4.0-release/xcode/swift-6.4.0-RELEASE/swift-6.4.0-RELEASE-osx.pkg \
+            --output "$RUNNER_TEMP/swift.pkg"
+          pkgutil --check-signature "$RUNNER_TEMP/swift.pkg"
+          sudo installer -pkg "$RUNNER_TEMP/swift.pkg" -target /
+          shopt -s nullglob
+          toolchains=(/Library/Developer/Toolchains/swift-6.4*RELEASE.xctoolchain/usr/bin)
+          test "${#toolchains[@]}" -eq 1
+          echo "${toolchains[0]}" >> "$GITHUB_PATH"
+      - name: Confirm toolchain
+        run: swift --version | grep 'Swift version 6.4'
+      - run: yarn install --frozen-lockfile
+      - run: yarn check:swift
+      - run: yarn lint:swift
+      - run: yarn test:swift
+      - run: yarn build:macos

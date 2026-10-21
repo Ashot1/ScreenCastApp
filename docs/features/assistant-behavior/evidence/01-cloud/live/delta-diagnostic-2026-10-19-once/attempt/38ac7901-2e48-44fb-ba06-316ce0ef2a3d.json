@@ -1,0 +1,135 @@
+{
+  "attempt_id": "38ac7901-2e48-44fb-ba06-316ce0ef2a3d",
+  "case_id": "text-none",
+  "requested_configuration": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "service_tier": "priority"
+  },
+  "returned_configuration": {
+    "model": "gpt-6-luna",
+    "service_tier": null,
+    "reasoning_effort": "low"
+  },
+  "started_at": "2026-10-18T23:52:06.529Z",
+  "request_sha256": "a25216298cfd5a0624cf800304b46027b2acc144298198490226f6500935dba9",
+  "credit_guard": {
+    "source": "user_reported",
+    "confirmed": true
+  },
+  "status": "configuration_mismatch",
+  "usage": {
+    "input_tokens": 171,
+    "output_tokens": 82,
+    "total_tokens": 253,
+    "input_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0
+    },
+    "output_tokens_details": {
+      "reasoning_tokens": 32
+    }
+  },
+  "usage_status": "reported",
+  "validation_metadata": {
+    "terminal_fields": {
+      "output": "array",
+      "model": "string",
+      "service_tier": "string",
+      "reasoning": "object",
+      "status": "string"
+    },
+    "configuration": {
+      "model": "matching",
+      "service_tier": "default",
+      "reasoning_effort": "matching"
+    },
+    "output_count": 0,
+    "message_count": 0,
+    "reasoning_count": 0,
+    "proposal_rejection": "message_count"
+  },
+  "proposal": {
+    "kind": "invalid"
+  },
+  "stream_event_metadata": {
+    "event_counts": {
+      "response.created": 1,
+      "response.in_progress": 1,
+      "response.output_item.added": 2,
+      "response.output_item.done": 2,
+      "response.content_part.added": 1,
+      "response.content_part.done": 1,
+      "response.output_text.delta": 40,
+      "response.output_text.done": 1,
+      "response.completed": 1,
+      "response.failed": 0,
+      "response.incomplete": 0,
+      "error": 0,
+      "other": 1
+    },
+    "parts": [
+      {
+        "output_index": 1,
+        "content_index": 0,
+        "delta_count": 40,
+        "text_bytes": 211,
+        "done_count": 1,
+        "done_text_type": "string",
+        "done_text_bytes": 211
+      }
+    ],
+    "output_items_done": [
+      {
+        "index_valid": true,
+        "output_index": 0,
+        "item_type": "reasoning",
+        "item_status": "missing",
+        "content_type": "array",
+        "content_count": 0,
+        "content_types": {
+          "output_text": 0,
+          "refusal": 0,
+          "other": 0
+        },
+        "text_bytes": 0
+      },
+      {
+        "index_valid": true,
+        "output_index": 1,
+        "item_type": "message",
+        "item_status": "completed",
+        "content_type": "array",
+        "content_count": 1,
+        "content_types": {
+          "output_text": 1,
+          "refusal": 0,
+          "other": 0
+        },
+        "text_bytes": 211
+      }
+    ],
+    "invalid_index_count": 0,
+    "parts_truncated": false,
+    "output_items_truncated": false,
+    "candidate_bytes_observed": 211,
+    "candidate_byte_limit": 65536,
+    "part_limit": 8,
+    "index_limit": 7,
+    "candidate": {
+      "outcome": "validated",
+      "kind": "none"
+    }
+  },
+  "post_dispatch": "sent",
+  "elapsed_ms": 2689,
+  "response_metadata": {
+    "http_status": 200,
+    "media_type": "absent",
+    "body_present": true,
+    "body_read_outcome": "terminal_event",
+    "bytes_observed": 24102,
+    "byte_limit": 2097152
+  },
+  "model_output_omitted": true
+}

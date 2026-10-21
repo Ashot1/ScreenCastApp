@@ -1,0 +1,29 @@
+{
+  "name": "ambient-assistant-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "scripts": {
+    "agents:generate": "node scripts/generate-agent-sources.mjs",
+    "agents:check": "node scripts/generate-agent-sources.mjs --check",
+    "test:tooling": "vitest run scripts/generate-agent-sources.test.js",
+    "check:core": "cargo check --workspace --locked",
+    "lint:core": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked -- -D warnings",
+    "test:core": "cargo test --workspace --locked",
+    "check:swift": "bash scripts/macos.sh check",
+    "test:swift": "bash scripts/macos.sh test",
+    "build:macos": "bash scripts/macos.sh app",
+    "lint:swift": "swift format lint --strict --configuration .swift-format src/platforms/macos/Package.swift src/platforms/macos/VoiceHelper/Package.swift --recursive src/platforms/macos/Sources src/platforms/macos/Tests src/platforms/macos/App src/platforms/macos/VoiceHelper/Sources",
+    "verify:portable": "yarn agents:check && yarn test:tooling && yarn check:core && yarn lint:core && yarn test:core",
+    "verify": "yarn verify:portable && yarn check:swift && yarn lint:swift && yarn test:swift"
+  },
+  "devDependencies": {
+    "smol-toml": "1.9.0",
+    "yaml": "2.9.1",
+    "vitest": "4.0.18"
+  }
+}

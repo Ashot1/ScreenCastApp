@@ -1,0 +1,8 @@
+{
+  "tests/feasibility/01-cloud/probe.mjs": "095580dfa5f2435aedc6426061e1178b85711983f0491c0aa1e8e913ec8c3377",
+  "tests/feasibility/01-cloud/probe.test.js": "9aab1002e63decc8099e1d36caaa14d4e9da31dd68e8f1a9275094610d48d8e3",
+  "tests/feasibility/01-cloud/cases.json": "a87e8532e03e039e600150ffe3d9d46ab31f40585ccaef2fb20bd620403f46c1",
+  "tests/feasibility/01-cloud/response-schema.json": "33c935f65333a09d7d845c9c4da8b6e9715b714df98c3476a5d1b1feda10ca64",
+  "tests/feasibility/01-cloud/synthetic.png": "605630988273596c803e8bab24f456b59cd85bd4a0665c490b4cae3c4513e106",
+  "tests/feasibility/01-cloud/live-settings.example.json": "fd89b2b6dbfb68cb11511e8eefa3b5d73bb20be15d554a228b534a0a30dea1a4"
+}

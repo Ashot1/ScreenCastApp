@@ -1,0 +1,66 @@
+# Контракты и границы
+
+По [ADR-019](decisions/0019-unified-integrations.md) согласован переход на общий слой интеграций. [ADR-020](decisions/0020-integration-layer-contract.md) принят; 23A реализован и принят: **schema11** (таблицы `integration_profiles`, `integration_exclusions`, `integration_metadata`, строка `store_identity` из `randomblob(16)`; таблицы Jira удалены, таблицы GitHub остаются до 23B) и **ABI интеграций v1** (`ambient_integration.h`; виды `local-projects` 1, `codex` 2, `github` 3, `jira` 4) вместо Jira ABI1. **23B принят:** schema12 (таблицы GitHub удалены, профили GitHub — в `integration_profiles` с `scope` NULL и allowlist в `config`), ABI интеграций v1 — 15 экспортов с видом 3 и `ambient_integration_v1_github_profile_save`; GitHub1 удалён. **23C принят:** schema13 (таблица `integration_switches` ровно с четырьмя строками, все включены при создании; проверка при открытии), ABI интеграций v1 — 17 экспортов: добавлены `ambient_integration_v1_enabled(h, kind, uint32_t*)` и `ambient_integration_v1_set_enabled(h, kind, 0|1)` для видов 1..4; выключенная интеграция даёт существующую ошибку `STALE` (11). Схема12 отклоняется без записи. **24A принят:** schema14 (таблицы `plugins`, `plugin_servers`, `plugin_tools`, `plugin_calls`, `connection_check_totals`; метаданные результатов плагинов — в `integration_metadata`, пространство `plugin`), **модель ABI v5** вместо v4 (`dispatch(op, token, keys[≤64], count, out)` с `AmbientPluginKey` 48 bytes; многошаговый контракт до 5 POST, без повторов) и **`ambient_plugin.h` v1** (11 экспортов, `AmbientPluginFile` 40 bytes, статусы `ambient_source.h`); Keychain service `dev.ambient.foundation.plugins`. Схема13 отклоняется без записи. Memory3/auth1/source1/Codex1 не менялись. **24C принят:** schema15 (`plugin_calls.outcome` 0..11; JSON пакета с меткой `kind`), **модель ABI v6** (`ambient_model_v6_dispatch(op, token, token_length, keys, key_count, root, out)`, 17 экспортов) и **`ambient_plugin.h` v2** (14 экспортов: 11 переименованных и `operation_begin/cancel/close`; `discover(memory, operation, root, plugin, server, generation, key, …)`; статусы 4 — занятая операция, 7 — неизвестная операция). Схема14 отклоняется без записи. JSON серверов в списке и просмотре: `{key, kind:{kind:"remote",url,auth_required}|{kind:"local",command,args,env}, needs_key, downloads[, generation]}`. **24B принят локально:** `ambient_plugin.h` v2 — 21 экспорт (`builtin`, `managed_status`, `managed_install`, `oauth_begin`, `oauth_exchange`, `oauth_refresh`, `oauth_revoke`); сохранённый вид `{"kind":"managed","id":"google-workspace"}`; конверт секрета Swift `oauth {access, refresh, expires_at, refresh_issued_at}`; схема 15 не менялась. Схема11 отклоняется без записи и миграции. Следующие сведения относятся к принятому коду; старые schema11/Todoist ABI1 из проекта17A не являются допуском реализации.
+
+Текущий принятый контракт12A: schema10, memory3/auth1/source1/Codex1/model4/GitHub1/Jira1. Постоянная помощь08B сохраняет свои ограничения: До16 предложений на дело/128 всего,32 пары; message16KiB/rationale8KiB, точные row32KiB/feed4MiB/details256KiB включая framing. Метаданные и диалог входят в общий64MiB. Workspace revision отдельно от TaskVersion; ProposalId не переиспользуется; разрешение после restart проверяется заново. Публикация не откатывает учтённый расход. Старые model ABI1–3 удалены. [ADR-015](decisions/0015-persistent-proposal-feed.md). Ниже версии прежних пакетов описывают историю изменений; GitHub schema9/ABI1 принят по [ADR-016](decisions/0016-selected-github-pr.md). Новый ABI содержит13 production exports;13A сохраняет1–32 объекта после точного preview одной транзакцией, проверяя профиль/поколение/дело. Metadata входят в combined16KiB/global64MiB; окно512KiB и страницы256KiB включают JSON framing. Обычное обновление сохраняет stale-обсуждение, отзыв credentials очищает зависимые области08B.
+
+Принятый 10A сохраняет schema6/memory3/auth1/source1/model3. WAV: PCM16 mono16kHz, до60s/2MiB; результат: текст16KiB/канал32KiB; общий срок helper300s. Отмена: TERM, затем через250ms KILL, освобождение после фактического выхода. Проверены поколения черновика, позднее разрешение, отзыв допуска и очистка. [ADR-013](decisions/0013-local-voice-reply.md).
+
+Принятый08A: model ABI3 целиком заменяет2, добавляя временный reply preview, отдельную Reply citation и точную suppression цели. Schema6/memory3/auth1/source1 сохраняются. Один result/snapshot и один pending preview;16KiB reply,32 подтверждённые пары,256KiB context/320KiB body. `ambient_model_v3_result` проверяет текущий receipt и полный допуск без копирования/preview/HTTP; native отдельно проверяет вид результата. [ADR-012](decisions/0012-edge-card-and-text-reply.md).
+
+Принятый11A: schema6 и отдельный local-source ABI1, memory3/auth1/model2 сохранены. Native передаёт ограниченные Git-байты и факты чтения; Core проверяет grant/task/epoch/root settings, разбирает байты и выдаёт датированное SourceEvidence. Отмена закрывает допуск, освобождение происходит после фактического возврата чтения и закрытия operation FD. Подробности: [ADR-011](decisions/0011-selected-local-branches.md).
+
+Статус: память, собственный вход и нативная синтетическая проверка подключения реализованы и проверены локально. Общие контракты наблюдения/анализа ниже остаются требованиями. Перед созданием transport/domain/FFI типов вызывается Type Scaffolder по правилам проекта.
+
+## Проверка подключения06D
+
+[ADR-010](decisions/0010-selected-task-assistance.md) заменяет model ABI1 на2 отдельно от memory ABI3/auth ABI1. Core собирает точный immutable context, допускает один запрос и commit unknown до сети; providers выполняет синтетический Luna Low/High либо помощь High, priority, проверяя actual/usage. Схема5 прежнего Store read-only отвергает старые1–4, без миграции и сброса. Журнал1024 записями/1MiB, консервативный charge160bytes/row; checked token sums не выдаются за остаток подписки или доллары. Core receipt проверяется при публикации и copy; отмена во время commit не возвращает действие, поздний usage сохраняется.
+
+Registry освобождается перед Store/operation lock и HTTP. Model operation удерживает Arc Store до учёта даже после закрытия memory handle; cancel не снимает busy до возврата transport. App shutdown сначала ждёт ChatGPTCoordinator (auth/model), затем MemorySession. Поздний usage может учитываться, а поколение native запрещает позднее подтверждение сессии. Этот путь не даёт допуска источникам и не включает анализ.
+
+## Реализованная память 07 (ADR-004/005)
+
+Rust владеет делами, сведениями, связями и ревизиями; SQLite-схема 4 (память07 и журнал06D) и точные ограничения описаны в [ADR-004](decisions/0004-multiple-tasks-and-source-memory.md) и [core README](../src/core/README.md). Исторический импорт принимает существующее дело и ожидаемую ревизию; явная пользовательская привязка отделена от него. Происхождение, время и полнота не выдумываются. Удаление оставляет терминальный ID и минимальный отпечаток известного источника, предотвращая возврат забытой истории. Ручная пауза глобальна. По [ADR-005](decisions/0005-manual-plan-and-task-lifecycle.md) реализован ручной план внутри дела, зависимости и проверки, вычисляемая доступность; завершение атомарно сохраняет итог/выбранные связи и очищает подробности. Повторное открытие не восстанавливает их; отключение инициативы независимо от завершения. Автоматическое извлечение и инициативные напоминания ещё не реализованы; вручную запрошенные предложения сохраняет08B.
+
+[C ABI v3](../src/bridge/README.md) предоставляет типизированные синхронные операции памяти и ограниченные страницы, caller-owned записи/байтовые буферы. Изменения проверяют ожидаемые ревизии всех затронутых дел; Rust атомарно повышает их. Swift actor выполняет вызовы вне UI-потока и закрывает handle после принятых операций. UI хранит снимок и один самостоятельный черновик с исходным ID/ревизией. Старые memory ABI v1/v2 удалены; совместимого дубля нет. Точные функции и ошибки — в [ambient.h](../src/bridge/include/ambient.h).
+
+Настоящие SQLite, ABI и Swift integration tests проверяют эту границу. Схемы 1/2/3/4, чужая или повреждённая БД отклоняется без записи, включая сохранность старого WAL. Автоматического переноса/сброса нет; checkpoint предыдущей сборки сохранён. C# ещё не подключён.
+
+## Сущности
+
+| Контракт | Обязательный смысл |
+| --- | --- |
+| Observation | event ID, время, app/window/display identity, kind, state revision, evidence refs, geometry version, completeness, source, bytes |
+| ObservationLoss | интервал, причина, объём/счётчик потерь и что известно о неполноте |
+| Goal / Task | отдельные IDs, goal revision, priority, deadline, questions, evidence dependencies, capability, allowed routes, quality profile, budget reservation |
+| Completion | собственный ID, request/task IDs, goal revision, evidence, model/preprocessing version, answer/uncertainty, usage/status, validity dependencies, helper generation |
+| ActionProposal | отдельный ID, completion ID, goal revision, target app/window/element, geometry, preconditions, expiry, expected postcondition |
+| PermissionScope | выбранные приложения/окна, разрешённые данные, локальное хранение, облачная передача и действия — отдельные возможности |
+
+Completion не является ActionProposal. Отмена вычисления, пригодность результата и разрешение на действие имеют независимые состояния.
+
+## Время и координаты
+
+Wall-clock UTC сохраняется для истории. In-session deadlines считаются монотонно; значение native monotonic clock нельзя сравнивать между процессами/перезапусками без явного преобразования. Replay использует собственные управляемые часы.
+
+Изображения адресуются ссылкой и hash; DTO не содержит неограниченный inline screenshot. Производная хранит crop/scale/padding/orientation и связь с оригиналом. Перед действием native adapter проверяет актуальное окно/элемент и переводит координаты с учётом display scaling. Нормализованный box 0…1 сам по себе не является координатой клика.
+
+## Дальнейшее расширение C ABI
+
+Memory ABI ограничена памятью; отдельная model ABI4 обслуживает проверку и помощь по выбранным сохранённым данным. Передача внешних наблюдений, универсальных команд и событий ещё не реализована.
+
+До объявления API фиксируются: fixed-width types, encoding и size limits; allocator/free ownership; срок жизни буфера; thread affinity; ошибки вместо исключений через ABI; containment panic; отмена и shutdown; гарантия отсутствия callback после disposal; порядок повторного входа. Rust-owned object представлен непрозрачным handle, не нативной структурой языка.
+
+Swift импортирует C, C# использует LibraryImport. FFI-обвязка изолирована от `#![forbid(unsafe_code)]` ядра. Для обеих оболочек требуются одинаковые тесты round-trip, malformed input, double disposal prevention, late callback/cancellation и shutdown.
+
+## Нативный вход в разработке (ADR-006)
+
+[ADR-006](decisions/0006-native-chatgpt-session.md) задаёт отдельную auth ABI1, одноразовые protocol operations и native Keychain. Rust выполняет OIDC через проверенную библиотеку; native владеет браузером, ограниченным loopback listener и одной сессией. Auth I/O выполняется вне UI/MemorySession и не держит registry lock памяти. Отмена/срок запрещают позднее сохранение; операция занята до реального завершения. Пакет принят по локальным проверкам; он не подтверждает настоящий native consent/refresh, Fast или допуск анализа. App shutdown ждёт память и auth, включая фактическое завершение HTTP/cleanup и соединений.
+
+## Provider boundary
+
+Общий контракт capability/request/completion/usage не зависит от SDK. Цена и версия модели входят в профиль запроса. `unknown usage` — отдельный исход; нельзя декодировать его как ноль. Секрет не попадает в durable event, trace или replay. Повторные попытки видимы core ledger.
+
+В06C ручная пауза остаётся в Core, но в Swift имеет одну Bool? проекцию вне content MemorySnapshot. Начальное чтение и content reload разделяют одну отслеживаемую операцию; reload вычисляет состояние редактора после await, close ждёт actual completion. MenuBarExtra использует прежний delegate.model. Permission preflight — только локальное UI-состояние; новый domain/FFI контракт для него не нужен.
+
+Jira12A добавляет14 production exports отдельного ABI1 на том же memory handle. Выбор CloudID/issue → до13 GET/30s/1MiB на тело/8MiB всего → окно512KiB → точный preview1–32 объектов → одна существующая транзакция. Metadata входят в combined16KiB/global64MiB и проверяются при open. Исключение сайта хранится независимо от профиля, exclude↔allow меняет settings revision.401 отзывает только отправленное поколение; auth/site revoke очищают все зависимые основания08B, обычное обновление оставляет stale-обсуждение. Schema10 отклоняет1–9 без миграции или сброса. [ADR-017](decisions/0017-selected-jira-issue.md).

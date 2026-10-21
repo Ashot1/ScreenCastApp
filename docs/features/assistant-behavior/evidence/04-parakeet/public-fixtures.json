@@ -1,0 +1,52 @@
+{
+  "dataset": "google/fleurs",
+  "revision": "70bb2e84b976b7e960aa89f1c648e09c59f894dd",
+  "license": "CC-BY-4.0",
+  "transformation": "First five distinct dev transcriptions per language; short=first; long=concatenation; mono PCM16 16kHz via ffmpeg",
+  "cases": [
+    {
+      "case": "ru_ru-short",
+      "duration_s": 8.28,
+      "source_ids": [
+        "12991791007873426296.wav"
+      ],
+      "reference": "Основной религией в Молдавии является православное христианство.",
+      "sha256": "9a53414602f46d2e2790fb0851036302001df3d24ab3fcd852776acc7d1977e5"
+    },
+    {
+      "case": "ru_ru-long",
+      "duration_s": 55.2,
+      "source_ids": [
+        "12991791007873426296.wav",
+        "7279383094220726660.wav",
+        "16401100064950446126.wav",
+        "15831057629221328872.wav",
+        "8615352657490921896.wav"
+      ],
+      "reference": "Основной религией в Молдавии является православное христианство. Они по-прежнему стараются определить, насколько большим было столкновение и как пострадает Земля. Когда вы вначале отправились за границу, люди, скорее всего, относились к вам с терпением и пониманием, зная, что путешественникам нужно адаптироваться в новой стране. Бывший спикер палаты Ньют Гингрич, губернатор Техаса Рик Перри и конгресмен Мишель Бахман заняли четвертое, пятое и шестое места соответственно. Национальный парк Крюгера расположен на северо-востоке Южной Африки, вдоль границы с Мозамбиком на востоке, с Зимбабве на севере, его южной границей служит Крокодилова река.",
+      "sha256": "4fee15b7fe78ba2ba95b8a6e9c14d800e34995e1dcc91c6e8ad1fc82a29cafbd"
+    },
+    {
+      "case": "en_us-short",
+      "duration_s": 11.46,
+      "source_ids": [
+        "15158676295442294624.wav"
+      ],
+      "reference": "The main local beer is 'Number One', it is not a complex beer, but pleasant and refreshing. The other local beer is called \"Manta\".",
+      "sha256": "fa3bcdcb5a5b82dae1bb29708541109c7505ff992bc50962b28270bbc92d1160"
+    },
+    {
+      "case": "en_us-long",
+      "duration_s": 47.8,
+      "source_ids": [
+        "15158676295442294624.wav",
+        "16131823300806444840.wav",
+        "4175831345558885921.wav",
+        "665062717314476757.wav",
+        "3165540733904730243.wav"
+      ],
+      "reference": "The main local beer is 'Number One', it is not a complex beer, but pleasant and refreshing. The other local beer is called \"Manta\". Insects were the first animals to take to the air. Their ability to fly helped them evade enemies more easily and find food and mates more efficiently. There are many beaches, due to Auckland's straddling of two harbours. The most popular ones are in three areas. After seeing the horrors and atrocities of war during World War I, nations desired to avoid such a situation again in the future. Robin Uthappa made the innings highest score, 70 runs in just 41 balls by hitting 11 fours and 2 sixes.",
+      "sha256": "8a2d859f9bce6fd200dcf5f8ca33353818a8876b66b9fc0675b58846b553ecbd"
+    }
+  ]
+}

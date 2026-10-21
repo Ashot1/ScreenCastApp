@@ -1,0 +1,58 @@
+{
+  "thread_id": "01a15065-10a1-78b3-9ac8-330bcd8c2a13",
+  "started_unix_ns": 1792350832687233000,
+  "finished_unix_ns": 1792350832694778000,
+  "canonical_sha256_before": "d755907df2105c35524f6543f72903178a1d77bebd85a2462764bef38aca69a2",
+  "canonical_sha256_after": "d755907df2105c35524f6543f72903178a1d77bebd85a2462764bef38aca69a2",
+  "canonical_unchanged": true,
+  "snapshot_hash_matches": true,
+  "service_stores_before": {
+    "state_5.sqlite": {
+      "bytes": 103915520,
+      "mtime_ns": 1792350796988211853
+    },
+    "state_5.sqlite-wal": {
+      "bytes": 4169472,
+      "mtime_ns": 1792350832587457060
+    },
+    "state_5.sqlite-shm": {
+      "bytes": 32768,
+      "mtime_ns": 1792349081287338895
+    },
+    "history.jsonl": {
+      "bytes": 0,
+      "mtime_ns": 1791145868882106794
+    },
+    "session_index.jsonl": {
+      "bytes": 409551,
+      "mtime_ns": 1792350688596964423
+    }
+  },
+  "service_stores_after": {
+    "state_5.sqlite": {
+      "bytes": 103915520,
+      "mtime_ns": 1792350796988211853
+    },
+    "state_5.sqlite-wal": {
+      "bytes": 4169472,
+      "mtime_ns": 1792350832587457060
+    },
+    "state_5.sqlite-shm": {
+      "bytes": 32768,
+      "mtime_ns": 1792349081287338895
+    },
+    "history.jsonl": {
+      "bytes": 0,
+      "mtime_ns": 1791145868882106794
+    },
+    "session_index.jsonl": {
+      "bytes": 409551,
+      "mtime_ns": 1792350688596964423
+    }
+  },
+  "service_stats_unchanged": true,
+  "reader_mode": "rb",
+  "second_app_server_started": false,
+  "agent_start_resume_calls": 0,
+  "raw_history_exported": false
+}

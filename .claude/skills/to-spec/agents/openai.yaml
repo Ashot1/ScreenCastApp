@@ -1,0 +1,9 @@
+# GENERATED AGENT FILE. DO NOT EDIT.
+# Source: .agents/skills/to-spec/agents/openai.yaml
+# Edit the source and run yarn agents:generate.
+
+interface:
+  display_name: "To Spec"
+  short_description: "Turn a conversation into a spec"
+policy:
+  allow_implicit_invocation: false

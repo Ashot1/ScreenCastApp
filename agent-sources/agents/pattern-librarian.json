@@ -1,0 +1,47 @@
+{
+   "description": "Read-only specialist that checks what installed libraries already provide, starting from the Codebase Scout's places, before custom code is written.",
+   "environments": {
+      "codex": {
+         "tier": "basic",
+         "settings": {
+            "name": "pattern_librarian",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "basic",
+         "settings": {
+            "name": "pattern-librarian",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"],
+            "permissionMode": "plan"
+         }
+      },
+      "cursor": {
+         "tier": "basic",
+         "settings": {
+            "name": "pattern-librarian",
+            "readonly": true
+         },
+         "prefix": "# Pattern Librarian\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "basic",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "deny",
+               "websearch": "deny"
+            }
+         }
+      }
+   }
+}

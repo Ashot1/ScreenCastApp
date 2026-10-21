@@ -1,0 +1,10 @@
+{
+  "live_enabled": false,
+  "upper_bound_usd": null,
+  "upper_bound_evidence": null,
+  "account_terms_reference": null,
+  "opening_exposure_usd": null,
+  "opening_exposure_evidence": null,
+  "presence_min": null,
+  "unique_min": null
+}

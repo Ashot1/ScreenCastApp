@@ -1,0 +1,32 @@
+[package]
+name = "ambient-providers"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[features]
+model-test-support = ["ambient-core/model-test-support"]
+
+[dependencies]
+ambient-core = { path = "../core" }
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+openidconnect = { version = "=4.0.1", default-features = false }
+reqwest = { version = "=0.12.28", default-features = false, features = ["rustls-tls"] }
+tokio = { version = "=1.53.3", features = ["rt", "net", "time"] }
+# Google sign-in for the managed server (ADR-021 «Вход»): the lock entry openidconnect already uses.
+oauth2 = { version = "=5.0.0", default-features = false }
+# Names the managed server's install folder by the hash of its pinned requirements (ADR-022).
+sha2 = { version = "=0.11.1", default-features = false }
+
+[build-dependencies]
+serde_json = "=1.0.154"
+
+# Process-group signals for local MCP servers (ADR-022); safe API, so providers stays unsafe-free.
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "=1.1.5", features = ["process"] }
+
+
+[lints]
+workspace = true

@@ -1,0 +1,26 @@
+{
+  "status": "blocked",
+  "network_calls": 0,
+  "blockers": [
+    "missing_api_key",
+    "live_disabled",
+    "unconfirmed_upper_bound",
+    "unconfirmed_account_terms",
+    "missing_or_invalid_shared_ledger"
+  ],
+  "plan": {
+    "case_id": "P-ru",
+    "model": "jev-1.14.0",
+    "image_count": 1,
+    "image_bytes": 4102
+  },
+  "budget": {
+    "cap_nanousd": 1000000000,
+    "committed_nanousd": null,
+    "remaining_nanousd": null
+  },
+  "warning": null,
+  "settings_path": "/Users/gojda/Projects/ScreenCastApp/tests/feasibility/05-jev/live-settings.json",
+  "shared_ledger_path": "/Users/gojda/Projects/ScreenCastApp/docs/features/assistant-behavior/evidence/05-jev/jev-tests.sqlite3",
+  "api_key_environment": "TYPESAFE_API_KEY"
+}

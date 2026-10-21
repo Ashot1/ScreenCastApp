@@ -1,0 +1,31 @@
+Date: 2026-10-18
+Purpose: one authorized comparison of the same unchanged app under exec_command require_escalated.
+No TCC, app permission or sandbox configuration changes.
+
+Before launch:
+codesign --verify --strict --verbose=2 => exit 0, valid on disk, satisfies its Designated Requirement
+Executable SHA-256:
+33192207b1cd8f27f85d92d6640d2a9321d387a992b12f35d4e729d812b94649
+
+Command (one attempt, automatic approval accepted):
+open -g -n -W /Users/gojda/Projects/ScreenCastApp/tests/feasibility/03-native/.build/NativeContentProbe.app --stdout /Users/gojda/Projects/ScreenCastApp/tests/feasibility/03-native/.build/launchservices-preflight-stdout.txt --stderr /Users/gojda/Projects/ScreenCastApp/tests/feasibility/03-native/.build/launchservices-preflight-stderr.txt --args --preflight
+
+open process exit: 0
+open diagnostic:
+Unable to block on application (GetProcessPID() returned 18446744073709551016)
+
+Client stdout:
+accessibility=false
+screenCapture=false
+listenEvents=false
+mode=preflight
+exitCode=2
+
+Client stderr: empty
+After launch executable SHA-256 unchanged:
+33192207b1cd8f27f85d92d6640d2a9321d387a992b12f35d4e729d812b94649
+
+Conclusion: LaunchServices did execute the known app and its preflight produced these results.
+The earlier -10827 was not reproduced in this execution context. Bundle/executable is not missing.
+open did not confirm waiting or propagate the client's exit code; exitCode=2 above is the client's own output.
+No claim of granted permissions, successful AX reading, successful matrix or G2.

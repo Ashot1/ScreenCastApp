@@ -1,0 +1,55 @@
+yarn run v1.22.22
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ yarn agents:check && yarn test:tooling && yarn check:core && yarn lint:core && yarn test:core
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ node scripts/generate-agent-sources.mjs --check
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+Agent files are up to date.
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ vitest run scripts/generate-agent-sources.test.js
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+
+ RUN  v4.0.18 /Users/gojda/Projects/ScreenCastApp
+
+ ✓ scripts/generate-agent-sources.test.js (8 tests) 3545ms
+     ✓ renders parseable native agents, scoped rules and skills in all four environments  307ms
+     ✓ CLI --check exits 1 for changed, missing and extra owned files, without repairing them  1869ms
+     ✓ copies Matt supporting files and binary assets, catches drift and deletes removed Matt copies  321ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:30:49
+   Duration  4.95s (transform 70ms, setup 0ms, import 222ms, tests 3.54s, environment 0ms)
+
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ cargo check --workspace --locked
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked -- -D warnings
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.17s
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ cargo test --workspace --locked
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.23s
+     Running unittests src/lib.rs (target/debug/deps/ambient_core-62405d71d6d2e077)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ambient_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+Done in 19.61s.

@@ -1,0 +1,29 @@
+{
+  "authorized_at": "2026-10-18T23:42:47.438Z",
+  "maximum_new_responses_posts_this_execution": 1,
+  "batch_attempt": 3,
+  "batch_maximum": 3,
+  "instruction": "Exactly one final synthetic text-none/Luna low/priority POST; preserve all previous records and reported/unknown usage. No further POST.",
+  "hypothesis": "Closed exact existing-rejection diagnostics distinguish output/schema/evidence/message conditions and raw returned-tier/model/effort states before privacy projection.",
+  "request_body_unchanged": true,
+  "transport_unchanged": true,
+  "ordinary_cli_guard_unchanged": true,
+  "historical_records_preserved": {
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "authorized-2026-10-19-luna-low-fast-once/authorization.json": "20033710132feb12512970d402eaf69d24122ccafa6f4fcdd5260173c62055d1",
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/authorization.json": "c306773a728c9b99e1edd63d454670988929045bfafbde66fa4441ec20eb4941",
+    "bounded-diagnostic-2026-10-19/summary.json": "422741932e3c3181bbce29cdae968f5e383c1d0c6ddfbccfacbe188866144319",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-2-authorization.json": "ff9e4d60cda71a771f73be265b25d81fc1b371e560c114f77f8c8108b796e425",
+    "bounded-diagnostic-2026-10-19/attempt-2-summary.json": "7ee760faa8bfcd6f8a7cc33f1c2b587deddcac96360a718fb7251ec1401b5e79",
+    "bounded-diagnostic-2026-10-19/attempt-2/8a06d868-8220-4982-af11-21d7e8e8247e.json": "d1e34fe31409ed44f54e55e805bfa63c50f0e7930b0a1b7c44fdecaa271978d5"
+  },
+  "no_credit_setting": {
+    "source": "persisted_user_report",
+    "api_verified": false
+  }
+}

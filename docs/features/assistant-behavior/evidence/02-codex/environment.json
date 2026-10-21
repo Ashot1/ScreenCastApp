@@ -1,0 +1,17 @@
+{
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "macos": "27.0",
+  "python": "3.13.2",
+  "app_bundle_name": "ChatGPT",
+  "desktop_version": "26.1013.40934",
+  "desktop_build": "20770",
+  "builtin_package_metadata": {
+    "version": "0.163.0-alpha.10.2"
+  },
+  "rollout_engine_version": "0.163.0-alpha.10.2",
+  "global_cli_version": "0.160.0",
+  "probe_interface": "direct explicit local rollout binary file read; no app-server",
+  "scope": "authorized wave 1 test chats only",
+  "profile_write_permission": "not granted by this task",
+  "bundle_identifier": "com.openai.codex"
+}

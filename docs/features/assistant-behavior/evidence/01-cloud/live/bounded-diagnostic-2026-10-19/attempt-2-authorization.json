@@ -1,0 +1,23 @@
+{
+  "authorized_at": "2026-10-18T23:33:45.598Z",
+  "maximum_new_responses_posts_this_execution": 1,
+  "batch_attempt": 2,
+  "batch_maximum": 3,
+  "instruction": "Exactly one new synthetic text-none/Luna low/priority POST under existing D57; preserve all three unknown histories.",
+  "hypothesis": "Official SIWC devkit sends Accept:text/event-stream and accepts missing MIME with strict SSE validation; normalize present MIME and retain closed reading metadata.",
+  "source": "https://raw.githubusercontent.com/openai/sign-in-with-chatgpt-devkit/main/packages/local/src/responses.ts",
+  "request_body_unchanged": true,
+  "ordinary_cli_guard_unchanged": true,
+  "historical_unknown_preserved": {
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40"
+  },
+  "no_credit_setting": {
+    "source": "persisted_user_report",
+    "api_verified": false
+  }
+}

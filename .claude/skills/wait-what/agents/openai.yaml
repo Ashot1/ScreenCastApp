@@ -1,0 +1,9 @@
+# GENERATED AGENT FILE. DO NOT EDIT.
+# Source: .agents/skills/wait-what/agents/openai.yaml
+# Edit the source and run yarn agents:generate.
+
+interface:
+  display_name: "Wait What"
+  short_description: "Re-pitch that: simpler, with the context I'm missing"
+policy:
+  allow_implicit_invocation: false

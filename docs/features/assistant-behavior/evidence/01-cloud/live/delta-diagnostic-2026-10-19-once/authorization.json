@@ -1,0 +1,32 @@
+{
+  "authorized_at": "2026-10-18T23:52:05.228Z",
+  "maximum_responses_posts": 1,
+  "instruction": "One new separate diagnostic-only synthetic text-none/Luna low/priority POST under D57. Preserve exhausted prior batch3/3 and all historical records; no further POST.",
+  "hypothesis": "Official SIWC devkit accumulates output_text deltas; determine intermediate event counts and RAM-only candidate validity while retaining strict empty-output/default-tier rejection.",
+  "request_body_and_transport_unchanged": true,
+  "ordinary_cli_guard_unchanged": true,
+  "historical_json_files": 17,
+  "historical_before": {
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/authorization.json": "20033710132feb12512970d402eaf69d24122ccafa6f4fcdd5260173c62055d1",
+    "authorized-2026-10-19-luna-low-fast-once/execution-summary.json": "c891db5445ccb092443641b6d9776575ea4b70135e493921c2214f9f4fec593a",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-2-authorization.json": "ff9e4d60cda71a771f73be265b25d81fc1b371e560c114f77f8c8108b796e425",
+    "bounded-diagnostic-2026-10-19/attempt-2-summary.json": "7ee760faa8bfcd6f8a7cc33f1c2b587deddcac96360a718fb7251ec1401b5e79",
+    "bounded-diagnostic-2026-10-19/attempt-2/8a06d868-8220-4982-af11-21d7e8e8247e.json": "d1e34fe31409ed44f54e55e805bfa63c50f0e7930b0a1b7c44fdecaa271978d5",
+    "bounded-diagnostic-2026-10-19/attempt-3-authorization.json": "ad13b535a160bd48abd247b7bf8232159f57bc5c25724d36b9f1fa0271e609d8",
+    "bounded-diagnostic-2026-10-19/attempt-3-summary.json": "29282507a0102ff3506382b3bc0bfc9608bfa0651ac6e2bb14bc3cb0b81f20f2",
+    "bounded-diagnostic-2026-10-19/attempt-3/16775924-7946-4058-a9d8-e749e8b0c4bb.json": "7b370d6c1990621abf0b99aa74edf6862a8a6d3b08d47d09dd4c515c977bc3c8",
+    "bounded-diagnostic-2026-10-19/authorization.json": "c306773a728c9b99e1edd63d454670988929045bfafbde66fa4441ec20eb4941",
+    "bounded-diagnostic-2026-10-19/counter.json": "eff3276868889ce0235f8101332717987f4e729d72e1ec5c664859d3fb359569",
+    "bounded-diagnostic-2026-10-19/summary.json": "422741932e3c3181bbce29cdae968f5e383c1d0c6ddfbccfacbe188866144319",
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89"
+  },
+  "no_credit_setting": {
+    "source": "persisted_user_report",
+    "api_verified": false
+  }
+}

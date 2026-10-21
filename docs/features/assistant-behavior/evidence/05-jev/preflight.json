@@ -1,0 +1,41 @@
+{
+  "checked_local_date": "2026-10-18",
+  "credentials_check_scope": "current process JEV/TYPESAFE variable names; root config candidate filenames only",
+  "matching_environment_variable_names": [],
+  "root_config_candidates": [],
+  "key_provision_confirmed": false,
+  "authorized_jev_test_cap_usd": 1,
+  "authorized_cap_scope": "preliminary probes only, across all tasks/waves/retries/unsettled reservations; no access to later development or personal funds",
+  "user_reported_total_balance_usd": 5,
+  "protected_for_user_independent_use_usd": 2.5,
+  "previous_five_dollar_test_proposal_approved": false,
+  "aggregate_remaining_test_budget_usd": null,
+  "per_attempt_upper_cost_confirmed": false,
+  "account_terms_confirmed": false,
+  "live_calls_permitted_in_this_update": false,
+  "authenticated_requests": 0,
+  "request_counts_scope": "Jev provider only; localhost test traffic excluded",
+  "inference_requests": 0,
+  "model_usage": null,
+  "reconciled_bill_usd": null,
+  "get_models_without_authorization": {
+    "method": "GET",
+    "url": "https://api.typesafe.ai/v1/models",
+    "transport": "system curl",
+    "curl_exit_code": 0,
+    "http_status": 403,
+    "tls_verify_result": 0,
+    "elapsed_seconds": 0.45435,
+    "response_error_type": "authentication_error",
+    "response_message": "Must supply an API key! Check your request and try again.",
+    "inference_latency": false
+  },
+  "python_urllib_attempt": {
+    "http_status": null,
+    "error_type": "URLError"
+  },
+  "personal_images_read_or_transmitted": false,
+  "g4_status": "BLOCKED",
+  "billable_error_semantics_verified": false,
+  "reserved_for_real_application_development_tests_usd": 1.5
+}

@@ -1,0 +1,9 @@
+module CAmbient {
+    header "ambient.h"
+    header "ambient_model.h"
+    header "ambient_source.h"
+    header "ambient_codex.h"
+    header "ambient_integration.h"
+    header "ambient_plugin.h"
+    export *
+}

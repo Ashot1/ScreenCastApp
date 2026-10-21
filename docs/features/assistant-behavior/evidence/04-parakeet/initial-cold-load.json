@@ -1,0 +1,16 @@
+{
+  "status": "success",
+  "exit_code": 0,
+  "worker_reaped": true,
+  "has_text": true,
+  "text_characters": 64,
+  "elapsed_s": 140.4187218750012,
+  "inference_s": 1.4085910320281982,
+  "temporary_directory_owned": false,
+  "derived_audio_files_seen": 0,
+  "cpu_s": 6.17502,
+  "peak_process_rss_mib": 422.625,
+  "inference_ready": true,
+  "cancel_to_exit_s": null,
+  "owned_scratch_removed": true
+}

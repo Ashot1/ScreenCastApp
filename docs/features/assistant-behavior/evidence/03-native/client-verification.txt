@@ -1,0 +1,66 @@
+Date: 2026-10-18
+Scope: test-only client preparation. G2 remains BLOCKED.
+
+Bundle path:
+/Users/gojda/Projects/ScreenCastApp/tests/feasibility/03-native/.build/NativeContentProbe.app
+Bundle identifier: dev.ambient.feasibility.native-content
+Executable: Contents/MacOS/NativeContentProbe
+Format: Mach-O thin arm64 executable; built for macOS 14.0 minimum on SDK 27.0.
+CFBundleVersion: 1
+Signature: ad-hoc; TeamIdentifier not set.
+SHA-256 after signing:
+33192207b1cd8f27f85d92d6640d2a9321d387a992b12f35d4e729d812b94649
+Designated requirement:
+designated => cdhash H"a0c3b792234adfae93e7eeed28ae7cb927698472"
+
+Build/verification:
+bash tests/feasibility/03-native/build.sh => exit 0
+plutil -lint Info.plist => OK
+codesign --verify --strict --verbose=2 => valid on disk; satisfies its Designated Requirement
+file => Mach-O 64-bit executable arm64
+Executable mode => -rwxr-xr-x
+
+Repeat build:
+bash tests/feasibility/03-native/build.sh => exit 73
+Refusing to replace the frozen app. Preserve its identity and permission evidence.
+SHA-256 before/after is identical.
+
+LaunchServices:
+open -g -n -W <absolute bundle path> --stdout <own output path> --stderr <own error path> --args --preflight
+exit 1
+The application cannot be opened for an unexpected reason, error=Error Domain=NSOSStatusErrorDomain Code=-10827 "kLSNoExecutableErr: The executable is missing" UserInfo={_LSLine=4288, _LSFunction=_LSOpenStuffCallLocal, _LSFile=LSOpenCore.mm, _LSErrorMessage=kLSNoExecutableErr}
+The file exists, is executable, has matching CFBundleExecutable and a verified signature.
+This initial error occurred in restricted exec. Later one explicitly authorized require_escalated
+LaunchServices launch did execute the unchanged app; see launchservices-preflight.txt.
+That invocation returned open exit 0 with an inability-to-wait diagnostic, client stdout false/false/false,
+mode=preflight, exitCode=2, empty client stderr, unchanged executable hash.
+No granted TCC rights are claimed. Direct executable results remain separately in app-preflight.txt.
+
+TDD:
+First test run could not compile because the default module cache is outside writable scope:
+<unknown>:0: error: unable to open output file '/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/C/clang/ModuleCache/NNQYXDBK28EG/SwiftShims-2IMTS4WWRU7VJ.pcm': 'Operation not permitted'
+<unknown>:0: error: could not build Objective-C module 'SwiftShims'
+Only compiler cache location was set to the test's own .build/ModuleCache; sandbox was not disabled.
+RED: test script compiled the initial no-op policy and exited 1 with expected denial/invalid-target failures.
+GREEN: bash tests/feasibility/03-native/test.sh => exit 0
+PASS: permission gate, preflight isolation, invalid targets and AX failure propagation
+Coverage: denied AX cannot call window probe, preflight cannot read windows, five invalid-target requests are rejected without echo, AX-only probe does not require unused capture/listen rights, failed AX result is preserved.
+The controlled window closure is used only by policy tests. The app uses actual native API checks and AX queries; no simulated permissions/runtime mock option exists.
+
+Checks:
+swift format lint --strict --configuration .swift-format <three Swift files> => exit 0
+bash -n <build.sh and test.sh> => exit 0
+yarn verify => exit 1, stopped at yarn check:swift
+  agents:check PASS
+  test:tooling PASS, 8 tests
+  check:core PASS
+  lint:core PASS
+  test:core PASS, 0 product tests
+  check:swift BLOCKED: sandbox-exec: sandbox_apply: Operation not permitted
+  No --disable-sandbox, escalation for SwiftPM or changes to the Swift package.
+yarn lint:swift (run separately after the short-circuit) => exit 0
+No Windows CI or successful AX-content/UI search check.
+
+Review:
+Code Simplicity Reviewer: no code findings; update stale report/matrix statements.
+Updated documents accordingly. Mechanics for types/localization/endpoints not required.

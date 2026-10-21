@@ -1,0 +1,161 @@
+{
+  "thread_id": "01a15064-de4e-70f0-8cae-6f694fa81747",
+  "engine_version": "0.163.0-alpha.10.2",
+  "originator": "Codex Desktop",
+  "source": "vscode",
+  "history_mode": "paginated",
+  "coverage": "local_records_only",
+  "partial_tail": false,
+  "bytes": 1756350,
+  "sha256": "fb67558f5a4353254b4c4a85900c6e85c777a65b040f7c61eb30db71a6ed2465",
+  "turns": [
+    {
+      "id": "01a15064-e27e-78b2-8601-10f7d1d9af04",
+      "status": "completed",
+      "terminal_timestamp": "2026-10-18T19:03:02.582Z",
+      "plans": [],
+      "messages": [
+        {
+          "role": "user",
+          "phase": null,
+          "chars": 22813,
+          "sha256": "cfde1f7aa6e3ff295917297da7d0c6f05185decb795b54e19f9869021295703f"
+        },
+        {
+          "role": "delegated_input",
+          "phase": null,
+          "chars": 4902,
+          "sha256": "a5cf15c47d1f4c7e73df17cb686a7ada39979cb57e4a006084e0dafb7e7daa6b"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 160,
+          "sha256": "14f73ec90a4a0eac1c3cebae9bb46fd0448013304e2923a362dfa272cc93c67b"
+        },
+        {
+          "role": "assistant",
+          "phase": "final_answer",
+          "chars": 436,
+          "sha256": "d7264bd3d0e411b2bb3982c45aeb045cf6f0545d184e35bd190d01131e8f27eb"
+        }
+      ]
+    },
+    {
+      "id": "01a15069-7d79-7e60-a55f-8b1a535a4658",
+      "status": "completion_not_observed",
+      "terminal_timestamp": null,
+      "plans": [],
+      "messages": [
+        {
+          "role": "delegated_input",
+          "phase": null,
+          "chars": 1802,
+          "sha256": "13aa6fbaf0b9aae6e0bdbe7e9457c72f5e0a48540b1432fd46da3b83be7a6bf6"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 170,
+          "sha256": "21e0f01764b60dce231bf6998eebe79b4687be28ee0c66eaf814ab10eec48169"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 224,
+          "sha256": "c9dda9d771f1ef800d3233f86b8c8c475bbb3bb00c4e8b27a90153f102208bea"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 431,
+          "sha256": "53d35b3c3ae4eb1e1b6c21b6fe4a73fb87ac52c32d2191d5a78dbb1decf69cdc"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 472,
+          "sha256": "eb6276f2cf23b2d3e79d914d49fa2659e7593403d35a0dccbe33ef6f59625498"
+        },
+        {
+          "role": "delegated_input",
+          "phase": null,
+          "chars": 795,
+          "sha256": "75e9dbcf8b9b7b3f0305a0433420113944a61fd517ffd114002d45889b048f27"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 307,
+          "sha256": "2c6b7d1802520a1441c7fc1dbabe0f230295f64e0749e874c1c631354379b227"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 378,
+          "sha256": "28f4ec65644d0f6527aa8b514f91bc6f0174e201eefb36a649b67d1c4d010463"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 359,
+          "sha256": "a0e3cd482589bfabde94c0a7f6a14b87d4e161a64a64cb06074f8b8c90139247"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 334,
+          "sha256": "1236485a7f8a1bec9a498cef3fb869067b07d9e53d387eac15499a244b66065d"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 367,
+          "sha256": "b9297bb11171fa0f714965320785b6adfdbfef4851ef39c977b026b5b4c18ee1"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 345,
+          "sha256": "9e3c75505cb458563d5e475ef72cfb34286984c6d8d3852da7968f8981ea100f"
+        },
+        {
+          "role": "delegated_input",
+          "phase": null,
+          "chars": 1035,
+          "sha256": "01ec61a8bf8c4f3d29a5060548b7e9539d55cd36b444cbcea8fdf88fd6282374"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 227,
+          "sha256": "32300800b0e48c47a4c5c1e12911106c33d6517c96846a1e40afc318ab857a0f"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 238,
+          "sha256": "3a42087801a8184148856ba43debf90ca7147890d4af1ac826bd16a9a0a814a1"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 390,
+          "sha256": "1643ba30271c5ae44ceea153fa411be986f9e901fb3362010d88cd138d88a422"
+        },
+        {
+          "role": "delegated_input",
+          "phase": null,
+          "chars": 1338,
+          "sha256": "a61e99cc3d4ec9e241462a3a529574aea57bcd5c4712239d21ce56b0ef5c9aeb"
+        },
+        {
+          "role": "assistant",
+          "phase": "commentary",
+          "chars": 337,
+          "sha256": "622333bdcecb512f874dc8e6cff5bc1cfd643465856f7b6d66689732344ba185"
+        }
+      ]
+    }
+  ]
+}

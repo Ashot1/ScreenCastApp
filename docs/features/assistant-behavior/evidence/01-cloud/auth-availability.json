@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-18",
+  "connection_requested": "ChatGPT subscription",
+  "separately_billed_openai_api_authorized": false,
+  "check": "codex login status",
+  "binary": "/opt/homebrew/bin/codex",
+  "logged_in": true,
+  "login_type": "chatgpt",
+  "inference_started": false,
+  "raw_command_output_saved": false,
+  "token_values_printed_or_copied": false,
+  "auth_json_read_directly": false,
+  "login_or_account_settings_changed": false,
+  "proves": "The installed CLI reports an existing ChatGPT login.",
+  "does_not_prove": [
+    "Successful model inference or remaining quota",
+    "A native Ambient Sign in with ChatGPT authorization",
+    "A transferable credential for the existing HTTP probe",
+    "A per-attempt output or subscription consumption bound",
+    "G5 readiness"
+  ]
+}

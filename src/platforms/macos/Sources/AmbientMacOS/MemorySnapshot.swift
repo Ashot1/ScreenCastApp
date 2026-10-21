@@ -1,0 +1,145 @@
+import Foundation
+
+public struct MemoryTask: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let revision: UInt64
+    public let text: String
+    public let lifecycle: MemoryTaskLifecycle
+    public let initiativeSuppressed: Bool
+    public let planCompleteness: MemoryCompleteness
+}
+public struct MemoryPage<Item: Equatable & Sendable>: Equatable, Sendable {
+    public let items: [Item]
+    public let nextAfter: UInt64?
+    public var taskRevision: UInt64? = nil
+    public var planCompleteness: MemoryCompleteness? = nil
+    static var empty: Self { Self(items: [], nextAfter: nil) }
+}
+public enum MemoryCompleteness: UInt32, Sendable { case unknown, partial, complete }
+public enum MemoryAssertionKind: UInt32, Sendable { case sourceFact, assumption, userConfirmation }
+public struct MemorySourceKey: Equatable, Sendable {
+    public let namespace: String
+    public let scope: String
+    public let objectID: String
+}
+public enum MemoryOrigin: Equatable, Sendable {
+    case user
+    case external(key: MemorySourceKey, version: String?)
+}
+public struct MemorySourceEvidence: Equatable, Sendable {
+    public let text: String
+    public let observedAtUTC: Int64?
+    public let completeness: MemoryCompleteness
+    public let kind: MemoryAssertionKind
+}
+public struct MemoryEvidence: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let taskID: UInt64
+    public let text: String
+    public let origin: MemoryOrigin
+    public let observedAtUTC: Int64?
+    public let completeness: MemoryCompleteness
+    public let kind: MemoryAssertionKind
+}
+public struct MemorySourceBinding: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let taskID: UInt64
+    public let evidenceID: UInt64
+    public let key: MemorySourceKey
+    public let version: String?
+}
+public struct MemoryLink: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let otherTask: MemoryTask
+    public var otherTaskID: UInt64 { otherTask.id }
+    public let related: Bool
+    public let actionAtUTC: Int64
+}
+public struct MemoryBindingDecision: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let evidenceID: UInt64
+    public let accepted: Bool
+    public let actionAtUTC: Int64
+}
+public enum MemoryIngestOutcome: Equatable, Sendable {
+    case applied(UInt64)
+    case forgotten
+    case userProtected
+}
+public struct MemorySnapshot: Equatable, Sendable {
+    public let tasks: MemoryPage<MemoryTask>
+    public let selectedTask: MemoryTask?
+    public let evidence: MemoryPage<MemoryEvidence>
+    public let links: MemoryPage<MemoryLink>
+    public let decisions: MemoryPage<MemoryBindingDecision>
+    public let steps: MemoryPage<MemoryStep>
+    public let selectedStep: MemoryStep?
+    public let checks: MemoryPage<MemoryCheck>
+    public let dependencies: MemoryPage<MemoryDependency>
+    public let references: MemoryPage<MemoryReference>
+}
+public enum MemoryFailure: Error, Equatable, Sendable {
+    case opening, storage, schema, invalidInput, native, closed, stale, deleted, limit, completed,
+        clipboard
+    var message: String {
+        switch self {
+        case .completed: return String(localized: "error.completed", bundle: .module)
+        case .clipboard: return String(localized: "error.clipboard", bundle: .module)
+        case .opening: return String(localized: "error.open", bundle: .module)
+        case .storage: return String(localized: "error.storage", bundle: .module)
+        case .schema: return String(localized: "error.schema", bundle: .module)
+        case .invalidInput: return String(localized: "error.input", bundle: .module)
+        case .stale: return String(localized: "error.stale", bundle: .module)
+        case .deleted: return String(localized: "error.deleted", bundle: .module)
+        case .limit: return String(localized: "error.limit", bundle: .module)
+        case .native, .closed: return String(localized: "error.bridge", bundle: .module)
+        }
+    }
+}
+
+public enum MemoryTaskLifecycle: UInt32, Sendable { case open, completed }
+public enum MemoryCheckResult: UInt32, Sendable { case unknown, passed, failed }
+public struct MemoryStepInput: Equatable, Sendable {
+    public var description: String
+    public var prompt: String?
+    public var reference: String?
+}
+public struct MemoryStep: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let taskID: UInt64
+    public let description: String
+    public let prompt: String?
+    public let reference: String?
+    public let completedAtUTC: Int64?
+    public let ready: Bool
+}
+public struct MemoryCheck: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let taskID: UInt64
+    public let stepID: UInt64
+    public let description: String
+    public let result: MemoryCheckResult
+    public let confirmedAtUTC: Int64?
+}
+public struct MemoryDependency: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let taskID: UInt64
+    public let predecessor: UInt64
+    public let dependent: UInt64
+}
+public struct MemoryReference: Equatable, Identifiable, Sendable {
+    public let id: UInt64
+    public let taskID: UInt64
+    public let text: String
+}
+
+extension MemoryEvidence {
+    var assistanceSelectable: Bool {
+        switch origin {
+        case .user: true
+        case .external(let key, _):
+            key.namespace == "local-git-branch-v1" || key.namespace == "codex-local-jsonl-v1"
+                || IntegrationKind(namespace: key.namespace) != nil
+        }
+    }
+}

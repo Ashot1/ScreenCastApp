@@ -1,0 +1,150 @@
+{
+  "kind": "synthetic_ground_truth_not_model_output",
+  "created_local_date": "2026-10-18",
+  "coordinate_convention": "pixel-edge half-open [left, top, right, bottom], origin top-left",
+  "source_dimensions": [
+    800,
+    600
+  ],
+  "target": "red circle #e32636",
+  "fixtures": [
+    {
+      "file": "present.png",
+      "red_circle_boxes": [
+        [
+          100,
+          120,
+          220,
+          240
+        ]
+      ],
+      "source_crop": [
+        0,
+        0,
+        800,
+        600
+      ],
+      "dimensions": [
+        800,
+        600
+      ],
+      "format": "PNG",
+      "bytes": 4102,
+      "sha256": "01f10d64b6f33e9116a9f0a823ca678abfc542c2210f67f979384239670e8e67"
+    },
+    {
+      "file": "absent.png",
+      "red_circle_boxes": [],
+      "source_crop": [
+        0,
+        0,
+        800,
+        600
+      ],
+      "dimensions": [
+        800,
+        600
+      ],
+      "format": "PNG",
+      "bytes": 3648,
+      "sha256": "ef53734c7059274d143657979ee3d9c872761c23cfcd7c0f9051f9aef1c673e0"
+    },
+    {
+      "file": "ambiguous.png",
+      "red_circle_boxes": [
+        [
+          100,
+          120,
+          220,
+          240
+        ],
+        [
+          540,
+          360,
+          660,
+          480
+        ]
+      ],
+      "source_crop": [
+        0,
+        0,
+        800,
+        600
+      ],
+      "dimensions": [
+        800,
+        600
+      ],
+      "format": "PNG",
+      "bytes": 4578,
+      "sha256": "61e07d6508b176347719967b702e7275ce2d1dfce37195fa77bb11a4d5dbec2f"
+    },
+    {
+      "file": "present-half.png",
+      "red_circle_boxes": [
+        [
+          50,
+          60,
+          110,
+          120
+        ]
+      ],
+      "source_crop": [
+        0,
+        0,
+        800,
+        600
+      ],
+      "dimensions": [
+        400,
+        300
+      ],
+      "format": "PNG",
+      "bytes": 1753,
+      "sha256": "7115c0bc13796f866c64df78a2b454a21b70eb4b0078ac2f84a60d7b50efb601"
+    },
+    {
+      "file": "present-crop.png",
+      "red_circle_boxes": [
+        [
+          20,
+          40,
+          140,
+          160
+        ]
+      ],
+      "source_crop": [
+        80,
+        80,
+        480,
+        480
+      ],
+      "dimensions": [
+        400,
+        400
+      ],
+      "format": "PNG",
+      "bytes": 2625,
+      "sha256": "0d02b264f5e4e51b6d1c99f3a538dabc65f75183aee5fa94df00b723f4a8a03a"
+    },
+    {
+      "file": "exemplar.png",
+      "red_circle_boxes": [
+        [
+          80,
+          80,
+          200,
+          200
+        ]
+      ],
+      "role": "target_exemplar_not_search_scene",
+      "dimensions": [
+        280,
+        280
+      ],
+      "format": "PNG",
+      "bytes": 1341,
+      "sha256": "827d644ef3e47e4bbb0fd5b21d03758825a1c43f1391f81d328e1e208b45d845"
+    }
+  ]
+}

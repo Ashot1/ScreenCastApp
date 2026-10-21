@@ -1,0 +1,19 @@
+//! Fixed model endpoint and configuration for the native connection check.
+
+pub const RESPONSES_ENDPOINT: &str = "https://api.openai.com/v1/responses";
+
+pub const CONNECTION_CHECK_MODEL: &str = "gpt-6-luna";
+pub const CONNECTION_CHECK_REASONING_EFFORT: &str = "low";
+pub const CONNECTION_CHECK_REQUESTED_SERVICE_TIER: &str = "priority";
+pub const CONNECTION_CHECK_ACCEPTED_SERVICE_TIERS: [&str; 2] = ["priority", "fast"];
+
+pub const HIGH_REASONING_EFFORT: &str = "high";
+pub const SELECTED_TASK_ASSISTANCE_MODEL: &str = CONNECTION_CHECK_MODEL;
+pub const SELECTED_TASK_ASSISTANCE_REASONING_EFFORT: &str = HIGH_REASONING_EFFORT;
+pub const SELECTED_TASK_ASSISTANCE_REQUESTED_SERVICE_TIER: &str =
+    CONNECTION_CHECK_REQUESTED_SERVICE_TIER;
+pub const SELECTED_TASK_ASSISTANCE_ACCEPTED_SERVICE_TIERS: [&str; 2] =
+    CONNECTION_CHECK_ACCEPTED_SERVICE_TIERS;
+
+pub const CONNECTION_CHECK_INPUT: &str = "Reply exactly: AMBIENT_OK";
+pub const CONNECTION_CHECK_EXPECTED_OUTPUT: &str = "AMBIENT_OK";

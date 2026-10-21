@@ -1,0 +1,1511 @@
+{
+  "revision": "direct-siwc-high-suggestion-live-after-parser-fix",
+  "recorded_at": "2026-10-19",
+  "gate_g5": "BLOCKED",
+  "live_authorization_started": true,
+  "live_observation": {
+    "attempt_id": "103b41cb-2e0a-419e-84cb-6813b956d1e4",
+    "case_id": "text-suggestion",
+    "requested_configuration": {
+      "model": "gpt-6-luna",
+      "reasoning_effort": "high",
+      "service_tier": "priority"
+    },
+    "returned_configuration": {
+      "model": "gpt-6-luna",
+      "service_tier": null,
+      "reasoning_effort": "high"
+    },
+    "started_at": "2026-10-19T00:07:33.208Z",
+    "request_sha256": "50899908e53a0d11d1d871dec0d8085feaa7de09b2e6ea5c23e96e9226e54310",
+    "credit_guard": {
+      "source": "user_reported",
+      "confirmed": true
+    },
+    "status": "configuration_mismatch",
+    "usage": {
+      "input_tokens": 171,
+      "output_tokens": 117,
+      "total_tokens": 288,
+      "input_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      },
+      "output_tokens_details": {
+        "reasoning_tokens": 53
+      }
+    },
+    "usage_status": "reported",
+    "validation_metadata": {
+      "terminal_fields": {
+        "output": "array",
+        "model": "string",
+        "service_tier": "string",
+        "reasoning": "object",
+        "status": "string"
+      },
+      "configuration": {
+        "model": "matching",
+        "service_tier": "default",
+        "reasoning_effort": "matching"
+      },
+      "terminal_output_count": 0,
+      "output_count": 2,
+      "message_count": 1,
+      "reasoning_count": 1,
+      "message_fields": {
+        "role": "string",
+        "status": "string",
+        "content": "array"
+      },
+      "content_count": 1,
+      "proposal_keys": {
+        "kind": true,
+        "message": true,
+        "rationale": true,
+        "evidence_ids": true,
+        "unexpected": false
+      },
+      "evidence_id_count": 1
+    },
+    "output_source": "completed_items",
+    "proposal": {
+      "kind": "suggestion"
+    },
+    "stream_event_metadata": {
+      "event_counts": {
+        "response.created": 1,
+        "response.in_progress": 1,
+        "response.output_item.added": 2,
+        "response.output_item.done": 2,
+        "response.content_part.added": 1,
+        "response.content_part.done": 1,
+        "response.output_text.delta": 54,
+        "response.output_text.done": 1,
+        "response.completed": 1,
+        "response.failed": 0,
+        "response.incomplete": 0,
+        "error": 0,
+        "other": 1
+      },
+      "parts": [
+        {
+          "output_index": 1,
+          "content_index": 0,
+          "delta_count": 54,
+          "text_bytes": 313,
+          "done_count": 1,
+          "done_text_type": "string",
+          "done_text_bytes": 313
+        }
+      ],
+      "output_items_done": [
+        {
+          "index_valid": true,
+          "output_index": 0,
+          "item_type": "reasoning",
+          "item_status": "missing",
+          "content_type": "array",
+          "content_count": 0,
+          "content_types": {
+            "output_text": 0,
+            "refusal": 0,
+            "other": 0
+          },
+          "text_bytes": 0
+        },
+        {
+          "index_valid": true,
+          "output_index": 1,
+          "item_type": "message",
+          "item_status": "completed",
+          "content_type": "array",
+          "content_count": 1,
+          "content_types": {
+            "output_text": 1,
+            "refusal": 0,
+            "other": 0
+          },
+          "text_bytes": 313
+        }
+      ],
+      "invalid_index_count": 0,
+      "parts_truncated": false,
+      "output_items_truncated": false,
+      "invalid_delta_count": 0,
+      "delta_bytes_observed": 313,
+      "completed_item_count": 2,
+      "completed_item_bytes_observed": 452,
+      "completed_item_byte_limit": 65536,
+      "part_limit": 8,
+      "index_limit": 7
+    },
+    "post_dispatch": "sent",
+    "elapsed_ms": 3414,
+    "response_metadata": {
+      "http_status": 200,
+      "media_type": "absent",
+      "body_present": true,
+      "body_read_outcome": "terminal_event",
+      "bytes_observed": 28406,
+      "byte_limit": 2097152
+    },
+    "model_output_omitted": true,
+    "responses_post_count": 1,
+    "experiment_maximum": 1,
+    "historical_files_compared": 21,
+    "historical_files_unchanged": true,
+    "evidence_directory": "live/high-text-suggestion-2026-10-19-once/attempt",
+    "raw_body_saved": false,
+    "model_text_or_item_ids_saved": false,
+    "browser_calls": 0,
+    "oauth_token_posts": 0,
+    "model_discovery_gets": 1,
+    "session_refresh_this_attempt": false,
+    "assessment": {
+      "expected_kind": "suggestion",
+      "matches_expected_kind": true,
+      "evidence_ids_valid": true,
+      "evidence_id_count": 1,
+      "semantic_assessment": "Not independently performed; returned diagnostic result omits model text. No lexical heuristic presented as semantic proof."
+    },
+    "exact_configuration_rejection": "service_tier default; model and high effort matching",
+    "parser_real_path_verified": true,
+    "own_unresolved_removed_after_reported_usage": true
+  },
+  "local": {
+    "command": "yarn vitest run tests/feasibility/01-cloud",
+    "exit_code": 0,
+    "files": 4,
+    "passed": 234,
+    "auth": 48,
+    "probe": 111,
+    "response": 67,
+    "syntax_checks": {
+      "command": "node --check tests/feasibility/01-cloud/{probe.mjs,response.mjs,probe.test.js,response.test.js} (four individual commands)",
+      "exit_code": 0
+    },
+    "plan": {
+      "command": "node tests/feasibility/01-cloud/probe.mjs plan",
+      "exit_code": 0,
+      "authentication_started": false,
+      "model_requests": 0,
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "default_reasoning_effort": "low",
+        "allowed_reasoning_efforts": [
+          "low",
+          "high"
+        ],
+        "service_tier": "priority"
+      },
+      "verification_revision": "direct-siwc-canonical-completed-items-parser",
+      "high_fixture_plan_check": {
+        "case_id": "text-suggestion",
+        "reasoning_effort": "high",
+        "service_tier": "priority",
+        "request_sha256": "50899908e53a0d11d1d871dec0d8085feaa7de09b2e6ea5c23e96e9226e54310",
+        "authentication_started": false,
+        "model_posts": 0
+      }
+    },
+    "configuration_delta": {
+      "unsupported_model_cli_exit_code": 2,
+      "invalid_effort_pre_auth": true,
+      "fast_tier_confirmation_required": true,
+      "returned_model_tier_effort_saved_separately": true,
+      "live_calls_from_this_revision": true
+    },
+    "diagnostics": {
+      "stages": [
+        "model_discovery",
+        "request_preparation",
+        "evidence_preparation",
+        "model_request",
+        "evidence_finalization"
+      ],
+      "response_shapes": [
+        "models_array",
+        "data_array",
+        "error_object",
+        "detail_only",
+        "other_json",
+        "non_json"
+      ],
+      "pre_post_result": {
+        "status": "pre_post_failed",
+        "post_dispatch": "not_sent",
+        "usage_status": "not_applicable"
+      },
+      "post_boundary_marker": {
+        "post_dispatch": "possibly_sent",
+        "model_request_count_not_assumed": true
+      },
+      "raw_error_messages_and_response_bodies_saved": false,
+      "fetch_error_code_source": "allowlisted error.code or error.cause.code",
+      "timeout_and_user_abort_distinguished": true,
+      "json_null_classification": "other_json",
+      "attempt_record_written_before_unresolved_marker": true,
+      "post_transport_without_response": "possibly_sent",
+      "post_http_response_received": "sent",
+      "evidence_finalization_preserves_known_post_dispatch": true,
+      "ordinary_api_data_array_fallback": false,
+      "discovery_retries": 0,
+      "http_rejection": {
+        "branch": "HTTP non-ok or non-SSE response",
+        "maximum_accumulated_decoded_bytes": 16384,
+        "body_parse": "complete bounded body only; strict UTF-8 and JSON",
+        "optional_fields": [
+          "response_shape",
+          "provider_code",
+          "provider_param"
+        ],
+        "provider_codes": [
+          "subscription_sharing_usage_limit_exceeded",
+          "subscription_sharing_usage_unavailable",
+          "subscription_sharing_unsupported_capability"
+        ],
+        "unknown_provider_code": "provider_failure",
+        "provider_params": [
+          "model",
+          "service_tier",
+          "reasoning",
+          "reasoning.effort",
+          "tools",
+          "input",
+          "instructions",
+          "store",
+          "stream",
+          "text",
+          "text.format"
+        ],
+        "unknown_provider_param": "omitted",
+        "never_saved": [
+          "message",
+          "detail",
+          "raw body",
+          "arbitrary error.code",
+          "arbitrary error.param",
+          "error.type",
+          "x-request-id"
+        ],
+        "malformed_utf8_json": "response_shape=non_json; provider fields omitted",
+        "overflow_read_failure_missing_body": "body fields omitted; fixed http_error retained",
+        "read_cancel_failure": "local handling; HTTP status/sent/unknown/ledger preserved, never possibly_sent",
+        "same_classifier_as_sse": true,
+        "sse_behavior_changed": false,
+        "request_model_fast_payload_changed": false,
+        "tdd_red": [
+          {
+            "command": "yarn vitest run tests/feasibility/01-cloud/probe.test.js -t 'keeps only the allowed HTTP provider code'",
+            "exit_code": 1,
+            "failed": 3,
+            "reason": "missing safe code/param/shape"
+          },
+          {
+            "command": "yarn vitest run tests/feasibility/01-cloud/probe.test.js -t 'retains known HTTP dispatch when diagnostic body'",
+            "exit_code": 1,
+            "failed": 2,
+            "reason": "body cancellation failure escaped to outer transport catch and lost known HTTP status"
+          }
+        ],
+        "green": {
+          "command": "yarn vitest run tests/feasibility/01-cloud",
+          "exit_code": 0,
+          "passed": 134,
+          "verification_revision": "direct-siwc-safe-http-rejection-diagnostics"
+        },
+        "synthetic_cases": {
+          "recognized_codes": 3,
+          "allowed_parameter_names": 11,
+          "unknown_code_parameters": 4,
+          "malformed_nonjson_utf8": 3,
+          "exact_16384_and_16385_bytes": 2,
+          "read_cancel_failures": 2,
+          "non_sse_http200": 1,
+          "missing_body": 1,
+          "detail_only_400": 1
+        },
+        "assertions_each_case": [
+          "one POST",
+          "sent with HTTP status",
+          "usage unknown",
+          "canary absent from result/attempt/ledger",
+          "ledger retained unchanged by blocked next run",
+          "next run blocked before another POST"
+        ],
+        "no_real_calls_or_live_ledger_edits": true,
+        "temporary_mode": "Explicit programmatic diagnosticMode only; strict full-message templates and fixed-format correlation IDs, otherwise omitted."
+      }
+    },
+    "dependencies": {
+      "command": "npm ls --prefix tests/feasibility/01-cloud --depth=1",
+      "exit_code": 0,
+      "openid-client": "6.8.8",
+      "jose": "6.2.12",
+      "oauth4webapi": "3.8.8"
+    },
+    "keychain": 8,
+    "native_keychain": {
+      "swift_test": {
+        "command": "swift test --package-path tests/feasibility/01-cloud/native-keychain -Xswiftc -warnings-as-errors -Xswiftc -strict-concurrency=complete",
+        "exit_code": 0,
+        "passed": 4
+      },
+      "strict_release_build": {
+        "command": "swift build --package-path tests/feasibility/01-cloud/native-keychain -c release -Xswiftc -warnings-as-errors -Xswiftc -strict-concurrency=complete",
+        "exit_code": 0
+      },
+      "strict_lint": {
+        "command": "swift format lint --strict --configuration .swift-format --recursive tests/feasibility/01-cloud/native-keychain/Package.swift tests/feasibility/01-cloud/native-keychain/Sources tests/feasibility/01-cloud/native-keychain/Tests",
+        "exit_code": 0
+      },
+      "stable_binary": "tests/feasibility/01-cloud/native-keychain/.build/release/keychain-helper",
+      "binary_ready": true,
+      "actual_native_round_trip": {
+        "passed": true,
+        "data": "synthetic only",
+        "operations": [
+          "missing",
+          "add",
+          "read",
+          "duplicate_add_rejected",
+          "update",
+          "other_account_missing",
+          "delete",
+          "missing"
+        ],
+        "isolation": "unique temporary encrypted Keychain; kSecUseKeychain for Add, kSecMatchSearchList for queries",
+        "default_keychain_changed": false,
+        "global_search_list_changed": false,
+        "real_account_session_read": false,
+        "configuration_assertions": [
+          "before creation",
+          "after creation",
+          "after CRUD",
+          "after cleanup"
+        ],
+        "configuration_comparison": "SecKeychainCopySearchList / SecKeychainCopyDefault metadata only, in memory, without output of names/paths"
+      },
+      "legacy_api": "SecKeychainCreate/Delete only in explicitly deprecated test fixture; helper storage uses SecItem APIs",
+      "limits": {
+        "stdin_stdout_bytes": 65536,
+        "keychain_data_bytes": 49152,
+        "token_bytes": 16384,
+        "timeout_ms": 120000
+      },
+      "secret_transport": "private stdin/stdout pipes only; no argv/env/plaintext temp/logs",
+      "wait_for_close_on": [
+        "timeout",
+        "abort",
+        "stdout_overflow",
+        "stdin_error"
+      ],
+      "actual_account_keychain_acl_verified": false,
+      "performed_by_this_revision": false,
+      "verification_source": "previous D55 checks; Swift source untouched and native matrix not rerun for canonical Fast wire ID"
+    },
+    "session_lifecycle": {
+      "one_session": true,
+      "binding": "host UUID + verified client_id/issuer/subject; hashed account; Node validates persisted registration",
+      "initial_registration_pending_preserved_until_verified_binding": true,
+      "cache_saved_before_model_discovery": true,
+      "cache_survives_model_discovery_failure": true,
+      "valid_cache_browser_calls": 0,
+      "delete_old_record_before_refresh": true,
+      "refresh_attempts_per_expiring_session": 1,
+      "refresh_parameters": [
+        "client_id",
+        "grant_type=refresh_token",
+        "refresh_token",
+        "resource"
+      ],
+      "refresh_omits": [
+        "scope",
+        "client_secret",
+        "PKCE",
+        "dynamic client ID"
+      ],
+      "replacement_saved_before_use": true,
+      "missing_replacement_rejected": true,
+      "actual_expires_in_used": true,
+      "earliest_refresh_at_used": false,
+      "absent_scope": "retain previously verified permissions",
+      "present_scope": "intersect with prior grant and require subscription permissions",
+      "optional_id_token": "library signature/issuer/audience; strict expiry, prior subject, original nonce if present",
+      "refresh_failure_retry": false,
+      "refresh_failure_same_run_browser_fallback": false,
+      "old_rotating_token_restored": false,
+      "library_retry_branch": "DPoP nonce only; DPoP not configured",
+      "storage_error_browser_fallback": false,
+      "run_confirmation_required_each_time": true,
+      "actual_account_session_saved_read_confirmed_by_coordinator": true,
+      "actual_full_probe_cache_reuse_verified": true,
+      "actual_account_refresh_verified": false,
+      "actual_full_probe_cache_reuse_source": "coordinator completed normal CLI cached-session RUN through discovery to one HTTP400 POST without browser"
+    },
+    "model_catalog_limit": {
+      "maximum_decoded_bytes": 2097152,
+      "previous_decoded_bytes": 524288,
+      "named_constant": "maximumModelCatalogBytes",
+      "before": "strict UTF-8 decoding and JSON parsing",
+      "auth_decoded_byte_limit_unchanged": 524288,
+      "tdd_red": {
+        "command": "yarn vitest run tests/feasibility/01-cloud/probe.test.js -t 'synthetic metadata above'",
+        "exit_code": 1,
+        "expected_failure": "valid synthetic nine-model catalog above 512 KiB returned pre_post_failed instead of completed"
+      },
+      "tdd_green": {
+        "command": "yarn vitest run tests/feasibility/01-cloud",
+        "exit_code": 0,
+        "passed": 107
+      },
+      "boundary_cases": [
+        {
+          "decoded_bytes": 2097152,
+          "http_status": 200,
+          "result": "completed",
+          "synthetic_posts": 1
+        },
+        {
+          "decoded_bytes": 2097152,
+          "http_status": 503,
+          "reason": "http_error",
+          "synthetic_posts": 0
+        },
+        {
+          "decoded_bytes": 2097153,
+          "http_status": 200,
+          "reason": "response_too_large",
+          "reader_cancelled": true,
+          "synthetic_posts": 0
+        },
+        {
+          "decoded_bytes": 2097153,
+          "http_status": 503,
+          "reason": "response_too_large",
+          "reader_cancelled": true,
+          "synthetic_posts": 0
+        }
+      ],
+      "fixtures": "synthetic model metadata only; no copied real catalog",
+      "preserved": [
+        "strict UTF-8/JSON",
+        "models[] only",
+        "slug/visibility filter",
+        "reader cancellation/release",
+        "timeout",
+        "RUN/no-credit guard",
+        "single POST",
+        "unknown usage ledger"
+      ],
+      "new_dependency_parser_configuration_endpoint": false
+    },
+    "performed_by_this_revision": true,
+    "verification_revision": "direct-siwc-canonical-fast-priority-wire",
+    "verification_note": "fresh offline wire-mapping tests/syntax/plan; foundation verify recorded separately",
+    "wire_tier_mapping": {
+      "semantic_selection": "Fast",
+      "canonical_request_wire_id": "priority",
+      "previous_request_wire_id": "fast",
+      "one_existing_constant": "requestedTier",
+      "wire_consumers": [
+        "buildRequest.service_tier",
+        "requested_configuration.service_tier",
+        "plan.requested_configuration.service_tier"
+      ],
+      "ui_confirmation_cli_changed": false,
+      "other_request_fields_changed": false,
+      "fallback_added": false,
+      "returned_aliases_accepted": [
+        "fast",
+        "priority"
+      ],
+      "returned_raw_value_preserved": true,
+      "downgrade_model_mismatch_unknown_usage_one_post_guards_preserved": true,
+      "basis_from_coordinator": [
+        "account service_tiers entry id=priority, name=Fast",
+        "official OpenAI Codex config_types.rs ServiceTier::Fast.request_value() returns priority",
+        "service_tiers.rs selects name Fast then tier.id",
+        "openai_models.rs additional_speed_tiers deprecated; general API accepts both aliases"
+      ],
+      "new_external_research_performed": false,
+      "historical_sent_fast_attempts_unchanged": 2,
+      "live_priority_posts": 0,
+      "does_not_establish_old_http400_cause": true,
+      "tdd_red": {
+        "command": "yarn vitest run tests/feasibility/01-cloud/probe.test.js -t 'builds an inert structured request'",
+        "exit_code": 1,
+        "failed": 1,
+        "expected": "priority",
+        "received": "fast"
+      },
+      "green": {
+        "command": "yarn vitest run tests/feasibility/01-cloud",
+        "exit_code": 0,
+        "passed": 135
+      },
+      "focused_returned_fast_case": {
+        "requested": "priority",
+        "returned": "fast",
+        "accepted": true
+      },
+      "new_detail_only_case": {
+        "body": "synthetic {detail: privateCanary} only",
+        "http_status": 400,
+        "response_shape": "detail_only",
+        "provider_code": "provider_failure",
+        "private_text_absent_from": [
+          "result",
+          "synthetic attempt evidence",
+          "synthetic unresolved ledger"
+        ],
+        "posts": 1,
+        "usage_status": "unknown",
+        "next_run": "blocked by retained unresolved ledger",
+        "provider_root_cause_inferred": false
+      },
+      "new_test_count": 1
+    },
+    "checks_reused_without_code_change": true
+  },
+  "simplicity_review": {
+    "reviewer": "Sol d55_simplicity",
+    "scope": "Canonical completed-items parser delta",
+    "findings": 1,
+    "findings_fixed": 1,
+    "fix": "Pending added blocks only empty-terminal reconstruction; nonempty terminal remains authoritative",
+    "followup": "no new findings",
+    "writes": false
+  },
+  "inspector": {
+    "kind": "local API/client matrix, no provider inference",
+    "passed": 15,
+    "failed": 0,
+    "blocked": 0,
+    "cases": [
+      "plan has no auth/inference",
+      "obsolete run command rejected",
+      "local-only incomplete rejected",
+      "invalid model rejected before auth",
+      "synthetic OAuth JWT boundary",
+      "auth then confirmation then one POST",
+      "missing credit confirmation blocks",
+      "HTTP 429/500 no retries",
+      "unknown usage blocks later sign-in",
+      "exclusive lock and stable host UUID",
+      "loopback URL/method/path/state/once/abort",
+      "bounded SSE and proposal/usage validation",
+      "returning client/verified identity/scope binding",
+      "persist binding and block ambiguous initial registration",
+      "falsey/array malformed registration makes zero transport calls"
+    ],
+    "scope": "Prior local API/client matrix reused; D55 covered by new Node/native tests and independent Sol review; no user-requested UI check"
+  },
+  "specialists": [
+    "codebase_scout",
+    "pattern_librarian",
+    "external_researcher",
+    "type_scaffolder",
+    "code_simplicity_reviewer",
+    "visual_inspector"
+  ],
+  "skipped_triggers": {
+    "localization_mechanic": "no supported-locale keys or production UI copy changed",
+    "endpoint_registry_mechanic": "no provider/model registry; verified pinned endpoints in isolated probe only"
+  },
+  "common_checks": {
+    "command": "yarn verify",
+    "exit_code": 101,
+    "agents_check": "PASS",
+    "tooling_tests": {
+      "passed": 8,
+      "exit_code": 0
+    },
+    "stopped_stage": "cargo check --workspace --locked",
+    "failure": "Operation not permitted writing fallible-streaming-iterator-0.1.9.crate in /Users/gojda/.cargo/registry/cache",
+    "core_check_completed": false,
+    "remaining_core_and_swift_checks_completed": false,
+    "retry": "Coordinator will organize shared verification after parallel native work stabilizes; no unrelated files edited.",
+    "current_delta_note": "Not repeated while core/native in flight, by coordinator instruction; previous cache failure retained."
+  },
+  "not_verified": [
+    "exact causes of both HTTP400 attempts; old body lost, new detail intentionally not saved",
+    "usage of both sent POST attempts; both remain unknown and retained",
+    "actual inference execution count or zero consumption",
+    "actual account refresh after D55",
+    "full login-Keychain access/unlock dialog and ACL behavior",
+    "successful Responses inference and actual Fast through SIWC",
+    "saved no-credit setting (user reported; not API verified)",
+    "real provider text/image/refusal/incomplete/quota/cancellation",
+    "successful inference usage/latency",
+    "SIWC retention/training applicability for personal context",
+    "production native macOS UI/credential integration",
+    "Windows CI",
+    "G7",
+    "Previous e83457f3 HTTP200 MIME/body metadata remain unavailable; new absence does not establish its cause."
+  ],
+  "warnings": [
+    "Yarn used its writable fallback cache; checks passed."
+  ],
+  "historical_checks": "history-checks.json",
+  "d55": "ACTUAL_SESSION_REUSE_WITHOUT_BROWSER_CONFIRMED_REFRESH_PENDING",
+  "prior_live_observations": [
+    {
+      "source": "user report and coordinator-sanitized local state",
+      "oauth": "reported_complete",
+      "run_confirmation": "user_reported",
+      "no_credit_setting": "user_reported_not_api_verified",
+      "responses_post_count": 0,
+      "responses_post_count_basis": "no pre-dispatch record was present",
+      "model_discovery_result": "unknown",
+      "stop_cause": "unknown; could be model discovery or pre-POST request/evidence preparation",
+      "account_urls_codes_or_identity_claims_saved": false
+    },
+    {
+      "source": "user report and coordinator diagnostic, not repeated by this implementer",
+      "oauth": "completed_user_reported",
+      "session_ready": "user_observed",
+      "run_confirmation": "user_reported",
+      "no_credit_setting": "user_reported_not_api_verified",
+      "responses_post_count": 0,
+      "responses_post_count_basis": "probe explicitly returned post_dispatch=not_sent at model_discovery",
+      "probe_diagnostic": {
+        "status": "pre_post_failed",
+        "stage": "model_discovery",
+        "reason": "response_too_large",
+        "http_status": 200,
+        "post_dispatch": "not_sent"
+      },
+      "stop_cause": "correct full catalog exceeded prior 512 KiB (524288 byte) decoded-body limit",
+      "coordinator_diagnostic_get": {
+        "endpoint": "https://api.openai.com/v1/models",
+        "count": 1,
+        "under_active_lock": true,
+        "own_saved_session_read_via_prebuilt_helper": true,
+        "refresh_calls": 0,
+        "browser_calls": 0,
+        "responses_posts": 0,
+        "http_status": 200,
+        "decoded_bytes": 569147,
+        "shape": "models_array",
+        "model_count": 9,
+        "requested_slug": "gpt-6-luna",
+        "requested_slug_visibility": "list",
+        "largest_entry_bytes": 88532,
+        "body_or_credentials_printed_or_saved": false
+      },
+      "account_urls_codes_or_identity_claims_saved_in_evidence": false
+    },
+    {
+      "source": "coordinator-supplied sanitized facts; not reread from actual live files by implementer",
+      "attempt_id": "ce0627ad-9537-4888-aa15-88ccc3d96f40",
+      "started_at": "2026-10-18T22:24:59.361Z",
+      "started_at_moscow": "2026-10-19 01:24:59.361 Europe/Moscow",
+      "case_id": "text-none",
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "low",
+        "service_tier": "fast"
+      },
+      "normal_probe_cli_cached_session_reused": true,
+      "browser_calls": 0,
+      "model_discovery": "passed",
+      "responses_post_count": 1,
+      "status": "http_error",
+      "http_status": 400,
+      "post_dispatch": "sent",
+      "elapsed_ms": 576,
+      "usage": null,
+      "usage_status": "unknown",
+      "model_request_count_not_assumed": true,
+      "returned_configuration": {
+        "model": null,
+        "service_tier": null,
+        "reasoning_effort": null
+      },
+      "old_error_body": "cancelled without parsing; exact cause lost",
+      "provider_code_or_param_recovered": false,
+      "http400_implies_zero_usage": false,
+      "unresolved_ledger_retained": true,
+      "new_responses_post_allowed": false,
+      "unblock_requires": "external usage reconciliation and separate authorization; no ledger deletion workaround",
+      "no_credit_setting": "user_reported_not_api_verified",
+      "actual_fast_inference_refresh_confirmed": false,
+      "request_sha256": "55f45d437bd058e36c6e9e3ed63ff847ee3c422dc11e1119111cea6afc4fb407",
+      "request_sha256_source": "coordinator confirmed same hash for previous and new attempts"
+    },
+    {
+      "source": "coordinator-supplied sanitized facts; no credential or live-file read by this document update",
+      "attempt_id": "22dfcd3d-ea69-4f90-a57a-3b77d3af4496",
+      "started_at": "2026-10-18T22:53:06.948Z",
+      "started_at_moscow": "2026-10-19 01:53:06.948 Europe/Moscow",
+      "case_id": "text-none",
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "low",
+        "service_tier": "fast"
+      },
+      "request_sha256": "55f45d437bd058e36c6e9e3ed63ff847ee3c422dc11e1119111cea6afc4fb407",
+      "request_sha256_matches_previous_attempt": true,
+      "cached_session_reused": true,
+      "browser_calls": 0,
+      "model_discovery": "passed",
+      "responses_post_count": 1,
+      "status": "http_error",
+      "http_status": 400,
+      "post_dispatch": "sent",
+      "usage": null,
+      "usage_status": "unknown",
+      "model_request_count_not_assumed": true,
+      "returned_configuration": {
+        "model": null,
+        "service_tier": null,
+        "reasoning_effort": null
+      },
+      "elapsed_ms": 1249,
+      "diagnostic": {
+        "stage": "model_request",
+        "reason": "http_error",
+        "response_shape": "detail_only",
+        "provider_code": "provider_failure"
+      },
+      "provider_param": "absent; no structured error.code or error.param",
+      "detail_content_saved": false,
+      "exact_failure_cause": "unknown",
+      "evidence_directory": "live/authorized-2026-10-19-luna-low-fast-once",
+      "unresolved_ledger_retained": true,
+      "one_time_authorization": {
+        "explicit_user_instruction": "Да, запускай одну пробу Luna Low Fast. Предыдущее потребление оставь неизвестным и дальше разбирайся автономно",
+        "scope": "exactly one Responses POST; authorization consumed",
+        "directory_created_once": true,
+        "authorization_json_written_before_execution": true,
+        "existing_runProbe_and_payload_unchanged": true,
+        "same_active_lock": true,
+        "responses_post_counter": 1,
+        "default_cli_still_blocked": true,
+        "normal_guard_rule_changed": false,
+        "further_posts_authorized": false,
+        "root_unresolved_hash_unchanged_before_after": true,
+        "previous_attempt_unchanged": true,
+        "previous_attempt_hash_compared": false
+      },
+      "actual_fast_inference_refresh_confirmed": false
+    },
+    {
+      "attempt_id": "e83457f3-6108-4bdc-8b59-fdcbe269e4f0",
+      "case_id": "text-none",
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "low",
+        "service_tier": "priority"
+      },
+      "returned_configuration": {
+        "model": null,
+        "service_tier": null,
+        "reasoning_effort": null
+      },
+      "started_at": "2026-10-18T23:23:56.247Z",
+      "request_sha256": "a25216298cfd5a0624cf800304b46027b2acc144298198490226f6500935dba9",
+      "credit_guard": {
+        "source": "user_reported",
+        "confirmed": true
+      },
+      "status": "http_error",
+      "usage": null,
+      "usage_status": "unknown",
+      "http_status": 200,
+      "diagnostic": {
+        "stage": "model_request",
+        "reason": "http_error",
+        "http_status": 200
+      },
+      "post_dispatch": "sent",
+      "model_request_count_not_assumed": true,
+      "elapsed_ms": 2502,
+      "model_output_omitted": true,
+      "responses_post_count": 1,
+      "historical_four_files_unchanged": true,
+      "evidence_directory": "live/bounded-diagnostic-2026-10-19/attempt-1",
+      "raw_body_saved": false,
+      "browser_calls": 0,
+      "refresh_verified": false,
+      "exact_failure_cause": "unknown; HTTP 200 non-SSE branch with unavailable bounded-body metadata"
+    },
+    {
+      "attempt_id": "8a06d868-8220-4982-af11-21d7e8e8247e",
+      "case_id": "text-none",
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "low",
+        "service_tier": "priority"
+      },
+      "returned_configuration": {
+        "model": "gpt-6-luna",
+        "service_tier": null,
+        "reasoning_effort": "low"
+      },
+      "started_at": "2026-10-18T23:33:47.049Z",
+      "request_sha256": "a25216298cfd5a0624cf800304b46027b2acc144298198490226f6500935dba9",
+      "credit_guard": {
+        "source": "user_reported",
+        "confirmed": true
+      },
+      "status": "configuration_mismatch",
+      "usage": {
+        "input_tokens": 171,
+        "output_tokens": 94,
+        "total_tokens": 265,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        }
+      },
+      "usage_status": "reported",
+      "proposal": {
+        "kind": "invalid"
+      },
+      "post_dispatch": "sent",
+      "elapsed_ms": 2519,
+      "response_metadata": {
+        "http_status": 200,
+        "media_type": "absent",
+        "body_present": true,
+        "body_read_outcome": "terminal_event",
+        "bytes_observed": 26696,
+        "byte_limit": 2097152
+      },
+      "model_output_omitted": true,
+      "responses_post_count": 1,
+      "batch_reserved_posts": 2,
+      "batch_maximum": 3,
+      "historical_six_files_unchanged": true,
+      "evidence_directory": "live/bounded-diagnostic-2026-10-19/attempt-2",
+      "raw_body_saved": false,
+      "model_text_saved": false,
+      "browser_calls": 0,
+      "refresh_verified": false,
+      "service_tier_null_semantics": "safe projection: absent or unrecognized value; Fast unconfirmed",
+      "proposal_invalid_reason": "not captured; raw output omitted",
+      "own_unresolved_removed_after_reported_usage": true,
+      "invalid_cause_metadata_available": false,
+      "output_part_types_counts_available": false,
+      "memory_after_process_exit_available": false
+    },
+    {
+      "attempt_id": "16775924-7946-4058-a9d8-e749e8b0c4bb",
+      "case_id": "text-none",
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "low",
+        "service_tier": "priority"
+      },
+      "returned_configuration": {
+        "model": "gpt-6-luna",
+        "service_tier": null,
+        "reasoning_effort": "low"
+      },
+      "started_at": "2026-10-18T23:42:48.892Z",
+      "request_sha256": "a25216298cfd5a0624cf800304b46027b2acc144298198490226f6500935dba9",
+      "credit_guard": {
+        "source": "user_reported",
+        "confirmed": true
+      },
+      "status": "configuration_mismatch",
+      "usage": {
+        "input_tokens": 171,
+        "output_tokens": 44,
+        "total_tokens": 215,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        }
+      },
+      "usage_status": "reported",
+      "validation_metadata": {
+        "terminal_fields": {
+          "output": "array",
+          "model": "string",
+          "service_tier": "string",
+          "reasoning": "object",
+          "status": "string"
+        },
+        "configuration": {
+          "model": "matching",
+          "service_tier": "default",
+          "reasoning_effort": "matching"
+        },
+        "output_count": 0,
+        "message_count": 0,
+        "reasoning_count": 0,
+        "proposal_rejection": "message_count"
+      },
+      "proposal": {
+        "kind": "invalid"
+      },
+      "post_dispatch": "sent",
+      "elapsed_ms": 2094,
+      "response_metadata": {
+        "http_status": 200,
+        "media_type": "absent",
+        "body_present": true,
+        "body_read_outcome": "terminal_event",
+        "bytes_observed": 19001,
+        "byte_limit": 2097152
+      },
+      "model_output_omitted": true,
+      "responses_post_count": 1,
+      "batch_reserved_posts": 3,
+      "batch_maximum": 3,
+      "historical_files_compared": 12,
+      "historical_files_unchanged": true,
+      "evidence_directory": "live/bounded-diagnostic-2026-10-19/attempt-3",
+      "raw_body_saved": false,
+      "model_text_saved": false,
+      "browser_calls": 0,
+      "refresh_verified": false,
+      "exact_configuration_rejection": "service_tier default; model and effort matching",
+      "exact_proposal_rejection": "message_count requires exactly one; output_count=0 and message_count=0",
+      "json_schema_evidence_validation_reached": false,
+      "own_unresolved_removed_after_reported_usage": true
+    },
+    {
+      "attempt_id": "38ac7901-2e48-44fb-ba06-316ce0ef2a3d",
+      "case_id": "text-none",
+      "requested_configuration": {
+        "model": "gpt-6-luna",
+        "reasoning_effort": "low",
+        "service_tier": "priority"
+      },
+      "returned_configuration": {
+        "model": "gpt-6-luna",
+        "service_tier": null,
+        "reasoning_effort": "low"
+      },
+      "started_at": "2026-10-18T23:52:06.529Z",
+      "request_sha256": "a25216298cfd5a0624cf800304b46027b2acc144298198490226f6500935dba9",
+      "credit_guard": {
+        "source": "user_reported",
+        "confirmed": true
+      },
+      "status": "configuration_mismatch",
+      "usage": {
+        "input_tokens": 171,
+        "output_tokens": 82,
+        "total_tokens": 253,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens_details": {
+          "reasoning_tokens": 32
+        }
+      },
+      "usage_status": "reported",
+      "validation_metadata": {
+        "terminal_fields": {
+          "output": "array",
+          "model": "string",
+          "service_tier": "string",
+          "reasoning": "object",
+          "status": "string"
+        },
+        "configuration": {
+          "model": "matching",
+          "service_tier": "default",
+          "reasoning_effort": "matching"
+        },
+        "output_count": 0,
+        "message_count": 0,
+        "reasoning_count": 0,
+        "proposal_rejection": "message_count"
+      },
+      "proposal": {
+        "kind": "invalid"
+      },
+      "stream_event_metadata": {
+        "event_counts": {
+          "response.created": 1,
+          "response.in_progress": 1,
+          "response.output_item.added": 2,
+          "response.output_item.done": 2,
+          "response.content_part.added": 1,
+          "response.content_part.done": 1,
+          "response.output_text.delta": 40,
+          "response.output_text.done": 1,
+          "response.completed": 1,
+          "response.failed": 0,
+          "response.incomplete": 0,
+          "error": 0,
+          "other": 1
+        },
+        "parts": [
+          {
+            "output_index": 1,
+            "content_index": 0,
+            "delta_count": 40,
+            "text_bytes": 211,
+            "done_count": 1,
+            "done_text_type": "string",
+            "done_text_bytes": 211
+          }
+        ],
+        "output_items_done": [
+          {
+            "index_valid": true,
+            "output_index": 0,
+            "item_type": "reasoning",
+            "item_status": "missing",
+            "content_type": "array",
+            "content_count": 0,
+            "content_types": {
+              "output_text": 0,
+              "refusal": 0,
+              "other": 0
+            },
+            "text_bytes": 0
+          },
+          {
+            "index_valid": true,
+            "output_index": 1,
+            "item_type": "message",
+            "item_status": "completed",
+            "content_type": "array",
+            "content_count": 1,
+            "content_types": {
+              "output_text": 1,
+              "refusal": 0,
+              "other": 0
+            },
+            "text_bytes": 211
+          }
+        ],
+        "invalid_index_count": 0,
+        "parts_truncated": false,
+        "output_items_truncated": false,
+        "candidate_bytes_observed": 211,
+        "candidate_byte_limit": 65536,
+        "part_limit": 8,
+        "index_limit": 7,
+        "candidate": {
+          "outcome": "validated",
+          "kind": "none"
+        }
+      },
+      "post_dispatch": "sent",
+      "elapsed_ms": 2689,
+      "response_metadata": {
+        "http_status": 200,
+        "media_type": "absent",
+        "body_present": true,
+        "body_read_outcome": "terminal_event",
+        "bytes_observed": 24102,
+        "byte_limit": 2097152
+      },
+      "model_output_omitted": true,
+      "responses_post_count": 1,
+      "experiment_maximum": 1,
+      "historical_files_compared": 17,
+      "historical_files_unchanged": true,
+      "prior_batch_counter_unchanged": true,
+      "evidence_directory": "live/delta-diagnostic-2026-10-19-once/attempt",
+      "raw_body_saved": false,
+      "model_text_or_item_ids_saved": false,
+      "browser_calls": 0,
+      "oauth_token_posts": 0,
+      "session_refresh_this_attempt": false,
+      "exact_configuration_rejection": "service_tier default; model and effort matching",
+      "exact_terminal_proposal_rejection": "message_count, terminal output_count=0",
+      "delta_candidate": "validated none from 40 deltas, 211 UTF8 bytes; diagnostic only",
+      "own_unresolved_removed_after_reported_usage": true
+    }
+  ],
+  "live_calls_from_this_fix": true,
+  "live_calls_from_d55_implementation": false,
+  "actual_live_evidence_or_ledger_modified_by_this_fix": true,
+  "coordinator_independent_verification": {
+    "source": "coordinator acceptance in this thread",
+    "verification_revision": "direct-siwc-canonical-fast-priority-wire",
+    "node_tests_passed": 135,
+    "syntax_checks": "PASS",
+    "plan": "PASS",
+    "repeated_again": false
+  },
+  "known_responses_post_attempts": 7,
+  "known_responses_post_attempts_count_basis": "Seven durably recorded sent POST attempts; not exact inference count.",
+  "actual_inference_count": null,
+  "actual_inference_count_status": "Four terminal responses report usage; three historical usages remainunknown, exact total inference count unknown.",
+  "unknown_usage_attempts": [
+    {
+      "attempt_id": "ce0627ad-9537-4888-aa15-88ccc3d96f40",
+      "http_status": 400,
+      "elapsed_ms": 576,
+      "post_dispatch": "sent",
+      "usage_status": "unknown",
+      "usage": null,
+      "unresolved_location": "live/unresolved.json",
+      "retained": true
+    },
+    {
+      "attempt_id": "22dfcd3d-ea69-4f90-a57a-3b77d3af4496",
+      "http_status": 400,
+      "elapsed_ms": 1249,
+      "post_dispatch": "sent",
+      "usage_status": "unknown",
+      "usage": null,
+      "unresolved_location": "live/authorized-2026-10-19-luna-low-fast-once/unresolved.json",
+      "retained": true
+    },
+    {
+      "attempt_id": "e83457f3-6108-4bdc-8b59-fdcbe269e4f0",
+      "http_status": 200,
+      "elapsed_ms": 2502,
+      "post_dispatch": "sent",
+      "usage_status": "unknown",
+      "usage": null,
+      "unresolved_location": "live/bounded-diagnostic-2026-10-19/attempt-1/unresolved.json",
+      "retained": true
+    }
+  ],
+  "latest_read_only_model_catalog": {
+    "source": "coordinator-supplied metadata; this update made no GET and saved no raw body",
+    "get_count": 1,
+    "http_status": 200,
+    "decoded_bytes": 569147,
+    "responses_post_count": 0,
+    "model": "gpt-6-luna",
+    "supported_in_api": true,
+    "supported_reasoning_levels": [
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max"
+    ],
+    "service_tiers": [
+      {
+        "id": "priority",
+        "name": "Fast",
+        "description": "1.5x speed"
+      }
+    ],
+    "additional_speed_tiers": [
+      "fast"
+    ],
+    "default_service_tier": null,
+    "evidence_scope": "capability listing only; not proof of Fast through SIWC and not the established cause of HTTP400",
+    "model_tier_payload_changed": false,
+    "raw_body_persisted": false
+  },
+  "current_blocker": "RealHigh suggestion and completed-items parser verified structurally, but actual default tier mismatches requested priority/Fast. Independent semantic assessment and G5 matrix/data terms incomplete.",
+  "live_calls_from_this_metadata_update": false,
+  "actual_live_evidence_or_ledger_modified_by_this_metadata_update": false,
+  "prior_code_change_specialists": {
+    "reused_from_coordinator": {
+      "codebase_scout": "immediate cancel in HTTP branch loses body; existing responseShape and fixed classifier can be reused",
+      "pattern_librarian": "Node22 decoded Response.body reader/TextDecoder/JSON.parse; small local finite reader without dependency or shared reader refactor; body faults cannot escape known sent branch",
+      "external_researcher": "no proved JSON schema/request defect; general Fast support does not diagnose lost SIWC400 body; model/tier/payload unchanged"
+    },
+    "called": [
+      "type_scaffolder READ ONLY",
+      "code_simplicity_reviewer READ ONLY (Sol)"
+    ],
+    "type_contract": {
+      "fields": [
+        "diagnostic.response_shape",
+        "diagnostic.provider_code",
+        "diagnostic.provider_param"
+      ],
+      "compatibility": "additive optional fields; no new schema/type file",
+      "adopted": "reuse fixed enum/classifier and exact whitelist",
+      "rejected_unnecessary": "body_status"
+    },
+    "scope_incident_metadata": {
+      "role": "type_scaffolder",
+      "file_types": "attempt JSON and unresolved ledger JSON",
+      "token_or_secret_values_output": "no, according to specialist metadata-only report",
+      "writes_or_network": false,
+      "implementer_stopped_before_transport_edits": true,
+      "coordinator_authorized_offline_continuation": true,
+      "content_retransmitted": false
+    },
+    "not_triggered": {
+      "localization_mechanic": "no supported-locale text/key changes",
+      "endpoint_registry_mechanic": "no endpoint/model registry changes",
+      "visual_inspector": "no requested UI check; synthetic tests only",
+      "generic_workers": "not needed or created"
+    }
+  },
+  "current_delta_specialists": {
+    "reused": "Prior TypeScaffolder and independentSol canonical-parser contract/review remainapplicable; code unchanged, no new specialist calls."
+  },
+  "previous_metadata_only_update": {
+    "code_changed": false,
+    "credentials_or_live_read": false,
+    "network_or_model_calls": false,
+    "tests_or_verify_rerun": false,
+    "source": "coordinator facts only"
+  },
+  "current_update": {
+    "scope": "Exactlyoneauthorized text-suggestion/Luna high/priority liveverification with unchanged parser code",
+    "new_responses_posts_this_package": 1,
+    "model_discovery_gets": 1,
+    "oauth_token_posts": 0,
+    "browser_calls": 0,
+    "experiment_reserved_posts": 1,
+    "experiment_maximum": 1,
+    "code_changed": false,
+    "verified_source_hashes_match": true,
+    "high_plan_fixture_checked_before_post": true,
+    "focused_checks_reused": 234,
+    "historical_json_files_compared": 21,
+    "historical_file_hashes_unchanged": true,
+    "ordinary_cli_guard_unchanged": true,
+    "fast_guard_unchanged": true,
+    "old_unknown_usages_resolved": false,
+    "historical_live_outcomes_reinterpreted": false,
+    "global_verify_repeated": false,
+    "further_posts_stopped": true
+  },
+  "previous_common_checks": {
+    "performed_by_this_revision": true,
+    "verification_revision": "direct-siwc-canonical-fast-priority-wire",
+    "command": "yarn verify",
+    "exit_code": 0,
+    "environment": "local macOS",
+    "reported_duration": "Done in 19.83s",
+    "run_scope": "one fresh run after canonical Fast wire constant and test changes",
+    "included": [
+      "agents:check",
+      "test:tooling (8 passed)",
+      "check:core",
+      "lint:core",
+      "test:core (0 unit and 0 doc tests)",
+      "check:swift",
+      "lint:swift"
+    ],
+    "native_feasibility_swift_matrix_rerun": false,
+    "live_or_credentials_access": false
+  },
+  "temporary_diagnostics": {
+    "programmatic_only": true,
+    "approved_fixture_deep_equal": true,
+    "body_bound_bytes": 16384,
+    "explanation_max_ascii_bytes": 512,
+    "explanation": "strict complete public templates with allowlisted request fields only; otherwise omitted",
+    "provider_code_inferred_from_explanation": false,
+    "request_id": "x-request-id only; UUID or req_16..64hex, reject known secrets case-insensitively",
+    "model_output_omitted": true,
+    "returned_configuration_allowlisted_after_mismatch": true,
+    "arbitrary_available_models_omitted": true
+  },
+  "response_metadata_contract": {
+    "http_status": "actual received HTTP status",
+    "media_type": [
+      "absent",
+      "sse",
+      "json",
+      "other"
+    ],
+    "body_present": "boolean",
+    "body_read_outcome": [
+      "complete",
+      "terminal_event",
+      "eof",
+      "empty",
+      "limit_exceeded",
+      "read_error",
+      "invalid_utf8",
+      "invalid_json",
+      "invalid_event",
+      "cancelled"
+    ],
+    "bytes_observed": "reader bytes saturated at byte_limit+1; stops at terminal event, not necessarily EOF",
+    "byte_limit": {
+      "http_diagnostic": 16384,
+      "sse": 2097152
+    },
+    "arbitrary_mime_saved": false,
+    "survives_parser_or_evidence_error": true,
+    "absent_semantics": "Header missing or normalized MIME empty; raw header not saved."
+  },
+  "mime_contract": {
+    "source": "https://raw.githubusercontent.com/openai/sign-in-with-chatgpt-devkit/main/packages/local/src/responses.ts",
+    "post_accept": "text/event-stream",
+    "get_models_accept_added": false,
+    "normalization": "split semicolon, trim, lowercase",
+    "missing_header": "strict SSE parser, no fallback or skipped validation",
+    "explicit_other_mime": "http_error status with unexpected_content_type reason for successful HTTP response",
+    "request_body_changed": false
+  },
+  "validation_metadata_contract": {
+    "proposal_rejection": [
+      "output_missing",
+      "output_type",
+      "output_item_type",
+      "message_count",
+      "message_role",
+      "message_status",
+      "content_type",
+      "content_count",
+      "content_item_type",
+      "output_text_type",
+      "json_parse",
+      "payload_type",
+      "payload_keys",
+      "rationale",
+      "evidence_ids_type",
+      "evidence_ids_value",
+      "kind",
+      "none_message",
+      "suggestion_shape"
+    ],
+    "reason_source": "First existing rejecting branch, no duplicate validation",
+    "configuration": {
+      "model": [
+        "matching",
+        "missing",
+        "null",
+        "different"
+      ],
+      "service_tier": [
+        "missing",
+        "null",
+        "fast",
+        "priority",
+        "auto",
+        "default",
+        "flex",
+        "standard",
+        "other_string",
+        "other_type"
+      ],
+      "reasoning_effort": [
+        "matching",
+        "missing",
+        "null",
+        "different"
+      ]
+    },
+    "field_types": [
+      "missing",
+      "null",
+      "string",
+      "array",
+      "object",
+      "number",
+      "boolean"
+    ],
+    "terminal_fields": [
+      "output",
+      "model",
+      "service_tier",
+      "reasoning",
+      "status"
+    ],
+    "message_fields": [
+      "role",
+      "status",
+      "content"
+    ],
+    "counts": [
+      "output_count",
+      "message_count",
+      "reasoning_count",
+      "content_count",
+      "evidence_id_count"
+    ],
+    "count_cap": 1000,
+    "count_cap_semantics": "1000 or more",
+    "proposal_keys": [
+      "kind",
+      "message",
+      "rationale",
+      "evidence_ids",
+      "unexpected"
+    ],
+    "suggestion_message_nonempty": "optionalboolean",
+    "raw_values_or_unknown_keys_saved": false,
+    "acceptance_changed": false
+  },
+  "stream_event_metadata_contract": {
+    "event_counts": "fixed allowlist, unknown names other, counts capped1000",
+    "part_and_item_summary_limit": 8,
+    "indices": "integers0..7",
+    "delta_text_accumulated": false,
+    "parallel_delta_candidate_removed": true,
+    "delta_bytes_observed": "count only, saturated65537",
+    "completed_item_json_byte_limit": 65536,
+    "completed_items_ram": "canonical validator-relevant fields only; no IDs/unrelated fields",
+    "snapshots_on_error": "discard and continue terminal usage",
+    "output_source": [
+      "terminal",
+      "completed_items",
+      "unavailable"
+    ],
+    "output_rejection_reasons": [
+      "completed_items_gap",
+      "completed_items_duplicate_index",
+      "completed_items_invalid_index",
+      "completed_items_unfinished",
+      "completed_items_overflow",
+      "completed_item_conflict"
+    ],
+    "other_proposal_rejections": "existing proposalFromResponse/validateProposal branches",
+    "messages_validated_by_existing_validator": true,
+    "reasoning_done_status": "missing or completed only",
+    "terminal_nonempty": "authoritative; compare observed done canonical content, ignoreIDs/extra fields",
+    "terminal_empty": "requireuniquecontiguousdoneindexesandnopending/truncation",
+    "terminal_missing_or_nonarray": "neverreconstruct",
+    "raw_values_persisted": false
+  },
+  "previous_stream_event_metadata_contract": {
+    "event_counts": [
+      "response.created",
+      "response.in_progress",
+      "response.output_item.added",
+      "response.output_item.done",
+      "response.content_part.added",
+      "response.content_part.done",
+      "response.output_text.delta",
+      "response.output_text.done",
+      "response.completed",
+      "response.failed",
+      "response.incomplete",
+      "error",
+      "other"
+    ],
+    "event_count_cap": 1000,
+    "unknown_event_names": "other aggregate only",
+    "part_limit": 8,
+    "output_item_summary_limit": 8,
+    "indices": "integers 0..7 only",
+    "candidate_byte_limit": 65536,
+    "text_byte_counts_saturate": 65537,
+    "candidate_outcomes": [
+      "validated",
+      "invalid_json",
+      "no_text_deltas",
+      "no_terminal",
+      "invalid_index",
+      "invalid_delta",
+      "multiple_parts",
+      "byte_limit_exceeded"
+    ],
+    "candidate_validation": "existing validateProposal after terminal; persist only kind/rejection, no payload",
+    "candidate_acceptance_source": false,
+    "text_and_ids_saved": false,
+    "overflow": "discard diagnostic text, continue terminal usage",
+    "reasoning_token_detail": "integer 0..output_tokens only; invalid/missing omitted"
+  },
+  "catalog_review": {
+    "file": "catalog-review.json",
+    "new_get_count": 0,
+    "reused_prior_own_session_observation": true,
+    "missing_record_fields": [
+      "display_name",
+      "visibility"
+    ],
+    "capability_not_actual_tier": true
+  }
+}

@@ -1,0 +1,11 @@
+# GENERATED AGENT FILE. DO NOT EDIT.
+# Source: agent-sources/environments/codex.toml
+# Edit the source and run yarn agents:generate.
+
+#:schema https://developers.openai.com/codex/config-schema.json
+
+web_search = "live"
+project_doc_max_bytes = 65536
+[agents]
+max_threads = 12
+max_depth = 3

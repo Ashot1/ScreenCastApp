@@ -1,0 +1,149 @@
+{
+  "attempt_id": "103b41cb-2e0a-419e-84cb-6813b956d1e4",
+  "case_id": "text-suggestion",
+  "requested_configuration": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "high",
+    "service_tier": "priority"
+  },
+  "returned_configuration": {
+    "model": "gpt-6-luna",
+    "service_tier": null,
+    "reasoning_effort": "high"
+  },
+  "started_at": "2026-10-19T00:07:33.208Z",
+  "request_sha256": "50899908e53a0d11d1d871dec0d8085feaa7de09b2e6ea5c23e96e9226e54310",
+  "credit_guard": {
+    "source": "user_reported",
+    "confirmed": true
+  },
+  "status": "configuration_mismatch",
+  "usage": {
+    "input_tokens": 171,
+    "output_tokens": 117,
+    "total_tokens": 288,
+    "input_tokens_details": {
+      "cached_tokens": 0,
+      "cache_write_tokens": 0
+    },
+    "output_tokens_details": {
+      "reasoning_tokens": 53
+    }
+  },
+  "usage_status": "reported",
+  "validation_metadata": {
+    "terminal_fields": {
+      "output": "array",
+      "model": "string",
+      "service_tier": "string",
+      "reasoning": "object",
+      "status": "string"
+    },
+    "configuration": {
+      "model": "matching",
+      "service_tier": "default",
+      "reasoning_effort": "matching"
+    },
+    "terminal_output_count": 0,
+    "output_count": 2,
+    "message_count": 1,
+    "reasoning_count": 1,
+    "message_fields": {
+      "role": "string",
+      "status": "string",
+      "content": "array"
+    },
+    "content_count": 1,
+    "proposal_keys": {
+      "kind": true,
+      "message": true,
+      "rationale": true,
+      "evidence_ids": true,
+      "unexpected": false
+    },
+    "evidence_id_count": 1
+  },
+  "output_source": "completed_items",
+  "proposal": {
+    "kind": "suggestion"
+  },
+  "stream_event_metadata": {
+    "event_counts": {
+      "response.created": 1,
+      "response.in_progress": 1,
+      "response.output_item.added": 2,
+      "response.output_item.done": 2,
+      "response.content_part.added": 1,
+      "response.content_part.done": 1,
+      "response.output_text.delta": 54,
+      "response.output_text.done": 1,
+      "response.completed": 1,
+      "response.failed": 0,
+      "response.incomplete": 0,
+      "error": 0,
+      "other": 1
+    },
+    "parts": [
+      {
+        "output_index": 1,
+        "content_index": 0,
+        "delta_count": 54,
+        "text_bytes": 313,
+        "done_count": 1,
+        "done_text_type": "string",
+        "done_text_bytes": 313
+      }
+    ],
+    "output_items_done": [
+      {
+        "index_valid": true,
+        "output_index": 0,
+        "item_type": "reasoning",
+        "item_status": "missing",
+        "content_type": "array",
+        "content_count": 0,
+        "content_types": {
+          "output_text": 0,
+          "refusal": 0,
+          "other": 0
+        },
+        "text_bytes": 0
+      },
+      {
+        "index_valid": true,
+        "output_index": 1,
+        "item_type": "message",
+        "item_status": "completed",
+        "content_type": "array",
+        "content_count": 1,
+        "content_types": {
+          "output_text": 1,
+          "refusal": 0,
+          "other": 0
+        },
+        "text_bytes": 313
+      }
+    ],
+    "invalid_index_count": 0,
+    "parts_truncated": false,
+    "output_items_truncated": false,
+    "invalid_delta_count": 0,
+    "delta_bytes_observed": 313,
+    "completed_item_count": 2,
+    "completed_item_bytes_observed": 452,
+    "completed_item_byte_limit": 65536,
+    "part_limit": 8,
+    "index_limit": 7
+  },
+  "post_dispatch": "sent",
+  "elapsed_ms": 3414,
+  "response_metadata": {
+    "http_status": 200,
+    "media_type": "absent",
+    "body_present": true,
+    "body_read_outcome": "terminal_event",
+    "bytes_observed": 28406,
+    "byte_limit": 2097152
+  },
+  "model_output_omitted": true
+}

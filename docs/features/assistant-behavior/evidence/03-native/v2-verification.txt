@@ -1,0 +1,86 @@
+Date: 2026-10-18
+Scope: independent test-only preparation without granting macOS permissions.
+G2 and all real acceptance criteria remain BLOCKED.
+
+New bundle:
+/Users/gojda/Projects/ScreenCastApp/tests/feasibility/03-native/content-probe/.scratch/NativeContentProbeV2.app
+Identifier: dev.ambient.feasibility.native-content-v2
+Mach-O thin arm64, target macOS 14.0, Swift 6.4 / SDK 27.0
+Signature: ad-hoc; TeamIdentifier not set
+SHA-256 after signing:
+ca51b855ac367423eaa41892a726ef5663aea53d7182c8344ac0a636f7b18e94
+Designated requirement:
+designated => cdhash H"8c7921c314109d2efb4ee27d92f21da1ecfb5adf"
+
+Old frozen v1 executable SHA-256 after all v2 changes:
+33192207b1cd8f27f85d92d6640d2a9321d387a992b12f35d4e729d812b94649
+Old bundle, sources and build folder were not modified by v2 preparation.
+
+Scoped checks:
+bash content-probe/test.sh: PASS, exit 0
+  source unknown/changed/excluded, host and folder component boundaries/dot segments
+  invalid search/ambiguous exclusion/remote-file identities
+  8192-byte and 64-fragment retained evidence limits, Unicode boundaries, explicit loss
+  four-step navigation lease, input change, Stop latch and no automatic resume
+  actual CF type guards and AXValue geometry decoding using native in-memory objects
+  geometry clipping without a visibility claim
+  distinct error exit codes and summaries without raw text or query
+RED was observed before policy implementation, native conversion implementation, summary implementation
+and the visibility-label correction. Tests then passed on the real policy/native conversion helpers.
+These are offline tests, not proof of real AX reading or user-input interruption.
+
+Draft native swiftc compile: PASS, Swift 6 strict concurrency, warnings as errors
+bash content-probe/build.sh: PASS, exit 0
+plutil -lint: PASS
+codesign --verify --strict: PASS
+swift format lint --strict with repository config: PASS
+bash -n build.sh/test.sh: PASS
+Repeat build: expected exit 73, refusing to replace the frozen v2 app.
+Both v1/v2 executable hashes verified unchanged afterward.
+Markdown links: PASS, 5 files / 19 existing local targets.
+Own scratch/module cache only: content-probe/.scratch
+No shared manifest/runtime or sandbox settings changed.
+Common yarn verify for this continuation is delegated to the parent after all packages.
+
+Actual direct executable runs (not LaunchServices for v2):
+$ <v2 executable> --preflight
+accessibility=false
+screenCapture=false
+listenEvents=false
+mode=preflight
+exitCode=2
+process exit: 2
+
+$ <v2 executable> --request tests/feasibility/03-native/content-probe/request.example.json
+accessibility=false
+screenCapture=false
+listenEvents=false
+result=permission-denied
+exitCode=2
+process exit: 2
+No target binding, AX read, panel or navigation in this branch.
+
+$ <v2 executable> --request <own .scratch/oversized-request.json containing 65537 bytes>
+accessibility=false
+screenCapture=false
+listenEvents=false
+result=invalid-request
+exitCode=64
+process exit: 64
+
+Specialists:
+Existing Scout/external research reused where current; no ready-made runtime helper exists.
+Pattern Librarian rechecked AX/CF geometry, bounded range requests and HID counters in the local SDK.
+Type Scaffolder wrote/reviewed ProbeContracts.swift; removed one unused limitation case.
+Localization Mechanic checked the two approved test-panel strings; no locale catalogs/supported locales exist.
+Code Simplicity Reviewer found two issues: preserve error exit codes; do not call window clipping visibility.
+Both corrected; corrected parts reviewed again, no further findings.
+Visual Inspector's earlier permission blocker remains; no new live UI matrix was run.
+No provider registry change, no generic implementation worker, no production mock.
+
+Unverified/blocked:
+Real content extraction, per-element source metadata and broad application coverage,
+passive UI behavior, navigation/Stop/user-input races, permission revocation, real Jira draft,
+fragment bounds (current geometry is whole-element/window clipping), capture/pixel transforms,
+virtual/closed content and the full matrix. HID polling is not an atomic guarantee.
+The native AX API does not bound transient IPC allocations; retained evidence is bounded.

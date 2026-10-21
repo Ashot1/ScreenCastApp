@@ -1,0 +1,52 @@
+{
+   "description": "Writable mechanic for every translation key or text change; the parent provides approved English copy plus UI/product context, and every supported locale is updated.",
+   "environments": {
+      "codex": {
+         "tier": "basic",
+         "settings": {
+            "name": "localization_mechanic",
+            "sandbox_mode": "workspace-write"
+         }
+      },
+      "claude": {
+         "tier": "basic",
+         "settings": {
+            "name": "localization-mechanic",
+            "disallowedTools": [
+               "Agent"
+            ]
+         }
+      },
+      "cursor": {
+         "tier": "basic",
+         "settings": {
+            "name": "localization-mechanic",
+            "is_background": true
+         },
+         "prefix": "# Localization Mechanic\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "basic",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": {
+                  "*": "deny",
+                  "src/platforms/macos/**/Resources/**": "allow",
+                  "src/platforms/windows/**/Resources/**": "allow"
+               },
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "deny",
+               "websearch": "deny"
+            }
+         }
+      }
+   }
+}

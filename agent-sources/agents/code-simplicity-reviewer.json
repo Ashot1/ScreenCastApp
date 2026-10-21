@@ -1,0 +1,47 @@
+{
+   "description": "Read-only code simplicity reviewer: checks task logic once for reuse, quality, efficiency and justified abstractions; proposes concrete replacements.",
+   "environments": {
+      "codex": {
+         "tier": "design",
+         "settings": {
+            "name": "code_simplicity_reviewer",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "design",
+         "settings": {
+            "name": "code-simplicity-reviewer",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"],
+            "permissionMode": "plan"
+         }
+      },
+      "cursor": {
+         "tier": "design",
+         "settings": {
+            "name": "code-simplicity-reviewer",
+            "readonly": true
+         },
+         "prefix": "# Code Simplicity Reviewer\n\n## Required model\n\nUse exactly `{{model}}`; do not substitute model or effort.\n\n"
+      },
+      "opencode": {
+         "tier": "design",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "allow",
+               "webfetch": "allow",
+               "websearch": "allow"
+            }
+         }
+      }
+   }
+}

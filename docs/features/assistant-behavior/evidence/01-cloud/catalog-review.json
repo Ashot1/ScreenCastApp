@@ -1,0 +1,30 @@
+{
+  "recorded_at": "2026-10-19",
+  "source": "Reuse of prior coordinator-verified own-session GET /v1/models retained in checks.json.latest_read_only_model_catalog; no new credential/session access or request.",
+  "new_get_count": 0,
+  "new_model_post_count": 0,
+  "selected_slug": "gpt-6-luna",
+  "observed_model": "gpt-6-luna",
+  "display_name": {
+    "state": "unknown",
+    "reason": "not retained in the prior bounded metadata record"
+  },
+  "visibility": {
+    "state": "unknown",
+    "reason": "not retained in the prior bounded metadata record"
+  },
+  "supported_in_api": true,
+  "service_tiers": [
+    {
+      "id": "priority",
+      "name": "Fast"
+    }
+  ],
+  "default_service_tier": null,
+  "default_service_tier_state": "previously observed null",
+  "additional_speed_tiers": [
+    "fast"
+  ],
+  "scope": "Advertised capabilities only; latest actual inference returned default, not confirmed Fast.",
+  "session_scope": "Prior verified application registration/session observation reused; current session not reopened or rechecked."
+}

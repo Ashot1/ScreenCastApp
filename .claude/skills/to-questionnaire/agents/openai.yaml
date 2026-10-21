@@ -1,0 +1,9 @@
+# GENERATED AGENT FILE. DO NOT EDIT.
+# Source: .agents/skills/to-questionnaire/agents/openai.yaml
+# Edit the source and run yarn agents:generate.
+
+interface:
+  display_name: "To Questionnaire"
+  short_description: "Front-load questions into a doc for someone to answer"
+policy:
+  allow_implicit_invocation: false

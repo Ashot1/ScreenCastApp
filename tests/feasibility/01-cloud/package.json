@@ -1,0 +1,14 @@
+{
+  "name": "ambient-cloud-feasibility",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "openid-client": "6.8.8"
+  },
+  "devDependencies": {
+    "jose": "6.2.12"
+  }
+}

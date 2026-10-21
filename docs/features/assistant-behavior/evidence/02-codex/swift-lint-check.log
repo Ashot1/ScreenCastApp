@@ -1,0 +1,6 @@
+yarn run v1.22.22
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ swift format lint --strict --configuration .swift-format src/platforms/macos/Package.swift --recursive src/platforms/macos/Sources
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+Done in 0.17s.

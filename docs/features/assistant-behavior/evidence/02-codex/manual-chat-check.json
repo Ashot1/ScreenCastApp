@@ -1,0 +1,19 @@
+{
+  "thread_id": "01a14bcd-17ea-7393-b123-a913316ead11",
+  "expected_turn_id": "01a15062-86ca-7f80-9e56-4e361c48ecfa",
+  "expected_user_message_id": "01a15062-88ff-7ec1-b375-3e944c9eadae",
+  "probe_limit_bytes": 16777216,
+  "matching_files": 1,
+  "reader_code_changed": false,
+  "raw_history_exported": false,
+  "other_chat_content_read": false,
+  "file_bytes": 8208205,
+  "read_status": "BLOCKED",
+  "reader_error_type": "ValueError",
+  "reader_error_code": "unsupported_record_type",
+  "overall_status": "BLOCKED",
+  "turn_id_found": "not_checked",
+  "known_human_phrase_found": "not_checked",
+  "message_id_found": "not_checked",
+  "source_relative_path": "2026/10/18/rollout-2026-10-18T00-38-14-01a14bcd-17ea-7393-b123-a913316ead11.jsonl"
+}

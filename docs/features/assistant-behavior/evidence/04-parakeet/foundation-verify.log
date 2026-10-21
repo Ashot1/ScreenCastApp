@@ -1,0 +1,41 @@
+yarn run v1.22.22
+$ yarn verify:portable && yarn check:swift && yarn lint:swift
+$ yarn agents:check && yarn test:tooling && yarn check:core && yarn lint:core && yarn test:core
+$ node scripts/generate-agent-sources.mjs --check
+Agent files are up to date.
+$ vitest run scripts/generate-agent-sources.test.js
+
+ RUN  v4.0.18 /Users/gojda/Projects/ScreenCastApp
+
+ ✓ scripts/generate-agent-sources.test.js (8 tests) 1242ms
+     ✓ CLI --check exits 1 for changed, missing and extra owned files, without repairing them  740ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  22:45:14
+   Duration  1.56s (transform 78ms, setup 0ms, import 150ms, tests 1.24s, environment 0ms)
+
+$ cargo check --workspace --locked
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.13s
+$ cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked -- -D warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.21s
+$ cargo test --workspace --locked
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.25s
+     Running unittests src/lib.rs (target/debug/deps/ambient_core-62405d71d6d2e077)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests ambient_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+$ swift build --package-path src/platforms/macos -Xswiftc -warnings-as-errors -Xswiftc -strict-concurrency=complete
+Building for debugging...
+[1 / 4]
+Build complete! (1.02 с)
+$ swift format lint --strict --configuration .swift-format src/platforms/macos/Package.swift --recursive src/platforms/macos/Sources
+Done in 14.22s.

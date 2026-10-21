@@ -1,0 +1,14 @@
+yarn run v1.22.22
+warning Skipping preferred cache folder "/Users/gojda/Library/Caches/Yarn" because it is not writable.
+warning Selected the next writable cache folder in the list, will be "/var/folders/qp/9vzc6snd1z797d_lr5qz52x80000gn/T/.yarn-cache-501".
+$ swift build --package-path src/platforms/macos -Xswiftc -warnings-as-errors -Xswiftc -strict-concurrency=complete --disable-sandbox
+warning Cannot find a suitable global folder. Tried these: "/usr/local, /Users/gojda/.yarn"
+warning: /Users/gojda/Library/org.swift.swiftpm/configuration is not accessible or not writable, disabling user-level cache features.
+warning: /Users/gojda/Library/org.swift.swiftpm/security is not accessible or not writable, disabling user-level cache features.
+warning: /Users/gojda/Library/Caches/org.swift.swiftpm is not accessible or not writable, disabling user-level cache features.
+warning: 'macos': failed storing manifest for 'macos' in cache: attempt to write a readonly database
+Building for debugging...
+[Planning deferred tasks]
+[2 / 5] AmbientMacOS
+Build complete! (1.29 с)
+Done in 2.96s.

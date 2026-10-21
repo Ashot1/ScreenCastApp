@@ -1,0 +1,47 @@
+{
+   "description": "Read-only owner for facts outside the repository: official docs, web, user reports, forums, connectors, provider behavior, and current facts.",
+   "environments": {
+      "codex": {
+         "tier": "research",
+         "settings": {
+            "name": "external_researcher",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "research",
+         "settings": {
+            "name": "external-researcher",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"],
+            "permissionMode": "plan"
+         }
+      },
+      "cursor": {
+         "tier": "research",
+         "settings": {
+            "name": "external-researcher",
+            "readonly": true
+         },
+         "prefix": "# External Researcher\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "research",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "allow",
+               "websearch": "allow"
+            }
+         }
+      }
+   }
+}

@@ -1,0 +1,66 @@
+{
+  "responses_posts_this_execution": 1,
+  "batch_reserved_posts": 2,
+  "historical_six_files_unchanged": true,
+  "historical_before": {
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40"
+  },
+  "historical_after": {
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "bounded-diagnostic-2026-10-19/attempt-1/e83457f3-6108-4bdc-8b59-fdcbe269e4f0.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40",
+    "bounded-diagnostic-2026-10-19/attempt-1/unresolved.json": "6c406b45ee95721dc6404c0bb6d9862e4bbb47dc3e278dd927404b61d9c05b40"
+  },
+  "result": {
+    "attempt_id": "8a06d868-8220-4982-af11-21d7e8e8247e",
+    "case_id": "text-none",
+    "requested_configuration": {
+      "model": "gpt-6-luna",
+      "reasoning_effort": "low",
+      "service_tier": "priority"
+    },
+    "returned_configuration": {
+      "model": "gpt-6-luna",
+      "service_tier": null,
+      "reasoning_effort": "low"
+    },
+    "started_at": "2026-10-18T23:33:47.049Z",
+    "request_sha256": "a25216298cfd5a0624cf800304b46027b2acc144298198490226f6500935dba9",
+    "credit_guard": {
+      "source": "user_reported",
+      "confirmed": true
+    },
+    "status": "configuration_mismatch",
+    "usage": {
+      "input_tokens": 171,
+      "output_tokens": 94,
+      "total_tokens": 265,
+      "input_tokens_details": {
+        "cached_tokens": 0,
+        "cache_write_tokens": 0
+      }
+    },
+    "usage_status": "reported",
+    "proposal": {
+      "kind": "invalid"
+    },
+    "post_dispatch": "sent",
+    "elapsed_ms": 2519,
+    "response_metadata": {
+      "http_status": 200,
+      "media_type": "absent",
+      "body_present": true,
+      "body_read_outcome": "terminal_event",
+      "bytes_observed": 26696,
+      "byte_limit": 2097152
+    },
+    "model_output_omitted": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "process": "LocalParakeet",
+  "scope": "log show --last 20m --info --debug, filtered by exact test process name; known PUBLIC fixture phrases only",
+  "oslog_messages": 2504,
+  "recognized_public_phrase_matches": 0,
+  "normal_success_stdout_bytes": 0,
+  "normal_success_stderr_bytes": 0,
+  "network_profile": "(version 1)(allow default)(deny network*)",
+  "network_negative_control": "IPv4 localhost connect rejected: PermissionError errno 1; HTTPS DNS request rejected: curl exit 6",
+  "audio_cloud_fallback": "No cloud route in helper; all actual probes sandboxed with network denied"
+}

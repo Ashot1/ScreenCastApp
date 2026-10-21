@@ -1,0 +1,196 @@
+{
+  "product": "Codex CLI",
+  "installed_version": "0.160.0",
+  "reference_source_commit": "a956835d020762cb2b570053af06f643a11c0ecc",
+  "scope": "Local installed app-server protocol declarations and bounded pinned-source facts; no account values or credentials.",
+  "safety_capabilities": {
+    "global_empty_tool_policy_via_standard_cli": {
+      "confirmed": false,
+      "finding": "Not confirmed as configurable through the standard CLI.",
+      "evidence": "The pinned source has an internal allowed_tools Some(empty) policy, but this does not establish a standard CLI configuration surface.",
+      "source": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/ext/extension-api/src/tool_policy.rs#L6"
+    },
+    "zero_retries_for_builtin_openai_provider": {
+      "confirmed": false,
+      "finding": "Not confirmed configurable for the built-in OpenAI provider. Provider override configuration is not allowed; a separate Responses transport fallback exists.",
+      "source": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/config/src/config_toml.rs#L901",
+      "related_source": "https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/core/src/responses_retry.rs#L119"
+    },
+    "per_process_paid_credits_opt_out": {
+      "confirmed": false,
+      "finding": "Not confirmed. The account rate-limit protocol exposes credit availability fields but no per-process auto-reload opt-out.",
+      "account_credit_fields": [
+        "hasCredits",
+        "unlimited",
+        "balance"
+      ]
+    }
+  },
+  "app_server_protocol": {
+    "account/read": {
+      "params": {
+        "refreshToken": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "response": {
+        "requiresOpenaiAuth": {
+          "type": "boolean",
+          "required": true
+        },
+        "account": {
+          "type": "account union or null",
+          "required": false,
+          "variants": {
+            "chatgpt": {
+              "type": "chatgpt",
+              "required": true,
+              "email": {
+                "type": "string or null",
+                "required": true
+              },
+              "planType": {
+                "type": "string enum",
+                "required": true
+              }
+            },
+            "apiKey": {
+              "type": "apiKey",
+              "required": true
+            },
+            "amazonBedrock": {
+              "type": "amazonBedrock",
+              "required": true
+            }
+          }
+        }
+      },
+      "local_schema": "v2/GetAccountParams.json and v2/GetAccountResponse.json"
+    },
+    "account/rateLimits/read": {
+      "params": {
+        "object_or_null": true,
+        "excludeResetCreditDetails": {
+          "type": "boolean",
+          "required": false
+        },
+        "supportsLunaReserve": {
+          "type": "boolean",
+          "required": false
+        }
+      },
+      "response": {
+        "rateLimits": {
+          "type": "snapshot",
+          "required": true
+        },
+        "rateLimitsByLimitId": {
+          "type": "map of snapshots or null",
+          "required": false
+        },
+        "ordinaryUsageAllowed": {
+          "type": "boolean or null",
+          "required": false
+        },
+        "credits": {
+          "type": "object or null",
+          "required": false,
+          "hasCredits": {
+            "type": "boolean",
+            "required": true
+          },
+          "unlimited": {
+            "type": "boolean",
+            "required": true
+          },
+          "balance": {
+            "type": "string or null",
+            "required": false
+          }
+        }
+      },
+      "local_schema": "v2/NullableGetAccountRateLimitsParams.json and v2/GetAccountRateLimitsResponse.json"
+    },
+    "model/list": {
+      "response": {
+        "data": {
+          "type": "array of models",
+          "required": true
+        },
+        "nextCursor": {
+          "type": "string or null",
+          "required": false
+        }
+      },
+      "model_required_fields": [
+        "id",
+        "model",
+        "displayName",
+        "description",
+        "hidden",
+        "isDefault",
+        "defaultReasoningEffort",
+        "supportedReasoningEfforts"
+      ],
+      "local_schema": "v2/ModelListResponse.json"
+    }
+  },
+  "cli_jsonl": {
+    "source_status": "requires external pinned source validation",
+    "documented_noninteractive_event_types": [
+      "thread.started",
+      "turn.started",
+      "item.completed",
+      "turn.completed",
+      "turn.failed",
+      "error"
+    ],
+    "documented_item_kind": "agent_message",
+    "documented_turn_completed_usage_fields": [
+      "input_tokens",
+      "cached_input_tokens",
+      "output_tokens"
+    ],
+    "performed_inference": false
+  },
+  "bundled_desktop_cli": {
+    "installed_version": "0.163.0-alpha.10.2",
+    "target": "aarch64-apple-darwin",
+    "package_metadata": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/codex-package.json",
+    "reference_source_commit": "4ebc485ca321243727539187169425fcf972f2c4",
+    "local_evidence": [
+      "codex --version reports 0.163.0-alpha.10.2",
+      "codex --help exposes no explicit no-tools option",
+      "app-server protocol method names and fields were inspected as binary strings; protocol schema generation was not run because its command may load user configuration"
+    ],
+    "app_server_observed_names": [
+      "account/read",
+      "account/rateLimits/read",
+      "model/list",
+      "thread/start",
+      "turn/start",
+      "thread/start.dynamicTools",
+      "turn/start.dynamicTools",
+      "hasCredits",
+      "unlimited",
+      "balance",
+      "request_max_retries",
+      "stream_max_retries"
+    ],
+    "no_tools_policy_via_standard_cli": {
+      "confirmed": false,
+      "finding": "Not confirmed. CLI help has no explicit no-tools option. App-server binary exposes dynamicTools fields, but this inspection does not establish a global empty-tool policy or its semantics."
+    },
+    "zero_retries_for_builtin_openai_provider": {
+      "confirmed": false,
+      "finding": "Not confirmed. Retry field names occur in the bundled binary, but local declarations and accepted overrides were not inspected."
+    },
+    "per_process_paid_credits_opt_out": {
+      "confirmed": false,
+      "finding": "Not confirmed. Credit availability field names occur in the bundled protocol; no per-process auto-reload opt-out was established."
+    },
+    "protocol_field_types_and_optionality": "Not verified for this bundle because schema generation was not run.",
+    "performed_inference": false
+  }
+}

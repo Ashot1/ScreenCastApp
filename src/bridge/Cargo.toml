@@ -1,0 +1,26 @@
+[package]
+name = "ambient-bridge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[features]
+model-test-support = ["ambient-providers/model-test-support", "ambient-core/model-test-support"]
+
+[dependencies]
+ambient-core = { path = "../core" }
+ambient-providers = { path = "../providers" }
+# Already locked for core/providers: the managed-server and OAuth answers are JSON (24B).
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+
+[lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"

@@ -1,0 +1,25 @@
+{
+  "authorized_at": "2026-10-18T23:23:51.683Z",
+  "maximum_new_responses_posts": 3,
+  "user_instruction": "Продолжай автономно, без моего участия. Даю разрешение на различные запросы и тесты с подпиской",
+  "coordinator_limit": "Maximum three new Responses POST attempts; each requires a changed justified hypothesis.",
+  "selected_configuration": {
+    "model": "gpt-6-luna",
+    "reasoning_effort": "low",
+    "service_tier": "priority"
+  },
+  "no_credit_setting": {
+    "source": "persisted_user_report",
+    "api_verified": false
+  },
+  "historical_unknown_preserved": {
+    "ce0627ad-9537-4888-aa15-88ccc3d96f40.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "unresolved.json": "cbf0c578eb4c0829119fbf5f61f281e12069e7836ed4344ccf6063df8b134c89",
+    "authorized-2026-10-19-luna-low-fast-once/22dfcd3d-ea69-4f90-a57a-3b77d3af4496.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760",
+    "authorized-2026-10-19-luna-low-fast-once/unresolved.json": "5c7c090168b192aa1c02eefaa6bf25500b374741a219b15f4fb308885d703760"
+  },
+  "responses_post_reservations": 0,
+  "attempt_1_hypothesis": "Use canonical Fast wire priority and opt-in sanitized diagnostics to identify the historical HTTP 400 cause.",
+  "ordinary_cli_guard_unchanged": true,
+  "diagnostic_mode": true
+}

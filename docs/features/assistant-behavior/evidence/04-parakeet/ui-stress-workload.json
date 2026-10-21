@@ -1,0 +1,7 @@
+{
+  "duration_s": 20,
+  "workload": "Continuous sequential fresh worker launches with 55.2s public RU completed speech; idle gaps only supervisor overhead",
+  "completed_operations": 21,
+  "all_success": true,
+  "all_reaped_and_cleaned": true
+}

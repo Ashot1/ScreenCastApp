@@ -1,0 +1,29 @@
+[package]
+name = "ambient-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+# Loopback plugin servers for local tests only; never enabled in the application.
+model-test-support = []
+
+[dependencies]
+serde = { version = "=1.0.229", features = ["derive"] }
+serde_json = "=1.0.154"
+time = { version = "=0.3.55", default-features = false, features = ["parsing"] }
+url = "=2.5.8"
+httpdate = "=1.0.3"
+rusqlite = { version = "=0.40.2", features = ["bundled"] }
+sha2 = { version = "=0.11.1", default-features = false }
+
+gix-ref = { version = "=0.69.0", default-features = false, features = ["sha1", "sha256"] }
+gix-hash = { version = "=0.28.0", default-features = false, features = ["sha1", "sha256"] }
+gix-config = { version = "=0.62.0", default-features = false }
+
+[lints]
+workspace = true

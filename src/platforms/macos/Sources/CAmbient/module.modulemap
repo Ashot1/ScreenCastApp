@@ -1,0 +1,10 @@
+module CAmbient [system] {
+    header "../../../../bridge/include/ambient.h"
+    header "../../../../bridge/include/ambient_model.h"
+    link "ambient_bridge"
+    header "../../../../bridge/include/ambient_source.h"
+    header "../../../../bridge/include/ambient_codex.h"
+    header "../../../../bridge/include/ambient_integration.h"
+    header "../../../../bridge/include/ambient_plugin.h"
+    export *
+}

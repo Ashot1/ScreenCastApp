@@ -1,0 +1,12 @@
+{
+  "uri": "codex://threads/01a15065-10a1-78b3-9ac8-330bcd8c2a13",
+  "static_route": "/local/01a15065-10a1-78b3-9ac8-330bcd8c2a13",
+  "static_handler_verified": true,
+  "runtime_resolution": "BLOCKED",
+  "uri_opened": false,
+  "cua_entrypoint": "cua.getApp(\"/Applications/ChatGPT.app\")",
+  "cua_result": "Computer Use is not allowed to use the app 'com.openai.codex' for safety reasons.",
+  "shell_ax_trusted": false,
+  "workaround_attempted": false,
+  "restoration_required": false
+}

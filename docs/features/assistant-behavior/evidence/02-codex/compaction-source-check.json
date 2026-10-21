@@ -1,0 +1,12 @@
+{
+  "engine_version": "0.163.0-alpha.10.2",
+  "commit": "4ebc485ca321243727539187169425fcf972f2c4",
+  "url": "https://raw.githubusercontent.com/openai/codex/4ebc485ca321243727539187169425fcf972f2c4/codex-rs/app-server-protocol/src/protocol/thread_history_projection.rs",
+  "verified_with": "web open of pinned official raw source",
+  "projection_applies_to": "canonical paginated visible thread history",
+  "item_completed_uses_explicit_turn_id": true,
+  "compacted_yields_default_change_set": true,
+  "compacted_source_line_one_based": 89,
+  "model_context_reconstruction_out_of_scope": true,
+  "local_python_fetch": "TLS certificate verification failed; security validation was not disabled"
+}

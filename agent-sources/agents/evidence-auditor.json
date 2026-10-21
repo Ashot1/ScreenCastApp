@@ -1,0 +1,47 @@
+{
+   "description": "Read-only auditor that checks a finished spec's data, APIs, and components against concrete evidence; planning only, before tickets.",
+   "environments": {
+      "codex": {
+         "tier": "verification",
+         "settings": {
+            "name": "evidence_auditor",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "verification",
+         "settings": {
+            "name": "evidence-auditor",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"],
+            "permissionMode": "plan"
+         }
+      },
+      "cursor": {
+         "tier": "verification",
+         "settings": {
+            "name": "evidence-auditor",
+            "readonly": true
+         },
+         "prefix": "# Evidence Auditor\n\n## Required model\n\nMandatory. Use exactly this model. Do not substitute another model or effort level.\n\n`{{model}}`\n\n"
+      },
+      "opencode": {
+         "tier": "verification",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "deny",
+               "webfetch": "allow",
+               "websearch": "allow"
+            }
+         }
+      }
+   }
+}

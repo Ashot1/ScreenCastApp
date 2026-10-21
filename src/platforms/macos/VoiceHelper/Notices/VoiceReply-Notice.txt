@@ -1,0 +1,21 @@
+Ambient local dictation
+
+Runtime: FluidInference/FluidAudio 0.17.7, commit
+503b4bd1bbf7220882de39fe8ae6716aae4132da, unmodified upstream.
+FluidAudio is distributed under Apache License 2.0; see FluidAudio-LICENSE.txt.
+The linked fastcluster code includes Daniel Muellner and Google copyrights
+and its BSD license; see fastcluster-LICENSE.txt.
+
+The upstream FluidAudio resource bundle includes the bundled LuxTTS English
+lexicon and G2P auxiliary dictionary. They are retained as upstream package
+resources; no TTS model weights or NemoTextProcessing runtime are distributed.
+
+Parakeet TDT 0.6B v3 model weights are NOT included or downloaded by Ambient.
+The supported user-selected CoreML conversion is FluidInference's
+parakeet-tdt-0.6b-v3-coreml revision
+7dd20fe6b1797d35f5e3307e8b1732d9a178edfe, derived from NVIDIA Parakeet.
+The weights/conversion metadata use Creative Commons Attribution 4.0;
+the runtime's Apache license does not make the weights Apache-only.
+https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
+https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml
+https://creativecommons.org/licenses/by/4.0/

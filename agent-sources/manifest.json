@@ -1,0 +1,283 @@
+{
+   "documents": [
+      {
+         "output": "AGENTS.md",
+         "sources": [
+            "rules/universal.md"
+         ]
+      },
+      {
+         "output": "CLAUDE.md",
+         "sources": [
+            "entrypoints/claude.md"
+         ]
+      },
+      {
+         "output": "AGENTS.override.md",
+         "sources": [
+            "entrypoints/codex.md"
+         ],
+         "includeGenerated": [
+            "AGENTS.md"
+         ]
+      },
+      {
+         "output": ".codex/config.toml",
+         "sources": [
+            "environments/codex.toml"
+         ]
+      }
+   ],
+   "rules": [
+      {
+         "name": "repository-workflow",
+         "source": "rules/repository-workflow.md",
+         "cursor": {
+            "alwaysApply": true
+         }
+      },
+      {
+         "name": "source",
+         "source": "rules/source.md",
+         "claude": {
+            "paths": [
+               "src/**"
+            ]
+         }
+      },
+      {
+         "name": "core",
+         "source": "rules/core.md",
+         "claude": {
+            "paths": [
+               "src/core/**"
+            ]
+         }
+      },
+      {
+         "name": "swift",
+         "source": "rules/swift.md",
+         "claude": {
+            "paths": [
+               "src/platforms/macos/**"
+            ]
+         }
+      },
+      {
+         "name": "windows",
+         "source": "rules/windows.md",
+         "claude": {
+            "paths": [
+               "src/platforms/windows/**"
+            ]
+         }
+      },
+      {
+         "name": "bridge",
+         "source": "rules/bridge.md",
+         "claude": {
+            "paths": [
+               "src/bridge/**"
+            ]
+         }
+      },
+      {
+         "name": "providers",
+         "source": "rules/providers.md",
+         "claude": {
+            "paths": [
+               "src/providers/**"
+            ]
+         }
+      },
+      {
+         "name": "replay",
+         "source": "rules/replay.md",
+         "claude": {
+            "paths": [
+               "src/replay/**",
+               "tests/replay/**"
+            ]
+         }
+      }
+   ],
+   "scopes": [
+      {
+         "output": "src/AGENTS.md",
+         "sources": [
+            "rules/source.md"
+         ]
+      },
+      {
+         "output": "src/AGENTS.override.md",
+         "sources": [
+            "rules/source.md"
+         ]
+      },
+      {
+         "output": "src/core/AGENTS.md",
+         "sources": [
+            "rules/core.md"
+         ]
+      },
+      {
+         "output": "src/core/AGENTS.override.md",
+         "sources": [
+            "rules/core.md"
+         ]
+      },
+      {
+         "output": "src/platforms/macos/AGENTS.md",
+         "sources": [
+            "rules/swift.md"
+         ]
+      },
+      {
+         "output": "src/platforms/macos/AGENTS.override.md",
+         "sources": [
+            "rules/swift.md"
+         ]
+      },
+      {
+         "output": "src/platforms/windows/AGENTS.md",
+         "sources": [
+            "rules/windows.md"
+         ]
+      },
+      {
+         "output": "src/platforms/windows/AGENTS.override.md",
+         "sources": [
+            "rules/windows.md"
+         ]
+      },
+      {
+         "output": "src/bridge/AGENTS.md",
+         "sources": [
+            "rules/bridge.md"
+         ]
+      },
+      {
+         "output": "src/bridge/AGENTS.override.md",
+         "sources": [
+            "rules/bridge.md"
+         ]
+      },
+      {
+         "output": "src/providers/AGENTS.md",
+         "sources": [
+            "rules/providers.md"
+         ]
+      },
+      {
+         "output": "src/providers/AGENTS.override.md",
+         "sources": [
+            "rules/providers.md"
+         ]
+      },
+      {
+         "output": "src/replay/AGENTS.md",
+         "sources": [
+            "rules/replay.md"
+         ]
+      },
+      {
+         "output": "src/replay/AGENTS.override.md",
+         "sources": [
+            "rules/replay.md"
+         ]
+      }
+   ],
+   "environments": {
+      "codex": {
+         "label": "Codex",
+         "variables": {
+            "nativeScope": "- Universal rules are already embedded in root `AGENTS.override.md`; do not reread root `AGENTS.md`.\n- Scoped rules use `AGENTS.override.md`.\n- Native agents live in `.codex/agents/`; keep their configured models.",
+            "scopeRuleStep": "Read every matching scoped `AGENTS.override.md` not already present in session context, including parent scopes such as `src/AGENTS.override.md`.",
+            "workerPreamble": "Use this Skill only for manual implementation workers. Named specialized agents\nand routine mechanics keep their configured models and follow\n`harmony-bootstrap`.",
+            "workerRecord": "Model: <model>\nEffort: <reasoning_effort>",
+            "workerModels": "Use the lowest credible option:\n\n- `gpt-5.6-luna` high: narrow, clear, repeatable implementation.\n- `gpt-5.6-luna` max: bounded implementation with several edge cases.\n- `gpt-5.6-terra` xhigh: cross-file work or meaningful ambiguity.\n- `gpt-5.6-sol` high: broad, high-correctness implementation only when the\n  parent has already resolved scope and design decisions.\n\nIf the tool rejects an explicit model or effort, report it instead of silently\nchanging the route.",
+            "implementationOwner": "implementation owner",
+            "localizationAssignment": "- Handle the assigned labels, placeholders, validation messages, empty states, table headers, button text, modal copy, toast/success copy, and i18n keys.",
+            "agent_codebase_scout": "`codebase_scout`",
+            "agent_endpoint_registry_mechanic": "`endpoint_registry_mechanic`",
+            "agent_evidence_auditor": "`evidence_auditor`",
+            "agent_external_researcher": "`external_researcher`",
+            "agent_localization_mechanic": "`localization_mechanic`",
+            "agent_pattern_librarian": "`pattern_librarian`",
+            "agent_type_scaffolder": "`type_scaffolder`",
+            "agent_visual_inspector": "`visual_inspector`",
+            "agent_plan_simplicity_reviewer": "`plan_simplicity_reviewer`",
+            "agent_code_simplicity_reviewer": "`code_simplicity_reviewer`"
+         }
+      },
+      "claude": {
+         "label": "Claude Code",
+         "variables": {
+            "nativeScope": "- `CLAUDE.md` imports universal `AGENTS.md`; native path rules live in `.claude/rules/*.md`.\n- Ignore `AGENTS.override.md` and nested `AGENTS.md` adapters for other environments.\n- Native agents live in `.claude/agents/`; keep their configured models.",
+            "scopeRuleStep": "Use the matching Claude `paths` rules already loaded; read them manually only if native path loading is unavailable.",
+            "workerPreamble": "Use this Skill only for manual implementation workers. Named specialized agents\nand routine mechanics keep their native models and follow `harmony-bootstrap`.",
+            "workerRecord": "Model: <native Claude model>",
+            "workerModels": "Use the lowest credible native Claude model: a fast production-capable model\nfor clear bounded work, a stronger coding model for cross-file work or edge\ncases, and the strongest reasoning model only for broad high-correctness\nimplementation. Do not import model names from other environments.\n\nIf the tool exposes no model choice, use its default and record that fact.",
+            "implementationOwner": "implementation owner",
+            "localizationAssignment": "- Handle the assigned labels, placeholders, validation messages, empty states, table headers, button text, modal copy, toast/success copy, and i18n keys.",
+            "agent_codebase_scout": "`codebase-scout`",
+            "agent_endpoint_registry_mechanic": "`endpoint-registry-mechanic`",
+            "agent_evidence_auditor": "`evidence-auditor`",
+            "agent_external_researcher": "`external-researcher`",
+            "agent_localization_mechanic": "`localization-mechanic`",
+            "agent_pattern_librarian": "`pattern-librarian`",
+            "agent_type_scaffolder": "`type-scaffolder`",
+            "agent_visual_inspector": "`visual-inspector`",
+            "agent_plan_simplicity_reviewer": "`plan-simplicity-reviewer`",
+            "agent_code_simplicity_reviewer": "`code-simplicity-reviewer`"
+         }
+      },
+      "cursor": {
+         "label": "Cursor",
+         "variables": {
+            "nativeScope": "- Universal and directory rules use root and nested `AGENTS.md`.\n- Ignore all `AGENTS.override.md` files.\n- `.cursor/rules/repository-workflow.mdc` is the native workflow adapter.\n- Native agents live in `.cursor/agents/`; keep their configured models.",
+            "scopeRuleStep": "Use root-to-path `AGENTS.md` rules. Read a matching scope not yet loaded before edits.",
+            "workerPreamble": "Use this Skill only for manual implementation workers. Named specialized agents\nand routine mechanics keep their configured models and follow\n`harmony-bootstrap`.",
+            "workerRecord": "Model: <native Cursor model>",
+            "workerModels": "Use the lowest credible option:\n\n- `composer-2.5`: narrow, clear, bounded implementation.\n- `grok-4.6`: cross-file implementation or work with meaningful edge cases.\n- `inherit`: broad, high-correctness implementation only when the parent is\n  already using the strongest sufficient native Cursor model and has resolved\n  scope and design decisions.\n\nDo not import model names from other environments.\n\nIf the tool exposes no model choice, use its default and record that fact.",
+            "implementationOwner": "implementation owner",
+            "localizationAssignment": "- Handle the assigned labels, placeholders, validation messages, empty states, table headers, button text, modal copy, toast/success copy, and i18n keys.",
+            "agent_codebase_scout": "`codebase-scout`",
+            "agent_endpoint_registry_mechanic": "`endpoint-registry-mechanic`",
+            "agent_evidence_auditor": "`evidence-auditor`",
+            "agent_external_researcher": "`external-researcher`",
+            "agent_localization_mechanic": "`localization-mechanic`",
+            "agent_pattern_librarian": "`pattern-librarian`",
+            "agent_type_scaffolder": "`type-scaffolder`",
+            "agent_visual_inspector": "`visual-inspector`",
+            "agent_plan_simplicity_reviewer": "`plan-simplicity-reviewer`",
+            "agent_code_simplicity_reviewer": "`code-simplicity-reviewer`"
+         }
+      },
+      "opencode": {
+         "label": "OpenCode",
+         "variables": {
+            "nativeScope": "- Universal and directory rules use root and nested `AGENTS.md`, discovered natively by OpenCode v2.\n- Ignore all Codex `AGENTS.override.md` and Cursor `.cursor/rules` files.\n- Native agents live in `.opencode/agents/`; keep their configured models.\n- Do not use `instructions` config entries: OpenCode v2 does not load them.",
+            "scopeRuleStep": "Use root-to-path `AGENTS.md` rules. Read a matching scope not yet loaded before edits.",
+            "workerPreamble": "Use this Skill only for manual implementation workers. Named specialized agents\nand routine mechanics keep their configured models and follow\n`harmony-bootstrap`.",
+            "workerRecord": "Model: <native OpenCode model>",
+            "workerModels": "Use the lowest credible native OpenCode model: fast production-capable for\nclear bounded work, a stronger coding model for cross-file work or edge cases,\nand the strongest reasoning model only for broad high-correctness\nimplementation. Do not import model names from other environments.\n\nIf the tool exposes no model choice, use its default and record that fact.",
+            "implementationOwner": "implementation subagent",
+            "localizationAssignment": "- Treat this as the required mechanic for new/changed labels, placeholders, validation messages, empty states, table headers, button text, modal copy, toast/success copy, and i18n keys.",
+            "agent_codebase_scout": "`codebase_scout`",
+            "agent_endpoint_registry_mechanic": "`endpoint_registry_mechanic`",
+            "agent_evidence_auditor": "`evidence_auditor`",
+            "agent_external_researcher": "`external_researcher`",
+            "agent_localization_mechanic": "`localization_mechanic`",
+            "agent_pattern_librarian": "`pattern_librarian`",
+            "agent_type_scaffolder": "`type_scaffolder`",
+            "agent_visual_inspector": "`visual_inspector`",
+            "agent_plan_simplicity_reviewer": "`plan_simplicity_reviewer`",
+            "agent_code_simplicity_reviewer": "`code_simplicity_reviewer`"
+         }
+      }
+   },
+   "mattCopies": [
+      "claude"
+   ]
+}

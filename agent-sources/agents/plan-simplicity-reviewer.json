@@ -1,0 +1,47 @@
+{
+   "description": "Read-only simplicity reviewer: one independent alternative at a major design fork and review of a finished specification.",
+   "environments": {
+      "codex": {
+         "tier": "design",
+         "settings": {
+            "name": "plan_simplicity_reviewer",
+            "sandbox_mode": "read-only"
+         }
+      },
+      "claude": {
+         "tier": "design",
+         "settings": {
+            "name": "plan-simplicity-reviewer",
+            "disallowedTools": ["Edit", "Write", "NotebookEdit", "Agent"],
+            "permissionMode": "plan"
+         }
+      },
+      "cursor": {
+         "tier": "design",
+         "settings": {
+            "name": "plan-simplicity-reviewer",
+            "readonly": true
+         },
+         "prefix": "# Plan Simplicity Reviewer\n\n## Required model\n\nUse exactly `{{model}}`; do not substitute model or effort.\n\n"
+      },
+      "opencode": {
+         "tier": "design",
+         "settings": {
+            "mode": "subagent",
+            "permission": {
+               "edit": "deny",
+               "bash": "ask",
+               "read": "allow",
+               "grep": "allow",
+               "glob": "allow",
+               "list": "allow",
+               "task": "deny",
+               "todowrite": "deny",
+               "skill": "allow",
+               "webfetch": "allow",
+               "websearch": "allow"
+            }
+         }
+      }
+   }
+}

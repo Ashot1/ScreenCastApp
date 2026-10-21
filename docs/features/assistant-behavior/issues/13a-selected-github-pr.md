@@ -1,0 +1,31 @@
+# 13A: Выбранный GitHub PR и обсуждение
+
+Spec: [ADR-016](../../../decisions/0016-selected-github-pr.md), [полная спецификация](../spec.md). Evidence: [GitHub API](../evidence/13-github-integration-research.md).
+
+**What to build:** Собственный fine-grained PAT для GitHub.com и разрешённых репозиториев → чтение выбранного PR, reviews, inline и общих комментариев → точный preview выбранных1–32 объектов → одно атомарное сохранение в дело → существующая помощь08B. Исторические замечания и их происхождение доступны после ухода со страницы.
+
+**Blocked by:** локальная приёмка08B с окончательными source fences, постоянной областью помощи и правилами очистки. 14A уже принят. Принятые schema8/model4 проверены; новая13A использует schema9 и отдельный GitHub ABI1. Один исполнитель владеет связанными Core/provider/ABI/native изменениями.
+
+**Status:** implemented-local-pass;20 октября2026. Полный связанный13A реализован после принятого08B; локальная передача координатору для приёмки. Полная13/G6 и live/UI проверки остаются открыты.
+
+- [x] Настройки позволяют создать ограниченный профиль GitHub.com, явный allowlist и отдельный native Keychain credential. Core не получает PAT; Settings ничего не запрашивает в сети. Замена, удаление и crash между SQLite/Keychain не восстанавливают старый доступ.
+- [x] Один ограниченный job читает только четыре разрешённых GET endpoint с API version2026-03-10. Проверяются точная цель, profile/credential/session/report/High/pause fences до каждого шага и при приёме результата. Нет redirect/retry/cookie jar/произвольных ссылок/фонового чтения.
+- [x] Начальный и конечный PR detail проверяют repository/PR/head identity. Описание берётся из конечного ответа. Категории читаются с проверенной пагинацией; partial, потери и non-atomic interval видимы. Неизменный head не выдаётся за атомарное или полное обсуждение.
+- [x] Выполнены все job/body/header/window/page/preview/count/byte пределы ADR. Последний GET имеет резерв, но не обходит terminal stop/deadline. Нет скрытого truncation или unbounded raw error retention.
+- [x] 401 отзывает только точную credential generation и зависимую08B область; restart не возвращает старый доступ, поздний401 не портит новый PAT. 403/429 останавливают job; Core сохраняет срок ожидания без автоматического повтора. Категория404 остаётся явно ограниченным partial.
+- [x] Типизированные факты следуют pinned OpenAPI required/nullability, неизвестные состояния не подменяются известными. Стабильные numeric IDs, канонический digest, source timestamp, author и provenance сохранены без дублирования body/title/time. Ни review, ни Save не становятся UserConfirmation или разрешением выполнить действие.
+- [x] Preview выбранных1–32 уникальных объектов не пишет память. Save переиспользует существующие source правила внутри одной транзакции и возвращает только полный набор EvidenceIds/конечную TaskVersion. Любая ошибка, user protection, tombstone или лимит откатывают весь пакет.
+- [x] Обычный bind делает прежнюю08B область stale; отзыв профиля/credential и предусмотренные удаления очищают её атомарно. Все использованные основания, включая непрoцитированные, проверяются в preview/Send/result/copy/reply после restart. Исторические факты не становятся текущей полной историей PR.
+- [x] GitHub metadata учитывается в combined16KiB/global64MiB, bounded paging и DB-open validation. Новый source fence встроен во все реальные пути, отдельной памяти/бюджета/архива/долговечного read generation нет.
+- [x] Native UI показывает настройку доступа, выбранный PR, состояние категорий, Read/Cancel/Refresh, общий preview и Save. EN/RU согласованы. Помощь и голос продолжают существующую08B область; отмена освобождает job только после фактического завершения transport.
+- [x] Настоящий временный SQLite → C → Swift → изолированный test Keychain → loopback HTTP → batch bind →08B помощь проверен, включая pagination/rate/access/identity/nullability/bounds/crash/revoke/late-result случаи. Production Mach-O не содержит loopback hooks; секрет отсутствует в DB/log/model context.
+- [x] Пройдены обязательные специалисты, TDD и Code Simplicity Review, full verify, feature Swift, all-features Clippy, app build/signatures/Mach-O audit и сохранность прежних checkpoints. Актуальные логи и hashes сохранены в `target/verification/13a/`.
+- [x] Локальные проверки не выданы за реальные PAT permissions, UI, квоту GitHub, качество модели, High Fast или full13/G6. Проверки, которые не выполнялись, перечислены отдельно.
+
+**Не входит:** Checks/commit statuses, GraphQL resolved/outdated, GitHub Enterprise, автоматическое обнаружение/polling/webhooks, запись в GitHub, скачивание файлов/diff, новые model/Jev пробы или изменение подписочного маршрута. Эти границы не отменяют критерии полной задачи13.
+
+**Локальная проверка:** `yarn verify` — PASS (8 tooling/186 Rust/72 Swift); текущий focused GitHub Core —27 tests, full feature Swift —111 tests и повтор текущих6 GitHub cases, all-features Clippy —PASS. App build/signatures/Mach-O audit —PASS:4 images,13 GitHub ABI1/17 model4/15 Codex1 exports, нет test hooks/старых model ABI/Nemo/weights. Все162 файла13 checkpoints неизменны относительно baseline13A; подписи действительны. Новый checkpoint не создавался.
+
+Scout/Librarian/Type Scaffolder/Endpoint Registry Mechanic/Localization Mechanic выполнены и приняты; Code Simplicity Review с точечными исправлениями —PASS; Visual Inspector API matrix9/9 —PASS. EN/RU479/479 keys. Восемь чувствительных пар EN/RU вставлены механически после явного согласования координатором; правила ролей не менялись. В одном промежуточном прогоне прежний короткий HTTP-тест истёк по времени при параллельной сборке; отдельный повтор и полный прогон без сборки прошли без ослабления проверок. Подробности/актуальные hashes: `target/verification/13a/verification-summary.json`, `handoff.txt`, `app-checkpoint-proof.json`.
+
+UI/личная память/история/настоящий PAT/private GitHub/реальные permissions/квота GitHub/macOS14 hardware/Windows/live High Fast/Jev/full13/G6 не проверялись. Микрофон/TCC/ServiceManagement не использовались. Прежний голосовой fixture-путь проверен на существующем публичном WAV и model directory; новых weights нет. Облачный ledger неизменен:7 POST/1,021 known tokens/3 unknown attempts. Git init/commit/PR не выполнялись; общие документы и checkpoints оставлены координатору.
