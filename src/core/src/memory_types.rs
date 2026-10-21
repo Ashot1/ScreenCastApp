@@ -217,7 +217,7 @@ impl std::fmt::Display for StoreError {
             Self::Paused => "connection check is paused",
             Self::Busy => "connection check is busy",
             Self::Cancelled => "connection check was cancelled",
-            Self::CapabilityRequired => "current High Fast check is required",
+            Self::CapabilityRequired => "current High connection check is required",
             Self::SessionRequired => "current model session is required",
             Self::ReportRequired => "credit setting report is required",
             Self::InvalidInput => "invalid memory input",

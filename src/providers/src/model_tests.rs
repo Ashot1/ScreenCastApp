@@ -11,13 +11,13 @@ fn run_http(token: &str, flag: Arc<AtomicBool>, options: Options) -> ModelCheckR
 fn item() -> Value {
     json!({"id":"message-test","type":"message","status":"completed","role":"assistant","content":[{"type":"output_text","text":"AMBIENT_OK","annotations":[]}]})
 }
-fn terminal(tier: &str, output: Value) -> Value {
+fn terminal(tier: impl serde::Serialize, output: Value) -> Value {
     json!({"type":"response.completed","response":{"status":"completed","model":"gpt-6-luna","reasoning":{"effort":"low"},"service_tier":tier,"output":output,"usage":{"input_tokens":8,"output_tokens":3,"total_tokens":11,"input_tokens_details":{"cached_tokens":2},"output_tokens_details":{"reasoning_tokens":1}}}})
 }
 fn event(v: Value) -> Vec<u8> {
     format!("data: {}\r\n\r\n", v).into_bytes()
 }
-fn stream(tier: &str, empty: bool) -> Vec<u8> {
+fn stream(tier: impl serde::Serialize, empty: bool) -> Vec<u8> {
     let mut b = event(json!({"type":"response.output_item.done","output_index":0,"item":item()}));
     b.extend(event(terminal(
         tier,
@@ -36,28 +36,31 @@ fn decode(b: &[u8], step: usize) -> ModelCheckResult {
     d.finish().check
 }
 #[test]
-fn completed_and_empty_terminal_output_confirm_only_actual_fast_and_keep_usage_on_mismatch() {
+fn completed_and_empty_terminal_output_confirm_on_any_or_missing_tier_and_keep_usage_on_mismatch() {
     for empty in [false, true] {
-        for tier in ["priority", "fast", "default"] {
+        for (tier, label) in [
+            (json!("priority"), ActualTier::Priority),
+            (json!("fast"), ActualTier::Fast),
+            (json!("default"), ActualTier::Default),
+            (json!("flex"), ActualTier::Other),
+            (Value::Null, ActualTier::Missing),
+        ] {
             let r = decode(&stream(tier, empty), 1);
-            assert_eq!(
-                r.outcome,
-                if tier == "default" {
-                    CheckOutcome::Mismatch
-                } else {
-                    CheckOutcome::Confirmed
-                }
-            );
+            assert_eq!((r.outcome, r.actual.tier), (CheckOutcome::Confirmed, label));
             assert_eq!(r.usage.map(|v| v.total()), Some(11));
         }
     }
-    let mut t = terminal("priority", json!([item()]));
-    t["response"]["model"] = json!("different");
-    let mut b = event(json!({"type":"response.output_item.done","output_index":0,"item":item()}));
-    b.extend(event(t));
-    let r = decode(&b, 7);
-    assert_eq!(r.outcome, CheckOutcome::Mismatch);
-    assert_eq!(r.actual.model, ActualModel::Other);
+    for (model, effort) in [("different", "low"), ("gpt-6-luna", "high")] {
+        let mut t = terminal("priority", json!([item()]));
+        t["response"]["model"] = json!(model);
+        t["response"]["reasoning"]["effort"] = json!(effort);
+        let mut b =
+            event(json!({"type":"response.output_item.done","output_index":0,"item":item()}));
+        b.extend(event(t));
+        let r = decode(&b, 7);
+        assert_eq!(r.outcome, CheckOutcome::Mismatch);
+        assert_eq!(r.usage.map(|v| v.total()), Some(11));
+    }
 }
 #[test]
 fn malformed_incomplete_duplicate_conflicting_and_unfinished_items_are_never_success() {
@@ -100,7 +103,8 @@ fn usage_validation_is_independent_of_functional_result() {
         json!({"input_tokens":8,"output_tokens":3,"total_tokens":11,"output_tokens_details":{"reasoning_tokens":4}}),
         json!({"input_tokens":8.0,"output_tokens":3,"total_tokens":11}),
     ] {
-        let mut t = terminal("default", json!([item()]));
+        let mut t = terminal("priority", json!([item()]));
+        t["response"]["model"] = json!("different");
         t["response"]["usage"] = usage;
         let mut b =
             event(json!({"type":"response.output_item.done","output_index":0,"item":item()}));
@@ -479,11 +483,12 @@ fn high_assistance_decodes_json_above_low_limit_and_preserves_usage_on_bad_answe
     assert!(r.answer.is_none());
 }
 #[test]
-fn high_connectivity_requires_exact_marker_and_actual_high_fast() {
+fn high_connectivity_requires_exact_marker_and_actual_high_on_any_tier() {
     for (effort, tier, want) in [
         ("high", "fast", CheckOutcome::Confirmed),
+        ("high", "default", CheckOutcome::Confirmed),
         ("low", "fast", CheckOutcome::Mismatch),
-        ("high", "default", CheckOutcome::Mismatch),
+        ("low", "default", CheckOutcome::Mismatch),
     ] {
         let mut d = SseDecoder::new(ModelProfile::High, false);
         assert!(
@@ -647,7 +652,7 @@ fn reasoning() -> Value {
 fn function_call(arguments: &str) -> Value {
     json!({"id":"fc_1","type":"function_call","status":"completed","call_id":"call_1","name":"search","namespace":"plugins","arguments":arguments})
 }
-fn call_stream(arguments: &str, tier: &str) -> Vec<u8> {
+fn call_stream(arguments: &str, effort: &str) -> Vec<u8> {
     let mut b =
         event(json!({"type":"response.output_item.done","output_index":0,"item":reasoning()}));
     let mut added = function_call("");
@@ -658,8 +663,8 @@ fn call_stream(arguments: &str, tier: &str) -> Vec<u8> {
     b.extend(event(json!({"type":"response.function_call_arguments.delta","item_id":"fc_1","output_index":1,"delta":arguments})));
     b.extend(event(json!({"type":"response.function_call_arguments.done","item_id":"fc_1","output_index":1,"arguments":arguments})));
     b.extend(event(json!({"type":"response.output_item.done","output_index":1,"item":function_call(arguments)})));
-    let mut t = terminal(tier, json!([reasoning(), function_call(arguments)]));
-    t["response"]["reasoning"]["effort"] = json!("high");
+    let mut t = terminal("priority", json!([reasoning(), function_call(arguments)]));
+    t["response"]["reasoning"]["effort"] = json!(effort);
     b.extend(event(t));
     b
 }
@@ -675,7 +680,7 @@ fn decode_tools(b: &[u8], tools: bool) -> ModelResponse {
 }
 #[test]
 fn tool_steps_decode_calls_and_forward_reasoning_and_call_items_unchanged() {
-    let r = decode_tools(&call_stream(r#"{"q":"plan","limit":3}"#, "priority"), true);
+    let r = decode_tools(&call_stream(r#"{"q":"plan","limit":3}"#, "high"), true);
     assert_eq!(r.check.outcome, CheckOutcome::Confirmed);
     assert!(r.answer.is_none());
     assert_eq!(r.check.usage.map(|u| u.total()), Some(11));
@@ -694,14 +699,15 @@ fn tool_steps_decode_calls_and_forward_reasoning_and_call_items_unchanged() {
         r.forwarded,
         vec![reasoning(), function_call(r#"{"q":"plan","limit":3}"#)]
     );
-    // A mismatched actual tier keeps usage but never yields calls.
-    let r = decode_tools(&call_stream("{}", "default"), true);
+    // A mismatched actual effort keeps usage but never yields calls.
+    let r = decode_tools(&call_stream("{}", "low"), true);
     assert_eq!(r.check.outcome, CheckOutcome::Mismatch);
+    assert_eq!(r.check.usage.map(|u| u.total()), Some(11));
     assert!(r.calls.is_empty());
 }
 #[test]
 fn calls_without_offered_tools_and_malformed_arguments_are_invalid() {
-    let r = decode_tools(&call_stream("{}", "priority"), false);
+    let r = decode_tools(&call_stream("{}", "high"), false);
     assert_eq!(r.check.outcome, CheckOutcome::Invalid);
     assert!(r.calls.is_empty());
     for arguments in [
@@ -709,7 +715,7 @@ fn calls_without_offered_tools_and_malformed_arguments_are_invalid() {
         "{bad".to_owned(),
         format!(r#"{{"q":"{}"}}"#, "x".repeat(8 * 1024)),
     ] {
-        let r = decode_tools(&call_stream(&arguments, "priority"), true);
+        let r = decode_tools(&call_stream(&arguments, "high"), true);
         assert_eq!(r.check.outcome, CheckOutcome::Invalid, "{arguments:.20}");
         assert!(r.calls.is_empty());
     }
@@ -802,7 +808,7 @@ fn step_bodies_keep_plain_exact_and_send_tools_history_and_a_final_post_without_
 fn real_http_tool_step_posts_the_history_and_returns_the_calls()
 -> Result<(), Box<dyn std::error::Error>> {
     let (url, w) = server(
-        call_stream(r#"{"q":"plan"}"#, "priority"),
+        call_stream(r#"{"q":"plan"}"#, "high"),
         "Content-Type: text/event-stream\r\n",
         "200 OK",
         false,

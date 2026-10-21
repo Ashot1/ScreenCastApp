@@ -181,8 +181,8 @@ import Testing
                     self.send_response(200);self.send_header('Content-Type','text/event-stream');self.send_header('Content-Length','0');self.end_headers();return
                   item={'id':'message-test','type':'message','status':'completed','role':'assistant','content':[{'type':'output_text','text':text,'annotations':[]}]}
                   if mode=='refusal' and raw!='Reply exactly: AMBIENT_OK': item['content']=[{'type':'refusal','refusal':'Test refusal'}]
-                  tier='default' if mode=='mismatch' and raw!='Reply exactly: AMBIENT_OK' else 'fast'
-                  response={'status':'completed','model':'gpt-6-luna','reasoning':request['reasoning'],'service_tier':tier,'output':[item],'usage':{'input_tokens':8,'output_tokens':3,'total_tokens':11}}
+                  reasoning={'effort':'low'} if mode=='mismatch' and raw!='Reply exactly: AMBIENT_OK' else request['reasoning']
+                  response={'status':'completed','model':'gpt-6-luna','reasoning':reasoning,'service_tier':'fast','output':[item],'usage':{'input_tokens':8,'output_tokens':3,'total_tokens':11}}
                   terminal={'type':'response.completed','response':response}
                   if mode=='incomplete' and raw!='Reply exactly: AMBIENT_OK':
                    terminal['type']='response.incomplete';response['status']='incomplete'

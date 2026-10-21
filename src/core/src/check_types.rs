@@ -119,6 +119,8 @@ pub struct ActualConfig {
     pub tier: ActualTier,
 }
 impl ActualConfig {
+    /// The tier is shown, never gated (D91, D96): requests still ask for priority, and the served
+    /// tier, even a missing one, is only recorded as an honest label.
     pub fn confirmed(self, profile: ModelProfile) -> bool {
         self.model == ActualModel::Luna
             && self.effort
@@ -126,7 +128,6 @@ impl ActualConfig {
                     ModelProfile::Low => ActualEffort::Low,
                     ModelProfile::High => ActualEffort::High,
                 }
-            && matches!(self.tier, ActualTier::Priority | ActualTier::Fast)
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

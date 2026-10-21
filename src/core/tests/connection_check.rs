@@ -72,7 +72,7 @@ fn admission_pause_restart_and_known_usage_never_erase_unknown()
         ModelCheckResult {
             outcome: CheckOutcome::Mismatch,
             actual: ActualConfig {
-                model: ActualModel::Luna,
+                model: ActualModel::Other,
                 effort: ActualEffort::Low,
                 tier: ActualTier::Default,
             },
@@ -256,7 +256,7 @@ fn failed_result_commit_keeps_original_unknown_and_checked_totals_reject_overflo
 }
 
 #[test]
-fn only_committed_high_fast_of_current_epoch_opens_assistance()
+fn only_committed_high_check_of_current_epoch_opens_assistance()
 -> Result<(), Box<dyn std::error::Error>> {
     let db = Database::new();
     let mut s = Store::open(&db.0)?;
@@ -305,6 +305,48 @@ fn only_committed_high_fast_of_current_epoch_opens_assistance()
     s.set_model_session(11, true, false)?;
     assert!(!s.assistance_available()?);
     assert!(s.assistance_preview(preview.request_id).is_err());
+    Ok(())
+}
+#[test]
+fn assistance_opens_on_any_or_missing_tier_but_not_on_a_wrong_model_or_effort()
+-> Result<(), Box<dyn std::error::Error>> {
+    let db = Database::new();
+    let mut s = Store::open(&db.0)?;
+    s.set_model_session(10, true, true)?;
+    let mut check = |model, effort, tier| -> Result<(CheckOutcome, bool), StoreError> {
+        let a = s.prepare_check(true, ModelProfile::High)?;
+        let flag = a.cancellation();
+        let d = s.dispatch_check(a, 1)?;
+        let mut result = high_result()?;
+        result.actual = ActualConfig {
+            model,
+            effort,
+            tier,
+        };
+        let outcome = s.finish_check(d.id(), result)?.outcome;
+        s.release_check(&flag);
+        Ok((outcome, s.assistance_available()?))
+    };
+    // The served tier is only a label (D91, D96): no value of it, not even a missing one, blocks help.
+    for tier in [
+        ActualTier::Default,
+        ActualTier::Other,
+        ActualTier::Missing,
+        ActualTier::Priority,
+    ] {
+        assert_eq!(
+            check(ActualModel::Luna, ActualEffort::High, tier)?,
+            (CheckOutcome::Confirmed, true)
+        );
+    }
+    assert_eq!(
+        check(ActualModel::Other, ActualEffort::High, ActualTier::Fast)?,
+        (CheckOutcome::Mismatch, false)
+    );
+    assert_eq!(
+        check(ActualModel::Luna, ActualEffort::Low, ActualTier::Fast)?,
+        (CheckOutcome::Mismatch, false)
+    );
     Ok(())
 }
 fn high_result() -> Result<ModelCheckResult, StoreError> {

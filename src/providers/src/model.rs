@@ -580,7 +580,7 @@ impl SseDecoder {
         r: &Value,
         result: &mut ModelCheckResult,
     ) -> Result<(Option<AssistanceAnswer>, Vec<ToolCall>, Vec<Value>), ()> {
-        result.actual = actual_config(r, self.assistance)?;
+        result.actual = actual_config(r)?;
         if r.get("status").and_then(Value::as_str) != Some("completed") {
             return Err(());
         }
@@ -765,7 +765,7 @@ fn item_text(item: &Value, limit: usize) -> Result<String, ()> {
     }
     Ok(text)
 }
-fn actual_config(r: &Value, assistance: bool) -> Result<ActualConfig, ()> {
+fn actual_config(r: &Value) -> Result<ActualConfig, ()> {
     fn field(v: Option<&Value>) -> Result<Option<&str>, ()> {
         match v {
             None | Some(Value::Null) => Ok(None),
@@ -788,15 +788,11 @@ fn actual_config(r: &Value, assistance: bool) -> Result<ActualConfig, ()> {
         Some(HIGH_REASONING_EFFORT) => ActualEffort::High,
         _ => ActualEffort::Other,
     };
-    let tiers = if assistance {
-        SELECTED_TASK_ASSISTANCE_ACCEPTED_SERVICE_TIERS
-    } else {
-        CONNECTION_CHECK_ACCEPTED_SERVICE_TIERS
-    };
+    // The served tier is only a label (D91, D96); confirmation never depends on it.
     let tier = match field(r.get("service_tier"))? {
         None => ActualTier::Missing,
-        Some(v) if v == tiers[0] => ActualTier::Priority,
-        Some(v) if v == tiers[1] => ActualTier::Fast,
+        Some("priority") => ActualTier::Priority,
+        Some("fast") => ActualTier::Fast,
         Some("default") => ActualTier::Default,
         _ => ActualTier::Other,
     };

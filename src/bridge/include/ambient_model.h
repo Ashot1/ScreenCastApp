@@ -33,7 +33,7 @@ extern "C" {
  * cancel requests stop, close returns busy until actual return; every begin needs close.
  * Memory close cancels but a model lease retains Store for late usage accounting.
  * Cancellation/timeout does not prove that remote generation stopped.
- * session/available concern current High Fast permission; nothing is persisted.
+ * session/available concern current High permission (any tier); nothing is persisted.
  * feed/details are read-only on the existing Store and never acquire model transport
  * or High. Their JSON OUTPUT is the complete Core projection, with all framing and
  * metadata counted: feed128 rows/4MiB, each serialized row32KiB, details256KiB.

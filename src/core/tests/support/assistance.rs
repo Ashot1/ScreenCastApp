@@ -58,7 +58,7 @@ pub fn suppress(s: &mut Store, target: ProposalTarget) -> Result<(), StoreError>
     }
     s.set_initiative_suppressed(p.task.task_id, p.task.revision, true)
 }
-/// Makes High Fast assistance current through the Core test path.
+/// Makes High assistance current through the Core test path.
 pub fn ready(s: &mut Store) -> Result<(), StoreError> {
     s.set_model_session(9, true, true)?;
     let a = s.prepare_check(true, ModelProfile::High)?;
