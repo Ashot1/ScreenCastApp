@@ -25,7 +25,7 @@ import Observation
     private var operation: IntegrationOperation?
     private var running: Task<Void, Never>?
     // Every user action advances this; late responses for an older generation are dropped.
-    private var generation: UInt64 = 0
+    private(set) var generation: UInt64 = 0
     private(set) var profiles: [IntegrationProfile] = []
     private(set) var profile: IntegrationProfile?
     private(set) var exclusions: [String] = []

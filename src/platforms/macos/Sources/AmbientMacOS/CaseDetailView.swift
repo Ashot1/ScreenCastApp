@@ -5,80 +5,113 @@ enum CaseDeletion {
     case note(UInt64)
 }
 
+/// The case sections; a segmented picker switches them and only the shown one is built (D76: a
+/// source read continues while another tab is shown).
+enum CaseTab {
+    case plan, notes, links, sources, help
+    static func tabs(for task: MemoryTask) -> [CaseTab] {
+        task.lifecycle == .open
+            ? [.plan, .notes, .links, .sources, .help] : [.plan, .notes, .links]
+    }
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .plan: "plan.title"
+        case .notes: "notes.title"
+        case .links: "links.title"
+        case .sources: "case.sources"
+        case .help: "case.help"
+        }
+    }
+}
+
 struct CaseDetailView: View {
     @Bindable var model: AssistantModel
     let chatGPT: ChatGPTModel
     let snapshot: MemorySnapshot
     @Binding var linkTarget: UInt64?
     @Binding var deletion: CaseDeletion?
+    @Binding var tab: CaseTab
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             editor
             if let task = snapshot.selectedTask, !model.isCreatingTask {
-                Text(verbatim: task.text).textSelection(.enabled)
-                if task.lifecycle == .open {
-                    if model.integrations.isEnabled(.localProjects) {
-                        LocalProjectsView(
-                            model: model, chatGPT: chatGPT, task: task,
-                            projects: model.localProjects)
-                    } else {
-                        IntegrationDisabledView(kind: .localProjects)
-                    }
-                    if model.integrations.isEnabled(.codex) {
-                        CodexSourcesView(
-                            model: model, chatGPT: chatGPT, task: task,
-                            source: model.codexSources)
-                    } else {
-                        IntegrationDisabledView(kind: .codex)
-                    }
-                    if model.integrations.isEnabled(.github) {
-                        IntegrationSourcesView(
-                            model: model, chatGPT: chatGPT, task: task,
-                            source: model.githubSources)
-                    } else {
-                        IntegrationDisabledView(kind: .github)
-                    }
-                    if model.integrations.isEnabled(.jira) {
-                        IntegrationSourcesView(
-                            model: model, chatGPT: chatGPT, task: task,
-                            source: model.jiraSources)
-                    } else {
-                        IntegrationDisabledView(kind: .jira)
-                    }
-                    if model.integrations.isEnabled(.todoist) {
-                        IntegrationSourcesView(
-                            model: model, chatGPT: chatGPT, task: task,
-                            source: model.todoistSources)
-                    } else {
-                        IntegrationDisabledView(kind: .todoist)
-                    }
-                    SelectedAssistanceView(
-                        model: model, chatGPT: chatGPT, task: task,
-                        notes: snapshot.evidence.items)
-                }
-                HStack {
-                    Button {
-                        Task { await model.requestSelection(.newNote) }
+                VStack(alignment: .leading, spacing: 16) {
+                    CaseHeader(model: model, task: task, deletion: $deletion)
+                    Picker(
+                        selection: Binding(get: { shownTab(task) }, set: { tab = $0 })
+                    ) {
+                        ForEach(CaseTab.tabs(for: task), id: \.self) { item in
+                            Text(item.titleKey, bundle: .module).tag(item)
+                        }
                     } label: {
-                        Text("notes.add", bundle: .module)
-                    }.disabled(task.lifecycle == .completed)
-                    Spacer()
-                    Button(role: .destructive) {
-                        deletion = .task
-                    } label: {
-                        Text("intent.delete", bundle: .module)
+                        Text("case.sections", bundle: .module)
                     }
-                    .disabled(model.hasUnsavedChanges)
+                    .pickerStyle(.segmented).labelsHidden()
+                    switch shownTab(task) {
+                    case .plan: ManualPlanView(model: model, snapshot: snapshot)
+                    case .notes:
+                        Button {
+                            Task { await model.requestSelection(.newNote) }
+                        } label: {
+                            Text("notes.add", bundle: .module)
+                        }.disabled(task.lifecycle == .completed)
+                        notes
+                    case .links: links
+                    case .sources: sources(task)
+                    case .help:
+                        SelectedAssistanceView(
+                            model: model, chatGPT: chatGPT, task: task,
+                            notes: snapshot.evidence.items)
+                    }
                 }
-                Divider()
-                ManualPlanView(model: model, snapshot: snapshot)
-                Divider()
-                notes
-                Divider()
-                links
+                // Assistance availability follows the open case, whichever tab is shown.
+                .task(id: task.lifecycle == .open ? task.id : nil) {
+                    if task.lifecycle == .open { await chatGPT.reloadAssistanceAvailability() }
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    /// A completed case has no sources or help; its hidden tab shows the plan.
+    private func shownTab(_ task: MemoryTask) -> CaseTab {
+        CaseTab.tabs(for: task).contains(tab) ? tab : .plan
+    }
+    @ViewBuilder private func sources(_ task: MemoryTask) -> some View {
+        if model.integrations.isEnabled(.localProjects) {
+            LocalProjectsView(
+                model: model, chatGPT: chatGPT, task: task,
+                projects: model.localProjects)
+        } else {
+            IntegrationDisabledView(kind: .localProjects)
+        }
+        if model.integrations.isEnabled(.codex) {
+            CodexSourcesView(
+                model: model, chatGPT: chatGPT, task: task,
+                source: model.codexSources)
+        } else {
+            IntegrationDisabledView(kind: .codex)
+        }
+        if model.integrations.isEnabled(.github) {
+            IntegrationSourcesView(
+                model: model, chatGPT: chatGPT, task: task,
+                source: model.githubSources)
+        } else {
+            IntegrationDisabledView(kind: .github)
+        }
+        if model.integrations.isEnabled(.jira) {
+            IntegrationSourcesView(
+                model: model, chatGPT: chatGPT, task: task,
+                source: model.jiraSources)
+        } else {
+            IntegrationDisabledView(kind: .jira)
+        }
+        if model.integrations.isEnabled(.todoist) {
+            IntegrationSourcesView(
+                model: model, chatGPT: chatGPT, task: task,
+                source: model.todoistSources)
+        } else {
+            IntegrationDisabledView(kind: .todoist)
+        }
     }
     private var editor: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -203,6 +236,101 @@ struct CaseDetailView: View {
                         $0.id == linkTarget && $0.id != snapshot.selectedTask?.id
                     })
         }
+    }
+}
+
+/// The case title, its full selectable text, the lifecycle dot and the «⋯» menu of the existing
+/// case actions (ADR-023 #13) with their previous guards.
+private struct CaseHeader: View {
+    let model: AssistantModel
+    let task: MemoryTask
+    @Binding var deletion: CaseDeletion?
+    @State private var confirmReopen = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(task.lifecycle == .open ? Theme.ready.text : Color.secondary)
+                            .frame(width: 6, height: 6).accessibilityHidden(true)
+                        Text(
+                            task.lifecycle == .completed ? "lifecycle.completed" : "lifecycle.open",
+                            bundle: .module)
+                    }
+                    .font(.caption).foregroundStyle(.secondary)
+                    Text(verbatim: task.text).font(.system(size: 26, weight: .semibold))
+                        .lineLimit(1).truncationMode(.tail).help(task.text)
+                        .accessibilityAddTraits(.isHeader)
+                }
+                Spacer()
+                actions
+            }
+            // The title above already reads the full text to VoiceOver.
+            Text(verbatim: task.text).foregroundStyle(.secondary).textSelection(.enabled)
+                .accessibilityHidden(true)
+            if task.initiativeSuppressed {
+                Text("lifecycle.suppressed", bundle: .module).font(.caption)
+            }
+        }
+        .confirmationDialog(
+            Text("lifecycle.reopen", bundle: .module), isPresented: $confirmReopen,
+            titleVisibility: .visible
+        ) {
+            Button {
+                Task { await model.reopenTask() }
+            } label: {
+                Text("lifecycle.confirmReopen", bundle: .module)
+            }
+            Button(role: .cancel) {
+            } label: {
+                Text("switch.cancel", bundle: .module)
+            }
+        } message: {
+            Text("lifecycle.reopenWarning", bundle: .module)
+        }
+    }
+    private var actions: some View {
+        Menu {
+            Button {
+                Task { await model.requestSelection(.task(task.id)) }
+            } label: {
+                Text("intent.edit", bundle: .module)
+            }
+            if task.lifecycle == .completed {
+                Button {
+                    confirmReopen = true
+                } label: {
+                    Text("lifecycle.reopen", bundle: .module)
+                }
+                .disabled(model.hasUnsavedChanges)
+            } else {
+                Button {
+                    Task { await model.requestSelection(.completion) }
+                } label: {
+                    Text("lifecycle.complete", bundle: .module)
+                }
+            }
+            Button {
+                Task { await model.toggleInitiative() }
+            } label: {
+                Text(
+                    task.initiativeSuppressed ? "lifecycle.unsuppress" : "lifecycle.suppress",
+                    bundle: .module)
+            }.disabled(model.hasUnsavedChanges)
+            Divider()
+            Button(role: .destructive) {
+                deletion = .task
+            } label: {
+                Text("intent.delete", bundle: .module)
+            }
+            .disabled(model.hasUnsavedChanges)
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .menuStyle(.button).menuIndicator(.hidden)
+        .buttonStyle(.bordered).buttonBorderShape(.circle)
+        .accessibilityLabel(Text("case.actions", bundle: .module))
     }
 }
 

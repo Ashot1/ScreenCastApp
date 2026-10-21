@@ -3,137 +3,116 @@ import SwiftUI
 struct ManualPlanView: View {
     let model: AssistantModel
     let snapshot: MemorySnapshot
-    @State private var confirmReopen = false
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let task = snapshot.selectedTask {
-                Text(
-                    task.lifecycle == .completed ? "lifecycle.completed" : "lifecycle.open",
-                    bundle: .module
-                ).font(.headline)
-                if task.initiativeSuppressed { Text("lifecycle.suppressed", bundle: .module) }
-                Button {
-                    Task { await model.toggleInitiative() }
-                } label: {
-                    Text(
-                        task.initiativeSuppressed ? "lifecycle.unsuppress" : "lifecycle.suppress",
-                        bundle: .module)
-                }.disabled(model.hasUnsavedChanges)
+                if task.lifecycle == .open { plan(task) }
+                references
                 Text("lifecycle.suppressionHelp", bundle: .module).font(.caption).foregroundStyle(
                     .secondary)
-                if task.lifecycle == .completed {
-                    Button {
-                        confirmReopen = true
-                    } label: {
-                        Text("lifecycle.reopen", bundle: .module)
-                    }
-                    .disabled(model.hasUnsavedChanges)
-                } else {
-                    plan(task)
-                    Button {
-                        Task { await model.requestSelection(.completion) }
-                    } label: {
-                        Text("lifecycle.complete", bundle: .module)
-                    }
-                }
-                references
             }
             if model.copied { Text("plan.copied", bundle: .module).font(.caption) }
-        }
-        .confirmationDialog(
-            Text("lifecycle.reopen", bundle: .module), isPresented: $confirmReopen,
-            titleVisibility: .visible
-        ) {
-            Button {
-                Task { await model.reopenTask() }
-            } label: {
-                Text("lifecycle.confirmReopen", bundle: .module)
-            }
-            Button(role: .cancel) {
-            } label: {
-                Text("switch.cancel", bundle: .module)
-            }
-        } message: {
-            Text("lifecycle.reopenWarning", bundle: .module)
         }
     }
     private func plan(_ task: MemoryTask) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("plan.title", bundle: .module).font(.title3.bold())
-            Text(completenessKey(task.planCompleteness), bundle: .module)
-            Button {
-                Task { await model.confirmPlan() }
-            } label: {
-                Text("plan.confirm", bundle: .module)
-            }
-            .disabled(model.hasUnsavedChanges || task.planCompleteness == .complete)
-            Button {
-                Task { await model.requestSelection(.newStep) }
-            } label: {
-                Text("plan.newStep", bundle: .module)
-            }
+            if let step = snapshot.nextStep { next(step) }
             if snapshot.steps.items.isEmpty {
                 Text("plan.empty", bundle: .module).foregroundStyle(.secondary)
             }
             ForEach(snapshot.steps.items) { step in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("plan.stepID", bundle: .module)
-                        Text(verbatim: String(step.id))
-                    }
-                    .font(.caption).foregroundStyle(.secondary)
-                    Text(verbatim: step.description).textSelection(.enabled)
-                    if step.completedAtUTC != nil {
-                        Text("plan.done", bundle: .module)
-                    } else if step.ready {
-                        Text("plan.ready", bundle: .module).foregroundStyle(.green)
-                    } else if task.planCompleteness == .complete {
-                        Text("plan.blocked", bundle: .module)
-                    }
-                    if let prompt = step.prompt {
-                        DisclosureGroup {
-                            Text(verbatim: prompt).textSelection(.enabled)
-                        } label: {
-                            Text("plan.prompt", bundle: .module)
+                HStack(alignment: .top, spacing: 10) {
+                    statusIcon(step)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(verbatim: step.description).textSelection(.enabled)
+                            Spacer()
+                            status(step, task)
                         }
-                        Button {
-                            model.copy(prompt)
-                        } label: {
-                            Text("plan.copyPrompt", bundle: .module)
+                        HStack {
+                            Text("plan.stepID", bundle: .module)
+                            Text(verbatim: String(step.id))
                         }
-                    }
-                    if let reference = step.reference {
-                        Text(verbatim: reference).textSelection(.enabled)
-                        Button {
-                            model.copy(reference)
-                        } label: {
-                            Text("plan.copyReference", bundle: .module)
-                        }
-                    }
-                    HStack {
-                        Button {
-                            Task { await model.requestSelection(.step(step.id)) }
-                        } label: {
-                            Text("plan.editStep", bundle: .module)
-                        }
-                        Button {
-                            Task { await model.completeStep(step) }
-                        } label: {
+                        .font(.caption).foregroundStyle(.secondary)
+                        if let waiting = snapshot.waitingSteps(
+                            for: step, dependenciesFromStart: model.dependenciesAfter == 0),
+                            !waiting.isEmpty
+                        {
                             Text(
-                                step.completedAtUTC == nil ? "plan.completeStep" : "plan.undoStep",
-                                bundle: .module)
-                        }.disabled(model.hasUnsavedChanges)
-                        Button(role: .destructive) {
-                            Task { await model.deleteStep(step.id) }
-                        } label: {
-                            Text("plan.deleteStep", bundle: .module)
+                                "plan.waitsFor \(waiting.map(String.init).joined(separator: ", "))",
+                                bundle: .module
+                            )
+                            .font(.caption).foregroundStyle(.secondary)
                         }
-                        .disabled(model.hasUnsavedChanges)
+                        if let prompt = step.prompt {
+                            DisclosureGroup {
+                                Text(verbatim: prompt).textSelection(.enabled)
+                            } label: {
+                                Text("plan.prompt", bundle: .module)
+                            }
+                            Button {
+                                model.copy(prompt)
+                            } label: {
+                                Text("plan.copyPrompt", bundle: .module)
+                            }
+                        }
+                        if let reference = step.reference {
+                            Text(verbatim: reference).textSelection(.enabled)
+                            Button {
+                                model.copy(reference)
+                            } label: {
+                                Text("plan.copyReference", bundle: .module)
+                            }
+                        }
+                        HStack {
+                            Button {
+                                Task { await model.requestSelection(.step(step.id)) }
+                            } label: {
+                                Text("plan.editStep", bundle: .module)
+                            }
+                            Button {
+                                Task { await model.completeStep(step) }
+                            } label: {
+                                Text(
+                                    step.completedAtUTC == nil
+                                        ? "plan.completeStep" : "plan.undoStep",
+                                    bundle: .module)
+                            }.disabled(model.hasUnsavedChanges)
+                            Button(role: .destructive) {
+                                Task { await model.deleteStep(step.id) }
+                            } label: {
+                                Text("plan.deleteStep", bundle: .module)
+                            }
+                            .disabled(model.hasUnsavedChanges)
+                        }
+                        .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
                     }
-                }.padding().frame(maxWidth: .infinity, alignment: .leading)
-                    .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+                }
+                .padding(.vertical, 4)
+                Divider()
             }
-            pageButtons(.steps, next: snapshot.steps.nextAfter)
+            pageControls(.steps, after: model.stepsAfter, next: snapshot.steps.nextAfter)
+            Button {
+                Task { await model.requestSelection(.newStep) }
+            } label: {
+                Label {
+                    Text("plan.newStep", bundle: .module)
+                } icon: {
+                    Image(systemName: "plus")
+                }
+            }
+            .buttonStyle(.borderless)
+            HStack {
+                Text(completenessKey(task.planCompleteness), bundle: .module)
+                    .font(.caption).foregroundStyle(.secondary)
+                Button {
+                    Task { await model.confirmPlan() }
+                } label: {
+                    Text("plan.confirm", bundle: .module)
+                }
+                .buttonStyle(.borderless)
+                .disabled(model.hasUnsavedChanges || task.planCompleteness == .complete)
+            }
             checks
             Text("plan.dependencies", bundle: .module).font(.headline)
             Button {
@@ -152,7 +131,85 @@ struct ManualPlanView: View {
                     .disabled(model.hasUnsavedChanges)
                 }
             }
-            pageButtons(.dependencies, next: snapshot.dependencies.nextAfter)
+            pageControls(
+                .dependencies, after: model.dependenciesAfter,
+                next: snapshot.dependencies.nextAfter)
+        }
+    }
+    /// The design's «Следующий шаг» block on a quiet inset fill; no glass inside the sheet.
+    private func next(_ step: MemoryStep) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Circle().fill(Theme.ready.text).frame(width: 8, height: 8)
+                    .accessibilityHidden(true)
+                Text("plan.next", bundle: .module).font(.caption.weight(.semibold))
+            }
+            Text(verbatim: step.description).font(.system(size: 18, weight: .medium))
+                .textSelection(.enabled)
+            HStack {
+                if let prompt = step.prompt {
+                    Button {
+                        model.copy(prompt)
+                    } label: {
+                        Label {
+                            Text("plan.copyPrompt", bundle: .module)
+                        } icon: {
+                            Image(systemName: "doc.on.doc")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                if let reference = step.reference {
+                    Button {
+                        model.copy(reference)
+                    } label: {
+                        Label {
+                            Text("plan.copyReference", bundle: .module)
+                        } icon: {
+                            Image(systemName: "link")
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                }
+                Spacer()
+                Button {
+                    Task { await model.completeStep(step) }
+                } label: {
+                    Label {
+                        Text("plan.completeStep", bundle: .module)
+                    } icon: {
+                        Image(systemName: "checkmark")
+                    }
+                }
+                .buttonStyle(.bordered).disabled(model.hasUnsavedChanges)
+            }
+            .buttonBorderShape(.capsule)
+        }
+        .padding(.vertical, 20).padding(.horizontal, 22)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("plan.next", bundle: .module))
+    }
+    private func statusIcon(_ step: MemoryStep) -> some View {
+        Group {
+            if step.completedAtUTC != nil {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.secondary)
+            } else if step.ready {
+                Image(systemName: "circle.inset.filled").foregroundStyle(Theme.ready.text)
+            } else {
+                Image(systemName: "circle.dashed").foregroundStyle(.secondary)
+            }
+        }
+        .font(.title3).accessibilityHidden(true)
+    }
+    @ViewBuilder private func status(_ step: MemoryStep, _ task: MemoryTask) -> some View {
+        if step.completedAtUTC != nil {
+            Pill(text: Text("plan.done", bundle: .module))
+        } else if step.ready {
+            Pill(text: Text("plan.ready", bundle: .module), tone: Theme.ready)
+        } else if task.planCompleteness == .complete {
+            Pill(text: Text("plan.blocked", bundle: .module))
         }
     }
     @ViewBuilder private var checks: some View {
@@ -211,25 +268,15 @@ struct ManualPlanView: View {
                         Text("plan.copy", bundle: .module)
                     }
                 }
-                pageButtons(.references, next: snapshot.references.nextAfter)
+                pageControls(
+                    .references, after: model.referencesAfter, next: snapshot.references.nextAfter)
             }
         }
     }
-    private func pageButtons(_ kind: MemoryPlanPage, next: UInt64?) -> some View {
-        HStack {
-            Button {
-                Task { await model.pagePlan(kind, after: 0) }
-            } label: {
-                Text("tasks.first", bundle: .module)
-            }
-            if let next {
-                Button {
-                    Task { await model.pagePlan(kind, after: next) }
-                } label: {
-                    Text("tasks.next", bundle: .module)
-                }
-            }
-        }
+    private func pageControls(_ kind: MemoryPlanPage, after: UInt64, next: UInt64?) -> some View {
+        PageControls(
+            first: after == 0 ? nil : { Task { await model.pagePlan(kind, after: 0) } },
+            next: next.map { next in { Task { await model.pagePlan(kind, after: next) } } })
     }
     private func completenessKey(_ value: MemoryCompleteness) -> LocalizedStringKey {
         switch value {

@@ -142,10 +142,6 @@ struct CodexSourcesView: View {
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
         .task(id: task) { await source.loadMetadata(task: task) }
-        .onDisappear { source.cancel() }
-        .onChange(of: task) { _, _ in source.cancel() }
-        .onChange(of: model.manualPause) { _, _ in source.cancel() }
-        .onChange(of: chatGPT.assistanceReady) { _, ready in if !ready { source.cancel() } }
         .confirmationDialog(
             Text("source.deleteWarning", bundle: .module),
             isPresented: Binding(get: { deletion != nil }, set: { if !$0 { deletion = nil } })

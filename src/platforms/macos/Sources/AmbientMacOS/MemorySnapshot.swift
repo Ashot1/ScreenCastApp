@@ -80,6 +80,23 @@ public struct MemorySnapshot: Equatable, Sendable {
     /// Groups only the loaded task page: Core pages by ID across both lifecycles.
     var openTasks: [MemoryTask] { tasks.items.filter { $0.lifecycle == .open } }
     var completedTasks: [MemoryTask] { tasks.items.filter { $0.lifecycle == .completed } }
+    /// The first ready, unfinished step of the loaded page. Readiness comes only from Core, and
+    /// later pages are not read for it (ADR-023 #19).
+    var nextStep: MemoryStep? { steps.items.first { $0.ready && $0.completedAtUTC == nil } }
+    /// Unfinished predecessors a waiting step depends on, or nil when that is unknown: every
+    /// dependency (from the first page) and every predecessor step must be loaded.
+    func waitingSteps(for step: MemoryStep, dependenciesFromStart: Bool) -> [UInt64]? {
+        guard !step.ready, step.completedAtUTC == nil, dependenciesFromStart,
+            dependencies.nextAfter == nil
+        else { return nil }
+        var waiting: [UInt64] = []
+        for dependency in dependencies.items where dependency.dependent == step.id {
+            guard let predecessor = steps.items.first(where: { $0.id == dependency.predecessor })
+            else { return nil }
+            if predecessor.completedAtUTC == nil { waiting.append(predecessor.id) }
+        }
+        return waiting
+    }
 }
 public enum MemoryFailure: Error, Equatable, Sendable {
     case opening, storage, schema, invalidInput, native, closed, stale, deleted, limit, completed,

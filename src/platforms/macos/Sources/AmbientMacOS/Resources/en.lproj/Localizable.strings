@@ -9,7 +9,12 @@
 "intent.unsaved" = "Unsaved changes";
 "intent.save" = "Save";
 "intent.delete" = "Delete task";
+"intent.edit" = "Edit task";
 "intent.discard" = "Discard changes";
+"case.sections" = "Task sections";
+"case.sources" = "Sources";
+"case.help" = "Help";
+"case.actions" = "Task actions";
 "pause.enable" = "Pause manually";
 "pause.remove" = "Remove manual pause";
 "pause.help" = "Manual pause is saved between launches. Removing it does not connect the cloud.";
@@ -186,6 +191,8 @@
 "plan.ready" = "Available to start";
 "plan.done" = "Completed by you";
 "plan.blocked" = "Waiting for predecessors";
+"plan.next" = "Next step";
+"plan.waitsFor %@" = "Waits for step %@";
 "plan.completeStep" = "Mark step completed";
 "plan.undoStep" = "Remove completion";
 "plan.deleteStep" = "Delete step";

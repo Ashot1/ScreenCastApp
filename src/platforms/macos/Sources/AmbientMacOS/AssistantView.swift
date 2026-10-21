@@ -6,6 +6,7 @@ public struct AssistantView: View {
     @State private var linkTarget: UInt64?
     @State private var deletion: CaseDeletion?
     @State private var section = MainSection.task
+    @State private var tab = CaseTab.plan
     public init(model: AssistantModel, chatGPT: ChatGPTModel) {
         self.model = model
         self.chatGPT = chatGPT
@@ -36,7 +37,7 @@ public struct AssistantView: View {
                         if let snapshot = model.snapshot {
                             CaseDetailView(
                                 model: model, chatGPT: chatGPT, snapshot: snapshot,
-                                linkTarget: $linkTarget, deletion: $deletion)
+                                linkTarget: $linkTarget, deletion: $deletion, tab: $tab)
                             Text("memory.help", bundle: .module).font(.caption).foregroundStyle(
                                 .secondary)
                         }
@@ -59,6 +60,11 @@ public struct AssistantView: View {
         // The section follows every selection path, including the unsaved-changes alert buttons.
         .onChange(of: model.snapshot?.selectedTask?.id) { _, _ in section = .task }
         .onChange(of: model.isCreatingTask) { _, _ in section = .task }
+        // Case and pause changes cancel source reads in the model (D76); the root adds the two
+        // facts the model does not see: assistance became unavailable and the window closed.
+        .onChange(of: chatGPT.assistanceReady) { _, ready in if !ready { model.cancelSourceViews() }
+        }
+        .onDisappear { model.cancelSourceViews() }
         .onChange(of: model.manualPause) { _, _ in
             Task {
                 await chatGPT.resetAssistance()

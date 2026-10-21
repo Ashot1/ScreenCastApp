@@ -8,7 +8,7 @@ import Observation
     private let reader = LocalGitReader()
     private var operation: LocalSourceOperation?
     private var running: Task<Void, Never>?
-    private var generation: UInt64 = 0
+    private(set) var generation: UInt64 = 0
     private(set) var busy = false
     private(set) var root: LocalRootSettings?
     private(set) var savedRoots: [LocalRootSettings]?

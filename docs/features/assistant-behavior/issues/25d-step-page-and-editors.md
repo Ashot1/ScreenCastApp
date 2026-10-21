@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25C.
 
-**Status:** blocked
+**Status:** ready — 25C принята; исполнитель запускается оркестратором (D80)
 
 - [ ] `editorKind` — проекция только для чтения существующего `Editor`; приоритет страниц: `editorKind`, затем `selectedStep`, затем вкладки.
 - [ ] Страница шага: проверки через `Menu`, дата `confirmedAtUTC`, если есть, меню шага; «Назад к плану» — `requestSelection(.task(current))`.

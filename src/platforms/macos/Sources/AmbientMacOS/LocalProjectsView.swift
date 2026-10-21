@@ -120,10 +120,6 @@ struct LocalProjectsView: View {
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
-        .onDisappear { projects.cancel() }
-        .onChange(of: task) { _, _ in projects.cancel() }
-        .onChange(of: model.manualPause) { _, _ in projects.cancel() }
-        .onChange(of: chatGPT.assistanceReady) { _, ready in if !ready { projects.cancel() } }
         .confirmationDialog(
             Text("source.deleteWarning", bundle: .module),
             isPresented: Binding(get: { deletion != nil }, set: { if !$0 { deletion = nil } })

@@ -15,8 +15,18 @@ public enum MemorySelection: Equatable, Sendable {
 }
 public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
 @MainActor @Observable public final class AssistantModel {
-    public private(set) var snapshot: MemorySnapshot?
-    public private(set) var manualPause: Bool?
+    // D76: a source read belongs to one case revision and to the pause state it started in.
+    // Tabs, the step page and editors keep both, so they never cancel a read.
+    public private(set) var snapshot: MemorySnapshot? {
+        didSet {
+            let old = oldValue?.selectedTask
+            let new = snapshot?.selectedTask
+            if old?.id != new?.id || old?.revision != new?.revision { cancelSourceViews() }
+        }
+    }
+    public private(set) var manualPause: Bool? {
+        didSet { if oldValue != manualPause { cancelSourceViews() } }
+    }
     public var draft = ""
     public var draftHasPrompt = false
     public var draftPrompt = ""
@@ -67,9 +77,9 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
     private(set) var evidenceAfter: UInt64 = 0
     private(set) var linksAfter: UInt64 = 0
     private var decisionsAfter: UInt64 = 0
-    private var stepsAfter: UInt64 = 0
-    private var dependenciesAfter: UInt64 = 0
-    private var referencesAfter: UInt64 = 0
+    private(set) var stepsAfter: UInt64 = 0
+    private(set) var dependenciesAfter: UInt64 = 0
+    private(set) var referencesAfter: UInt64 = 0
     private var planPosition:
         (step: UInt64?, steps: UInt64, dependencies: UInt64, references: UInt64)
     {
@@ -108,7 +118,8 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         }
     }
     var isCreatingTask: Bool { if case .newTask = editor { true } else { false } }
-    private func cancelSourceViews() {
+    /// Also called by the window root when assistance becomes unavailable and when it closes.
+    func cancelSourceViews() {
         localProjects.cancel()
         codexSources.cancel()
         githubSources.cancel()

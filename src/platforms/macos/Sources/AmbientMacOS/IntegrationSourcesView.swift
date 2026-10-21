@@ -143,7 +143,5 @@ struct IntegrationSourcesView<Adapter: IntegrationPresentation>: View {
             await source.loadProfiles()
             await source.loadMetadata(task: task)
         }
-        .onDisappear { source.cancel() }
-        .onChange(of: chatGPT.assistanceReady) { if !chatGPT.assistanceReady { source.cancel() } }
     }
 }

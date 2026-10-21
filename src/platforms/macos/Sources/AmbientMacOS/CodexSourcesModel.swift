@@ -7,7 +7,7 @@ import Observation
     private let reader = CodexReader()
     private var operation: CodexOperation?
     private var running: Task<Void, Never>?
-    private var generation: UInt64 = 0
+    private(set) var generation: UInt64 = 0
     private(set) var selection: CodexSelection?
     private(set) var chosenPath: String?
     private(set) var settings: [CodexSelection]?

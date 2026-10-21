@@ -87,6 +87,5 @@ struct SelectedAssistanceView: View {
 
             }.frame(maxWidth: .infinity, alignment: .leading)
         }
-        .task(id: task.id) { await chatGPT.reloadAssistanceAvailability() }
     }
 }
