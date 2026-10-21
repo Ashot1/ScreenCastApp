@@ -1,5 +1,22 @@
 # Результаты проверки основы
 
+## Приёмка 25D — 21 октября 2026
+
+Страница шага, страницы редакторов и D81 ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25d-parent-inspection.md)).
+
+- **Исполнитель:**
+  - yarn verify 98 Swift, feature Swift 146;
+  - `MemorySessionTests` переписаны на `editorKind`;
+  - `CasePlanTests`: приоритет страниц; D81 — на второй странице готовый шаг есть, а блока нет; поведенческий RED для D81 наблюдался;
+  - перечень проверок 107 → 108, все изменения объяснены;
+  - аудит и подписи.
+- **Оркестратор:**
+  - свежий yarn verify 19:21–19:24Z, exit 0, 358 Rust / 98 Swift;
+  - хэши исходников и Mach-O совпадают;
+  - 25 прежних контрольных сборок (444 файла) не изменились;
+  - новая `Ambient-steps-25d.app`.
+- **Не проверено:** вид страниц (смотрит пользователь, D77), CI на `macos-26`, устройство с macOS 26.
+
 ## Приёмка 25C — 21 октября 2026
 
 Вкладки дела, план и отмена чтений в модели ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25c-parent-inspection.md)).

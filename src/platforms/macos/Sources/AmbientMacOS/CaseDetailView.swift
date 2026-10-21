@@ -31,46 +31,64 @@ struct CaseDetailView: View {
     @Binding var linkTarget: UInt64?
     @Binding var deletion: CaseDeletion?
     @Binding var tab: CaseTab
+    @Binding var editingTask: Bool
+    @Binding var editingStep: Bool
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            editor
-            if let task = snapshot.selectedTask, !model.isCreatingTask {
-                VStack(alignment: .leading, spacing: 16) {
-                    CaseHeader(model: model, task: task, deletion: $deletion)
-                    Picker(
-                        selection: Binding(get: { shownTab(task) }, set: { tab = $0 })
-                    ) {
-                        ForEach(CaseTab.tabs(for: task), id: \.self) { item in
-                            Text(item.titleKey, bundle: .module).tag(item)
-                        }
-                    } label: {
-                        Text("case.sections", bundle: .module)
-                    }
-                    .pickerStyle(.segmented).labelsHidden()
-                    switch shownTab(task) {
-                    case .plan: ManualPlanView(model: model, snapshot: snapshot)
-                    case .notes:
-                        Button {
-                            Task { await model.requestSelection(.newNote) }
-                        } label: {
-                            Text("notes.add", bundle: .module)
-                        }.disabled(task.lifecycle == .completed)
-                        notes
-                    case .links: links
-                    case .sources: sources(task)
-                    case .help:
-                        SelectedAssistanceView(
-                            model: model, chatGPT: chatGPT, task: task,
-                            notes: snapshot.evidence.items)
-                    }
+            switch model.casePage {
+            case .editor: DraftEditor(model: model)
+            case .step(let step):
+                if let task = snapshot.selectedTask {
+                    StepPage(
+                        model: model, snapshot: snapshot, task: task, step: step,
+                        editing: $editingStep)
                 }
-                // Assistance availability follows the open case, whichever tab is shown.
-                .task(id: task.lifecycle == .open ? task.id : nil) {
-                    if task.lifecycle == .open { await chatGPT.reloadAssistanceAvailability() }
-                }
+            case .tabs:
+                if let task = snapshot.selectedTask { tabs(task) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Assistance availability follows the open case, whichever page or tab is shown.
+        .task(id: openTaskID) {
+            if openTaskID != nil { await chatGPT.reloadAssistanceAvailability() }
+        }
+    }
+    private var openTaskID: UInt64? {
+        snapshot.selectedTask.flatMap { $0.lifecycle == .open ? $0.id : nil }
+    }
+    @ViewBuilder private func tabs(_ task: MemoryTask) -> some View {
+        CaseHeader(model: model, task: task, deletion: $deletion, editing: $editingTask)
+        // The model already edits the case; the mode only shows the fields, and an unsaved draft
+        // is always visible.
+        if model.editorKind == .task && (editingTask || model.hasUnsavedChanges) {
+            DraftEditor(model: model, titleFont: .title3.weight(.semibold)) { editingTask = false }
+        }
+        Picker(
+            selection: Binding(get: { shownTab(task) }, set: { tab = $0 })
+        ) {
+            ForEach(CaseTab.tabs(for: task), id: \.self) { item in
+                Text(item.titleKey, bundle: .module).tag(item)
+            }
+        } label: {
+            Text("case.sections", bundle: .module)
+        }
+        .pickerStyle(.segmented).labelsHidden()
+        switch shownTab(task) {
+        case .plan: ManualPlanView(model: model, snapshot: snapshot)
+        case .notes:
+            Button {
+                Task { await model.requestSelection(.newNote) }
+            } label: {
+                Text("notes.add", bundle: .module)
+            }.disabled(task.lifecycle == .completed)
+            notes
+        case .links: links
+        case .sources: sources(task)
+        case .help:
+            SelectedAssistanceView(
+                model: model, chatGPT: chatGPT, task: task,
+                notes: snapshot.evidence.items)
+        }
     }
     /// A completed case has no sources or help; its hidden tab shows the plan.
     private func shownTab(_ task: MemoryTask) -> CaseTab {
@@ -111,37 +129,6 @@ struct CaseDetailView: View {
                 source: model.todoistSources)
         } else {
             IntegrationDisabledView(kind: .todoist)
-        }
-    }
-    private var editor: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(LocalizedStringKey(model.editorKey), bundle: .module).font(.headline)
-            TextEditor(text: $model.draft).font(.body).frame(minHeight: 120).padding(6)
-                .overlay(RoundedRectangle(cornerRadius: 8).stroke(.secondary.opacity(0.3)))
-                .accessibilityLabel(
-                    Text(LocalizedStringKey(model.editorKey), bundle: .module))
-            PlanDraftFields(model: model)
-            if model.hasUnsavedChanges {
-                Text("intent.unsaved", bundle: .module).font(.caption).foregroundStyle(.secondary)
-            }
-            HStack {
-                Button {
-                    Task { await model.save() }
-                } label: {
-                    Text(
-                        model.isCompletingTask
-                            ? "lifecycle.confirmComplete"
-                            : model.isEditingNote ? "notes.save" : "intent.save", bundle: .module)
-                }
-                .buttonStyle(.borderedProminent).disabled(
-                    model.draft.isEmpty || !model.hasUnsavedChanges)
-                Button {
-                    model.discardChanges()
-                } label: {
-                    Text("intent.discard", bundle: .module)
-                }
-                .disabled(!model.hasUnsavedChanges && !model.isEditingNote && !model.isCreatingTask)
-            }
         }
     }
     private var notes: some View {
@@ -245,6 +232,7 @@ private struct CaseHeader: View {
     let model: AssistantModel
     let task: MemoryTask
     @Binding var deletion: CaseDeletion?
+    @Binding var editing: Bool
     @State private var confirmReopen = false
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -293,7 +281,7 @@ private struct CaseHeader: View {
     private var actions: some View {
         Menu {
             Button {
-                Task { await model.requestSelection(.task(task.id)) }
+                editing = true
             } label: {
                 Text("intent.edit", bundle: .module)
             }

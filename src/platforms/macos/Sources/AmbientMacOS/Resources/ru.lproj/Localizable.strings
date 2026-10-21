@@ -176,6 +176,7 @@
 "error.completed" = "Задача завершена. Чтобы добавить сведения, сначала откройте её снова.";
 "error.clipboard" = "Не удалось скопировать текст.";
 "plan.title" = "План";
+"plan.back" = "Назад к плану";
 "plan.empty" = "Нет шагов. Пустой план не означает, что задача завершена.";
 "plan.unknown" = "Неизвестно, насколько план полный.";
 "plan.partial" = "План неполный. Следующий шаг не предлагается.";
@@ -183,6 +184,7 @@
 "plan.confirm" = "Подтвердить все известные зависимости";
 "plan.newStep" = "Добавить шаг";
 "plan.editStep" = "Изменить шаг";
+"plan.stepActions" = "Действия с шагом";
 "plan.description" = "Описание";
 "plan.prompt" = "Точный промпт";
 "plan.reference" = "Точная ссылка";
@@ -203,6 +205,7 @@
 "plan.unknownCheck" = "Неизвестно";
 "plan.passed" = "Пройдена";
 "plan.failed" = "Не пройдена";
+"plan.checkConfirmed" = "Результат записан";
 "plan.dependencies" = "Зависимости";
 "plan.newDependency" = "Добавить зависимость";
 "plan.predecessor" = "ID предыдущего шага";

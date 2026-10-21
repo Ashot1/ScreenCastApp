@@ -7,6 +7,9 @@ public struct AssistantView: View {
     @State private var deletion: CaseDeletion?
     @State private var section = MainSection.task
     @State private var tab = CaseTab.plan
+    // Edit modes of the case text and of the step: here, so a section switch keeps them.
+    @State private var editingTask = false
+    @State private var editingStep = false
     public init(model: AssistantModel, chatGPT: ChatGPTModel) {
         self.model = model
         self.chatGPT = chatGPT
@@ -37,7 +40,8 @@ public struct AssistantView: View {
                         if let snapshot = model.snapshot {
                             CaseDetailView(
                                 model: model, chatGPT: chatGPT, snapshot: snapshot,
-                                linkTarget: $linkTarget, deletion: $deletion, tab: $tab)
+                                linkTarget: $linkTarget, deletion: $deletion, tab: $tab,
+                                editingTask: $editingTask, editingStep: $editingStep)
                             Text("memory.help", bundle: .module).font(.caption).foregroundStyle(
                                 .secondary)
                         }
@@ -58,7 +62,16 @@ public struct AssistantView: View {
             chatGPT.selectedTaskChanged()
         }
         // The section follows every selection path, including the unsaved-changes alert buttons.
-        .onChange(of: model.snapshot?.selectedTask?.id) { _, _ in section = .task }
+        .onChange(of: model.snapshot?.selectedTask?.id) { _, _ in
+            section = .task
+            closeEditModes()
+        }
+        .onChange(of: model.snapshot?.selectedStep?.id) { _, _ in editingStep = false }
+        // Opening a step or another editor changes the edited entity, so its mode closes too.
+        .onChange(of: model.editorKind) { _, kind in
+            if kind != .task { editingTask = false }
+            if kind != .step { editingStep = false }
+        }
         .onChange(of: model.isCreatingTask) { _, _ in section = .task }
         // Case and pause changes cancel source reads in the model (D76); the root adds the two
         // facts the model does not see: assistance became unavailable and the window closed.
@@ -79,6 +92,7 @@ public struct AssistantView: View {
         ) {
             Button {
                 let accepted = model.pendingSelection
+                closeEditModes()
                 Task { await model.saveAndSwitch(to: accepted) }
             } label: {
                 Text(
@@ -87,6 +101,7 @@ public struct AssistantView: View {
             }
             Button(role: .destructive) {
                 let accepted = model.pendingSelection
+                closeEditModes()
                 Task { await model.discardAndSwitch(to: accepted) }
             } label: {
                 Text("switch.discard", bundle: .module)
@@ -126,6 +141,11 @@ public struct AssistantView: View {
         } message: {
             Text("delete.message", bundle: .module)
         }
+    }
+    /// A failed save keeps its draft visible: the fields also show while there are unsaved changes.
+    private func closeEditModes() {
+        editingTask = false
+        editingStep = false
     }
     @ViewBuilder private var suggestions: some View {
         if !chatGPT.feed.isEmpty || !chatGPT.replyDraft.isEmpty || chatGPT.assisting {

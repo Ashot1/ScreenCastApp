@@ -103,6 +103,91 @@ import Testing
     #expect(await model.close())
 }
 
+/// The case page follows the open editor first, then the selected step, then the tabs. Checks
+/// load with their step, so a check editor wins over the step page it was opened from.
+@MainActor @Test func selectingAStepOpensItsPageAndEditorsWinOverTheStep() async throws {
+    let directory = try temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let s = MemorySession(databaseURL: directory.appendingPathComponent("memory.sqlite3"))
+    let task = try await s.createTask("Affair")
+    let stepID = try await s.addStep(
+        to: try await s.task(task.id),
+        input: MemoryStepInput(description: "Step", prompt: nil, reference: nil))
+    let checkID = try await s.addCheck(
+        to: try await s.task(task.id), stepID: stepID, description: "Check")
+    let model = AssistantModel(session: s)
+    await model.reload()
+    #expect(model.editorKind == .task && model.casePage == .tabs)
+
+    await model.requestSelection(.step(stepID))
+    let step = try #require(model.snapshot?.selectedStep)
+    #expect(step.id == stepID)
+    #expect(model.editorKind == .step && model.casePage == .step(step))
+
+    for (selection, kind) in [
+        (MemorySelection.newCheck(stepID), MemoryEditorKind.newCheck), (.check(checkID), .check),
+    ] {
+        await model.requestSelection(selection)
+        #expect(model.snapshot?.selectedStep?.id == stepID)
+        #expect(model.editorKind == kind && model.casePage == .editor)
+        // Leaving the check editor returns to the step it belongs to.
+        model.discardChanges()
+        #expect(model.editorKind == .task && model.casePage == .step(step))
+    }
+
+    for (selection, kind) in [
+        (MemorySelection.newStep, MemoryEditorKind.newStep), (.newDependency, .newDependency),
+        (.completion, .completion), (.newNote, .newNote), (.newTask, .newTask),
+    ] {
+        await model.requestSelection(selection)
+        #expect(model.editorKind == kind && model.casePage == .editor)
+        model.discardChanges()
+    }
+
+    // «Назад к плану» selects the case again and closes the step page.
+    await model.requestSelection(.step(stepID))
+    await model.requestSelection(.task(task.id))
+    #expect(model.snapshot?.selectedStep == nil)
+    #expect(model.editorKind == .task && model.casePage == .tabs)
+    #expect(await model.close())
+}
+
+/// D81: «Следующий шаг» shows only on the first step page; a later page may hide an earlier
+/// ready step, so the block is hidden there even when that page has a ready step.
+@MainActor @Test func nextStepShowsOnlyOnTheFirstStepPage() async throws {
+    let directory = try temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let s = MemorySession(databaseURL: directory.appendingPathComponent("memory.sqlite3"))
+    let task = try await s.createTask("Affair")
+    for index in 1...51 {
+        _ = try await s.addStep(
+            to: try await s.task(task.id),
+            input: MemoryStepInput(description: "Step \(index)", prompt: nil, reference: nil))
+    }
+    let model = AssistantModel(session: s)
+    await model.reload()
+    // Core marks steps ready only in a confirmed plan.
+    await model.confirmPlan()
+    let first = try #require(model.snapshot?.steps.items.first)
+    #expect(first.ready && model.nextStep == first)
+
+    await model.pagePlan(.steps, after: try #require(model.snapshot?.steps.nextAfter))
+    let later = try #require(model.snapshot?.steps.items.first)
+    #expect(later.ready && model.snapshot?.nextStep == later)
+    #expect(model.nextStep == nil)
+
+    await model.pagePlan(.steps, after: 0)
+    #expect(model.nextStep == first)
+    #expect(await model.close())
+}
+
+private func temporaryDirectory() throws -> URL {
+    let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "ambient-case-plan-" + UUID().uuidString)
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+    return directory
+}
+
 @MainActor private func generations(_ model: AssistantModel) -> [UInt64] {
     [
         model.localProjects.generation, model.codexSources.generation,

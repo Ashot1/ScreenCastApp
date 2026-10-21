@@ -16,79 +16,46 @@ struct ManualPlanView: View {
     }
     private func plan(_ task: MemoryTask) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            if let step = snapshot.nextStep { next(step) }
+            if let step = model.nextStep { next(step) }
             if snapshot.steps.items.isEmpty {
                 Text("plan.empty", bundle: .module).foregroundStyle(.secondary)
             }
+            // A row opens the step's page, which holds the step's actions and checks.
             ForEach(snapshot.steps.items) { step in
-                HStack(alignment: .top, spacing: 10) {
-                    statusIcon(step)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(verbatim: step.description).textSelection(.enabled)
-                            Spacer()
-                            status(step, task)
-                        }
-                        HStack {
-                            Text("plan.stepID", bundle: .module)
-                            Text(verbatim: String(step.id))
-                        }
-                        .font(.caption).foregroundStyle(.secondary)
-                        if let waiting = snapshot.waitingSteps(
-                            for: step, dependenciesFromStart: model.dependenciesAfter == 0),
-                            !waiting.isEmpty
-                        {
-                            Text(
-                                "plan.waitsFor \(waiting.map(String.init).joined(separator: ", "))",
-                                bundle: .module
-                            )
+                Button {
+                    Task { await model.requestSelection(.step(step.id)) }
+                } label: {
+                    HStack(alignment: .top, spacing: 10) {
+                        StepStatusIcon(step: step)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(verbatim: step.description)
+                                .foregroundStyle(
+                                    step.completedAtUTC == nil ? .primary : .secondary)
+                            HStack {
+                                Text("plan.stepID", bundle: .module)
+                                Text(verbatim: String(step.id))
+                            }
                             .font(.caption).foregroundStyle(.secondary)
-                        }
-                        if let prompt = step.prompt {
-                            DisclosureGroup {
-                                Text(verbatim: prompt).textSelection(.enabled)
-                            } label: {
-                                Text("plan.prompt", bundle: .module)
-                            }
-                            Button {
-                                model.copy(prompt)
-                            } label: {
-                                Text("plan.copyPrompt", bundle: .module)
-                            }
-                        }
-                        if let reference = step.reference {
-                            Text(verbatim: reference).textSelection(.enabled)
-                            Button {
-                                model.copy(reference)
-                            } label: {
-                                Text("plan.copyReference", bundle: .module)
-                            }
-                        }
-                        HStack {
-                            Button {
-                                Task { await model.requestSelection(.step(step.id)) }
-                            } label: {
-                                Text("plan.editStep", bundle: .module)
-                            }
-                            Button {
-                                Task { await model.completeStep(step) }
-                            } label: {
+                            if let waiting = snapshot.waitingSteps(
+                                for: step, dependenciesFromStart: model.dependenciesAfter == 0),
+                                !waiting.isEmpty
+                            {
                                 Text(
-                                    step.completedAtUTC == nil
-                                        ? "plan.completeStep" : "plan.undoStep",
-                                    bundle: .module)
-                            }.disabled(model.hasUnsavedChanges)
-                            Button(role: .destructive) {
-                                Task { await model.deleteStep(step.id) }
-                            } label: {
-                                Text("plan.deleteStep", bundle: .module)
+                                    "plan.waitsFor \(waiting.map(String.init).joined(separator: ", "))",
+                                    bundle: .module
+                                )
+                                .font(.caption).foregroundStyle(.secondary)
                             }
-                            .disabled(model.hasUnsavedChanges)
                         }
-                        .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+                        Spacer()
+                        StepStatus(step: step, task: task)
+                        Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+                            .accessibilityHidden(true)
                     }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
                 }
-                .padding(.vertical, 4)
+                .buttonStyle(.plain)
                 Divider()
             }
             pageControls(.steps, after: model.stepsAfter, next: snapshot.steps.nextAfter)
@@ -113,7 +80,6 @@ struct ManualPlanView: View {
                 .buttonStyle(.borderless)
                 .disabled(model.hasUnsavedChanges || task.planCompleteness == .complete)
             }
-            checks
             Text("plan.dependencies", bundle: .module).font(.headline)
             Button {
                 Task { await model.requestSelection(.newDependency) }
@@ -146,115 +112,13 @@ struct ManualPlanView: View {
             }
             Text(verbatim: step.description).font(.system(size: 18, weight: .medium))
                 .textSelection(.enabled)
-            HStack {
-                if let prompt = step.prompt {
-                    Button {
-                        model.copy(prompt)
-                    } label: {
-                        Label {
-                            Text("plan.copyPrompt", bundle: .module)
-                        } icon: {
-                            Image(systemName: "doc.on.doc")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                if let reference = step.reference {
-                    Button {
-                        model.copy(reference)
-                    } label: {
-                        Label {
-                            Text("plan.copyReference", bundle: .module)
-                        } icon: {
-                            Image(systemName: "link")
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                }
-                Spacer()
-                Button {
-                    Task { await model.completeStep(step) }
-                } label: {
-                    Label {
-                        Text("plan.completeStep", bundle: .module)
-                    } icon: {
-                        Image(systemName: "checkmark")
-                    }
-                }
-                .buttonStyle(.bordered).disabled(model.hasUnsavedChanges)
-            }
-            .buttonBorderShape(.capsule)
+            StepActions(model: model, step: step)
         }
         .padding(.vertical, 20).padding(.horizontal, 22)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(Text("plan.next", bundle: .module))
-    }
-    private func statusIcon(_ step: MemoryStep) -> some View {
-        Group {
-            if step.completedAtUTC != nil {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.secondary)
-            } else if step.ready {
-                Image(systemName: "circle.inset.filled").foregroundStyle(Theme.ready.text)
-            } else {
-                Image(systemName: "circle.dashed").foregroundStyle(.secondary)
-            }
-        }
-        .font(.title3).accessibilityHidden(true)
-    }
-    @ViewBuilder private func status(_ step: MemoryStep, _ task: MemoryTask) -> some View {
-        if step.completedAtUTC != nil {
-            Pill(text: Text("plan.done", bundle: .module))
-        } else if step.ready {
-            Pill(text: Text("plan.ready", bundle: .module), tone: Theme.ready)
-        } else if task.planCompleteness == .complete {
-            Pill(text: Text("plan.blocked", bundle: .module))
-        }
-    }
-    @ViewBuilder private var checks: some View {
-        if let step = snapshot.selectedStep {
-            Divider()
-            HStack {
-                Text("plan.checks", bundle: .module).font(.headline)
-                Text(verbatim: "#\(step.id)")
-            }
-            Button {
-                Task { await model.requestSelection(.newCheck(step.id)) }
-            } label: {
-                Text("plan.newCheck", bundle: .module)
-            }
-            ForEach(snapshot.checks.items) { check in
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(verbatim: check.description).textSelection(.enabled)
-                    Text(checkKey(check.result), bundle: .module).font(.caption)
-                    HStack {
-                        ForEach([MemoryCheckResult.unknown, .passed, .failed], id: \.rawValue) {
-                            result in
-                            Button {
-                                Task { await model.setCheck(check.id, result: result) }
-                            } label: {
-                                Text(checkKey(result), bundle: .module)
-                            }
-                            .disabled(model.hasUnsavedChanges || check.result == result)
-                        }
-                    }
-                    HStack {
-                        Button {
-                            Task { await model.requestSelection(.check(check.id)) }
-                        } label: {
-                            Text("plan.editCheck", bundle: .module)
-                        }
-                        Button(role: .destructive) {
-                            Task { await model.deleteCheck(check.id) }
-                        } label: {
-                            Text("plan.deleteCheck", bundle: .module)
-                        }
-                        .disabled(model.hasUnsavedChanges)
-                    }
-                }
-            }
-        }
     }
     private var references: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -283,13 +147,6 @@ struct ManualPlanView: View {
         case .unknown: "plan.unknown"
         case .partial: "plan.partial"
         case .complete: "plan.complete"
-        }
-    }
-    private func checkKey(_ value: MemoryCheckResult) -> LocalizedStringKey {
-        switch value {
-        case .unknown: "plan.unknownCheck"
-        case .passed: "plan.passed"
-        case .failed: "plan.failed"
         }
     }
 }
@@ -334,22 +191,12 @@ struct PlanDraftFields: View {
                             })
                     ) { Text(verbatim: link.otherTask.text).lineLimit(2) }
                 }
-                if let snapshot = model.snapshot {
-                    HStack {
-                        Button {
-                            Task { await model.pageLinks(after: 0) }
-                        } label: {
-                            Text("tasks.first", bundle: .module)
-                        }
-                        if let next = snapshot.links.nextAfter {
-                            Button {
-                                Task { await model.pageLinks(after: next) }
-                            } label: {
-                                Text("tasks.next", bundle: .module)
-                            }
-                        }
-                    }
-                }
+                PageControls(
+                    first: model.linksAfter == 0
+                        ? nil : { Task { await model.pageLinks(after: 0) } },
+                    next: model.snapshot?.links.nextAfter.map { next in
+                        { Task { await model.pageLinks(after: next) } }
+                    })
                 Text("lifecycle.references", bundle: .module).font(.headline)
                 ForEach(model.draftReferences.indices, id: \.self) { index in
                     HStack {

@@ -199,7 +199,7 @@ private struct DatabaseDirectory {
     await m.saveAndSwitch()
     #expect(m.pendingSelection == nil)
     #expect(m.draft == "Note 51")
-    #expect(m.isEditingNote)
+    #expect(m.editorKind == .note)
     m.draft = "Corrected note"
     await m.save()
     #expect(try await s.evidence(taskID: a.id, after: last - 1).items[0].text == "Corrected note")
@@ -326,10 +326,10 @@ private struct DatabaseDirectory {
     #expect(model.snapshot?.selectedTask?.lifecycle == .completed)
     #expect(model.pendingSelection == nil)
     #expect(model.failure == .completed)
-    #expect(!model.isEditingStep)
+    #expect(model.editorKind == .task)
     #expect(model.draft == "Summary")
     await model.requestSelection(.newNote)
-    #expect(!model.isEditingNote)
+    #expect(model.editorKind == .task)
     #expect(try await s.task(task.id).lifecycle == .completed)
     #expect(await model.close())
 }

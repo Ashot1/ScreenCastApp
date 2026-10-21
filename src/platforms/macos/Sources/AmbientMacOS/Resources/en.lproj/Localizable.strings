@@ -176,6 +176,7 @@
 "error.completed" = "This task is completed. Reopen it before adding details.";
 "error.clipboard" = "Could not copy the text.";
 "plan.title" = "Plan";
+"plan.back" = "Back to plan";
 "plan.empty" = "No steps. An empty plan does not complete the task.";
 "plan.unknown" = "Plan completeness is unknown.";
 "plan.partial" = "The plan is partial. No next step is recommended.";
@@ -183,6 +184,7 @@
 "plan.confirm" = "Confirm all known dependencies";
 "plan.newStep" = "Add step";
 "plan.editStep" = "Edit step";
+"plan.stepActions" = "Step actions";
 "plan.description" = "Description";
 "plan.prompt" = "Exact prompt";
 "plan.reference" = "Exact reference";
@@ -203,6 +205,7 @@
 "plan.unknownCheck" = "Unknown";
 "plan.passed" = "Passed";
 "plan.failed" = "Failed";
+"plan.checkConfirmed" = "Result recorded";
 "plan.dependencies" = "Dependencies";
 "plan.newDependency" = "Add dependency";
 "plan.predecessor" = "Predecessor step ID";

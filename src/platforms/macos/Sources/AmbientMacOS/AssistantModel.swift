@@ -14,6 +14,17 @@ public enum MemorySelection: Equatable, Sendable {
     case newDependency, completion
 }
 public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
+/// The open editor without its payload; the window picks the case page from it (ADR-023).
+enum MemoryEditorKind {
+    case newTask, task, newNote, note, newStep, step, newCheck, check, newDependency, completion
+}
+/// The case page by priority: an editor, then the selected step, then the case tabs. Checks load
+/// with their step, so a check editor wins over the step page.
+enum CasePage: Equatable {
+    case editor
+    case step(MemoryStep)
+    case tabs
+}
 @MainActor @Observable public final class AssistantModel {
     // D76: a source read belongs to one case revision and to the pause state it started in.
     // Tabs, the step page and editors keep both, so they never cancel a read.
@@ -111,13 +122,30 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         if isCompletingTask { return !draftKeepLinks.isEmpty || !draftReferences.isEmpty }
         return false
     }
-    var isEditingNote: Bool {
+    var editorKind: MemoryEditorKind {
         switch editor {
-        case .newNote, .note: true
-        default: false
+        case .newTask: .newTask
+        case .task: .task
+        case .newNote: .newNote
+        case .note: .note
+        case .newStep: .newStep
+        case .step: .step
+        case .newCheck: .newCheck
+        case .check: .check
+        case .newDependency: .newDependency
+        case .completion: .completion
         }
     }
-    var isCreatingTask: Bool { if case .newTask = editor { true } else { false } }
+    var casePage: CasePage {
+        switch editorKind {
+        case .task, .step: snapshot?.selectedStep.map(CasePage.step) ?? .tabs
+        default: .editor
+        }
+    }
+    /// D81: only the first step page shows «Следующий шаг»; an earlier page may hold a ready step.
+    var nextStep: MemoryStep? { stepsAfter == 0 ? snapshot?.nextStep : nil }
+    var isEditingNote: Bool { editorKind == .note || editorKind == .newNote }
+    var isCreatingTask: Bool { editorKind == .newTask }
     /// Also called by the window root when assistance becomes unavailable and when it closes.
     func cancelSourceViews() {
         localProjects.cancel()
@@ -560,14 +588,9 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         inFlight = (readingPause, task)
         return await task.value
     }
-    var isEditingStep: Bool {
-        switch editor {
-        case .newStep, .step: true
-        default: false
-        }
-    }
-    var isEditingDependency: Bool { if case .newDependency = editor { true } else { false } }
-    var isCompletingTask: Bool { if case .completion = editor { true } else { false } }
+    var isEditingStep: Bool { editorKind == .step || editorKind == .newStep }
+    var isEditingDependency: Bool { editorKind == .newDependency }
+    var isCompletingTask: Bool { editorKind == .completion }
     var editorKey: String {
         switch editor {
         case .newTask: "tasks.new"

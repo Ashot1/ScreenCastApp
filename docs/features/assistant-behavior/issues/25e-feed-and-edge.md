@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25D.
 
-**Status:** blocked
+**Status:** ready — 25D принята; исполнитель запускается оркестратором (D80)
 
 - [ ] `AssistanceCardView`: сворачиваемые строки (развёрнута цель ответа, иначе явное нажатие, иначе первая не устаревшая), метки, `Callout`; `VoiceReplyView`; `WorkRow`.
 - [ ] `EdgeCardController`: в `render` меняется только блок создания окна (прозрачный скрытый заголовок, `.fullSizeContentView`, прозрачный фон, основной путь `.glassEffect`, запасной `NSGlassEffectView` по R2); логика показа и активации, наблюдатели, `placement()` и `EdgeCardTests` — побайтно прежние.
