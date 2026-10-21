@@ -39,7 +39,7 @@ impl JiraSteps for Store {
 }
 
 #[test]
-fn jira_store_uses_schema_fifteen() -> Result<(), Box<dyn std::error::Error>> {
+fn jira_store_uses_schema_sixteen() -> Result<(), Box<dyn std::error::Error>> {
     let path = std::env::temp_dir().join(format!(
         "ambient-jira-schema-{}.sqlite3",
         std::process::id()
@@ -48,7 +48,7 @@ fn jira_store_uses_schema_fifteen() -> Result<(), Box<dyn std::error::Error>> {
     drop(store);
     let connection = Connection::open(&path)?;
     let version: i32 = connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
-    assert_eq!(version, 15);
+    assert_eq!(version, 16);
     drop(connection);
     std::fs::remove_file(path)?;
     Ok(())

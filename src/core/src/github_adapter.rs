@@ -2,7 +2,6 @@
 use crate::github_parser::{self as parser, Loss};
 use crate::*;
 use serde_json::Value;
-use std::time::UNIX_EPOCH;
 
 pub(crate) struct GitHub;
 
@@ -182,12 +181,8 @@ impl Adapter for GitHub {
     }
     /// Any 403/429 or an exhausted quota stops the read with at least a 60 second pause; a
     /// secondary limit does not always carry distinguishing headers.
-    fn pause(
-        &self,
-        status: u16,
-        headers: &IntegrationHeaders,
-        now: i64,
-    ) -> Result<Option<Pause>, StoreError> {
+    fn pause(&self, response: &IntegrationResponse, now: i64) -> Result<Option<Pause>, StoreError> {
+        let (status, headers) = (response.status, &response.headers);
         if !matches!(status, 403 | 429) && headers.remaining.as_deref().and_then(decimal) != Some(0)
         {
             return Ok(None);
@@ -218,13 +213,8 @@ fn cooldown(h: &IntegrationHeaders, now: i64) -> Result<(i64, bool), StoreError>
     let mut until = now.checked_add(60).ok_or(StoreError::InvalidInput)?;
     let mut has_deadline = false;
     let mut trustworthy = !h.rate_ambiguous;
-    if let Some(raw) = &h.retry_after {
-        let delta = decimal(raw).and_then(|n| now.checked_add(n));
-        let date = httpdate::parse_http_date(raw)
-            .ok()
-            .and_then(|d| d.duration_since(UNIX_EPOCH).ok())
-            .and_then(|d| i64::try_from(d.as_secs()).ok());
-        if let Some(t) = delta.or(date) {
+    if h.retry_after.is_some() {
+        if let Some(t) = h.retry_after_deadline(now) {
             until = until.max(t);
             has_deadline = true;
         } else {
@@ -570,7 +560,8 @@ mod tests {
         target: IntegrationTarget,
         object: IntegrationObject,
         coverage: IntegrationCoverage,
-        initial: serde_json::Value,
+        /// Responses that take a reader past its identity reads.
+        initial: Vec<serde_json::Value>,
     }
     fn github() -> Result<Sample, Box<dyn std::error::Error>> {
         let repo = GitHubRepository {
@@ -588,7 +579,7 @@ mod tests {
             target,
             object,
             coverage,
-            initial: pr,
+            initial: vec![pr],
         })
     }
     fn jira() -> Result<Sample, Box<dyn std::error::Error>> {
@@ -608,7 +599,30 @@ mod tests {
             target,
             object,
             coverage,
-            initial: issue,
+            initial: vec![issue],
+        })
+    }
+    fn todoist() -> Result<Sample, Box<dyn std::error::Error>> {
+        let task = serde_json::json!({"id":"task-id","project_id":"project-id","content":"C","checked":false,"is_deleted":false});
+        let content = crate::todoist_parser::task(&task).map_err(|_| "todoist task")?;
+        let scope = TodoistScope {
+            profile: version(),
+            account: "account".into(),
+        };
+        let object =
+            crate::todoist_parser::object(&scope, content, (1, 2)).map_err(|_| "todoist object")?;
+        let profile = profile(
+            IntegrationConfig::Todoist(TodoistConfig::default()),
+            Some("account"),
+        );
+        let target = Todoist.parse_target("task-id")?;
+        let coverage = Todoist.start(&profile, &target)?.coverage;
+        Ok(Sample {
+            profile,
+            target,
+            object,
+            coverage,
+            initial: vec![serde_json::json!({"id":"account"}), task],
         })
     }
 
@@ -616,11 +630,18 @@ mod tests {
     #[test]
     fn adapter_methods_reject_the_other_adapters_variants() -> Result<(), Box<dyn std::error::Error>>
     {
-        let (g, j) = (github()?, jira()?);
-        for (adapter, own, foreign) in [
-            (&GitHub as &dyn Adapter, &g, &j),
-            (&Jira as &dyn Adapter, &j, &g),
-        ] {
+        let samples = [
+            (&GitHub as &dyn Adapter, github()?),
+            (&Jira as &dyn Adapter, jira()?),
+            (&Todoist as &dyn Adapter, todoist()?),
+        ];
+        let pairs = samples.iter().flat_map(|own| {
+            samples
+                .iter()
+                .filter(move |other| other.0.kind() != own.0.kind())
+                .map(move |other| (own.0, &own.1, &other.1))
+        });
+        for (adapter, own, foreign) in pairs {
             let mixed = profile(own.profile.config.clone(), own.profile.scope.as_deref());
             assert!(adapter.validate_config(&foreign.profile.config).is_err());
             assert!(adapter.admit(&own.profile, &foreign.target).is_err());
@@ -639,17 +660,20 @@ mod tests {
             // fails instead of panicking.
             let mut reader = adapter.start(&own.profile, &own.target)?.reader;
             let mut w = window(own.coverage.clone());
-            reader.next(false, &mut w)?;
-            let initial = IntegrationResponse {
-                status: 200,
-                body: serde_json::to_vec(&own.initial)?,
-                headers: IntegrationHeaders::default(),
-            };
-            assert!(matches!(reader.accept(&initial, 2, &mut w), Step::Continue));
+            for initial in &own.initial {
+                reader.next(false, &mut w)?;
+                let initial = IntegrationResponse {
+                    status: 200,
+                    body: serde_json::to_vec(initial)?,
+                    headers: IntegrationHeaders::default(),
+                };
+                assert!(matches!(reader.accept(&initial, 2, &mut w), Step::Continue));
+            }
             w.categories = foreign.coverage.clone();
             let unavailable = IntegrationResponse {
                 status: 404,
-                ..initial
+                body: Vec::new(),
+                headers: IntegrationHeaders::default(),
             };
             assert!(matches!(
                 reader.accept(&unavailable, 2, &mut w),
@@ -671,9 +695,13 @@ mod tests {
         // Exhaustive: a new kind fails to compile here until it is listed, and then fails this
         // test until its adapter joins the namespace table.
         let all = |k: IntegrationKind| match k {
-            IntegrationKind::GitHub | IntegrationKind::Jira => k,
+            IntegrationKind::GitHub | IntegrationKind::Jira | IntegrationKind::Todoist => k,
         };
-        for kind in [all(IntegrationKind::GitHub), all(IntegrationKind::Jira)] {
+        for kind in [
+            all(IntegrationKind::GitHub),
+            all(IntegrationKind::Jira),
+            all(IntegrationKind::Todoist),
+        ] {
             assert!(
                 crate::integration_types::ADAPTERS
                     .iter()

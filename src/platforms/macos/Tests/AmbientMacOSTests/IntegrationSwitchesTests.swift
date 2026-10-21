@@ -5,7 +5,8 @@ import Testing
 @testable import AmbientMacOS
 
 @Test func builtInIntegrationKindsUseTheFixedABIValues() {
-    #expect(BuiltInIntegration.allCases.map(\.abi) == [1, 2, 3, 4])
+    #expect(BuiltInIntegration.allCases.map(\.abi) == [1, 2, 3, 4, 5])
+    #expect(BuiltInIntegration.todoist.titleKey == "integrations.todoist")
 }
 
 @Test @MainActor func integrationSwitchesStartEnabledPersistAndCloseReading() async throws {

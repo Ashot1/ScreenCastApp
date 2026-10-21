@@ -30,6 +30,11 @@ mod jira_parser;
 mod jira_types;
 use jira_adapter::Jira;
 pub use jira_types::*;
+mod todoist_adapter;
+mod todoist_parser;
+mod todoist_types;
+use todoist_adapter::Todoist;
+pub use todoist_types::*;
 
 mod plugin_package;
 mod plugin_types;

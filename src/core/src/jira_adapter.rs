@@ -2,7 +2,6 @@
 use crate::jira_parser as parser;
 use crate::*;
 use serde_json::Value;
-use std::time::UNIX_EPOCH;
 
 pub(crate) struct Jira;
 
@@ -97,17 +96,13 @@ impl Adapter for Jira {
             coverage: IntegrationCoverage::Jira((0..4).map(coverage).collect()),
         })
     }
-    fn pause(
-        &self,
-        status: u16,
-        headers: &IntegrationHeaders,
-        now: i64,
-    ) -> Result<Option<Pause>, StoreError> {
+    fn pause(&self, response: &IntegrationResponse, now: i64) -> Result<Option<Pause>, StoreError> {
+        let (status, headers) = (response.status, &response.headers);
         // 429 always stops; 503 stops only when the server announced (or obscured) a retry time.
         if status == 429
             || (status == 503 && (headers.retry_after.is_some() || headers.rate_ambiguous))
         {
-            let until = retry_deadline(headers, now);
+            let until = headers.retry_after_deadline(now);
             return Ok(Some(Pause {
                 until,
                 known: until.is_some() && !headers.rate_ambiguous,
@@ -122,19 +117,6 @@ impl Adapter for Jira {
     fn validate_object(&self, o: &IntegrationObject, edited: bool) -> Result<(), StoreError> {
         parser::validate_object(o, edited)
     }
-}
-fn retry_deadline(h: &IntegrationHeaders, now: i64) -> Option<i64> {
-    let raw = h.retry_after.as_deref()?;
-    let delta = if !raw.is_empty() && raw.bytes().all(|b| b.is_ascii_digit()) {
-        raw.parse::<i64>().ok().and_then(|n| now.checked_add(n))
-    } else {
-        None
-    };
-    let date = httpdate::parse_http_date(raw)
-        .ok()
-        .and_then(|d| d.duration_since(UNIX_EPOCH).ok())
-        .and_then(|d| i64::try_from(d.as_secs()).ok());
-    delta.or(date)
 }
 fn coverage(category: u32) -> JiraCoverage {
     JiraCoverage {

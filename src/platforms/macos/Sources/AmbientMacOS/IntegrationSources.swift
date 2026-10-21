@@ -4,11 +4,12 @@ import Foundation
 
 /// Built-in HTTP integrations on the shared engine.
 enum IntegrationKind: String, Codable, Sendable {
-    case github, jira
+    case github, jira, todoist
     var abi: UInt32 {
         switch self {
         case .github: UInt32(AMBIENT_INTEGRATION_GITHUB)
         case .jira: UInt32(AMBIENT_INTEGRATION_JIRA)
+        case .todoist: UInt32(AMBIENT_INTEGRATION_TODOIST)
         }
     }
     /// Saved evidence is mapped to its integration only through the binding namespace.
@@ -16,19 +17,21 @@ enum IntegrationKind: String, Codable, Sendable {
         switch namespace {
         case "github-com-rest-v1": self = .github
         case "jira-cloud-rest-v1": self = .jira
+        case "todoist-api-v1": self = .todoist
         default: return nil
         }
     }
 }
 /// Built-in integrations that the user switches on and off as a whole (D61).
 enum BuiltInIntegration: CaseIterable, Sendable {
-    case localProjects, codex, github, jira
+    case localProjects, codex, github, jira, todoist
     var abi: UInt32 {
         switch self {
         case .localProjects: UInt32(AMBIENT_INTEGRATION_LOCAL_PROJECTS)
         case .codex: UInt32(AMBIENT_INTEGRATION_CODEX)
         case .github: UInt32(AMBIENT_INTEGRATION_GITHUB)
         case .jira: UInt32(AMBIENT_INTEGRATION_JIRA)
+        case .todoist: UInt32(AMBIENT_INTEGRATION_TODOIST)
         }
     }
 }
@@ -39,7 +42,7 @@ enum IntegrationFailure: Error, Equatable, Sendable {
 /// Adapter settings nested in a profile, decoded by the profile's kind.
 enum IntegrationConfig: Equatable, Sendable {
     case github([GitHubRepository])
-    case jira
+    case jira, todoist
 }
 struct IntegrationProfile: Decodable, Equatable, Sendable, Identifiable {
     let id: UInt64
@@ -66,11 +69,12 @@ struct IntegrationProfile: Decodable, Equatable, Sendable, Identifiable {
         credentialGeneration = try c.decode(UInt64.self, forKey: .credentialGeneration)
         name = try c.decode(String.self, forKey: .name)
         scope = try c.decodeIfPresent(String.self, forKey: .scope)
-        // Core validated the stored config; Jira's empty object carries nothing for native.
+        // Core validated the stored config; empty objects (Jira, Todoist) carry nothing for native.
         config =
             switch kind {
             case .github: .github(try c.decode([GitHubRepository].self, forKey: .config))
             case .jira: .jira
+            case .todoist: .todoist
             }
         notBeforeUTC = try c.decodeIfPresent(Int64.self, forKey: .notBeforeUTC)
         serverDeadlineKnown = try c.decode(Bool.self, forKey: .serverDeadlineKnown)
@@ -353,6 +357,18 @@ extension MemorySession {
             }
         }
         return try integrationProfile(out.id, kind: .jira)
+    }
+    /// Core keeps the account it wrote during a read; native never passes one.
+    func saveTodoistProfile(id: UInt64, expected: UInt64, name: String) throws
+        -> IntegrationProfile
+    {
+        let h = try sourceMemoryHandle()
+        var out = AmbientIntegrationProfileRef()
+        try LocalSourceBridge.withText(name) { name in
+            try IntegrationBridge.check(
+                ambient_integration_v1_todoist_profile_save(h, id, expected, name, &out))
+        }
+        return try integrationProfile(out.id, kind: .todoist)
     }
     func beginIntegrationCredentialReplacement(_ p: IntegrationProfile) throws
         -> IntegrationProfile

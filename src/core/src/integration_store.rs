@@ -15,6 +15,7 @@ fn adapter(kind: IntegrationKind) -> &'static dyn Adapter {
     match kind {
         IntegrationKind::GitHub => &GitHub,
         IntegrationKind::Jira => &Jira,
+        IntegrationKind::Todoist => &Todoist,
     }
 }
 
@@ -270,6 +271,35 @@ fn sent_generation(
         Err(e) => Err(e),
     }
 }
+/// Another profile of this kind already holds the scope; checked before the unique index would.
+fn duplicate(
+    c: &Connection,
+    kind: IntegrationKind,
+    id: u64,
+    scope: &str,
+) -> Result<bool, StoreError> {
+    Ok(profiles(c, kind)?
+        .iter()
+        .any(|p| p.id != id && p.scope.as_deref() == Some(scope)))
+}
+/// Writes a scope once into a profile that has none (D65). Revision and generation stay: no saved
+/// facts or 08B grounds can exist for a profile without a scope. Every domain refusal is
+/// `InvalidInput`, which the caller turns into the operation outcome 409; storage errors pass.
+fn pin(c: &Connection, kind: IntegrationKind, id: u64, scope: &str) -> Result<(), StoreError> {
+    adapter(kind).validate_scope(Some(scope))?;
+    if excluded(c, kind, scope)? || duplicate(c, kind, id, scope)? {
+        return Err(StoreError::InvalidInput);
+    }
+    // The row count guards against a second pin by a faulty adapter.
+    if c.execute(
+        "UPDATE integration_profiles SET scope=?1 WHERE id=?2 AND scope IS NULL",
+        params![scope, sql_id(id)?],
+    )? != 1
+    {
+        return Err(StoreError::InvalidInput);
+    }
+    validate_settings(c, kind)
+}
 fn merge(stored: (Option<i64>, bool), pause: &Pause) -> (Option<i64>, bool) {
     match (stored.0, pause.until) {
         (_, None) => stored,
@@ -281,11 +311,11 @@ fn merge(stored: (Option<i64>, bool), pause: &Pause) -> (Option<i64>, bool) {
 pub(super) fn validate_integrations(c: &Connection) -> Result<(), StoreError> {
     // The schema allows only id 1, so a readable identity means exactly one row.
     instance(c)?;
-    // The kind key and CHECK allow only the four built-in kinds, so four rows means all of them.
+    // The kind key and CHECK allow only the five built-in kinds, so five rows means all of them.
     let switches: i64 = c.query_row("SELECT count(*) FROM integration_switches", [], |r| {
         r.get(0)
     })?;
-    if switches != 4 {
+    if switches != 5 {
         return Err(StoreError::UnsupportedSchema);
     }
     let mut q = c.prepare(
@@ -406,11 +436,12 @@ impl Store {
                 }
                 Some(p)
             };
-            let all = profiles(c, kind)?;
-            if scope.is_some() && all.iter().any(|p| p.id != id && p.scope.as_deref() == scope) {
+            if let Some(scope) = scope
+                && duplicate(c, kind, id, scope)?
+            {
                 return Err(StoreError::InvalidInput);
             }
-            if old.is_none() && all.len() >= MAX_PROFILES {
+            if old.is_none() && profiles(c, kind)?.len() >= MAX_PROFILES {
                 return Err(StoreError::ResourceLimit);
             }
             let revision = clock(c)?;
@@ -716,7 +747,7 @@ impl Store {
             })?;
             return self.fail_integration_read(id, 401);
         }
-        if let Some(pause) = adapter(kind).pause(response.status, &response.headers, now)? {
+        if let Some(pause) = adapter(kind).pause(&response, now)? {
             self.change(|c| {
                 if let Some(p) = sent_generation(c, profile_id, generation)? {
                     let (until, known) = merge((p.not_before_utc, p.server_deadline_known), &pause);
@@ -747,6 +778,12 @@ impl Store {
                 Ok(())
             }
             Step::Fail(code) => fail(r, code),
+            // The fence above already admitted this exact profile version inside this `&mut self`
+            // call, so nothing can change the profile before the pin transaction runs.
+            Step::Pin(scope) => match self.change(|c| pin(c, kind, profile_id, &scope)) {
+                Err(StoreError::InvalidInput) => self.fail_integration_read(id, 409),
+                result => result,
+            },
         }
     }
     pub fn fail_integration_read(&mut self, id: u64, code: u32) -> Result<(), StoreError> {
@@ -1021,6 +1058,84 @@ mod tests {
         fn accept(&mut self, _: &IntegrationResponse, _: i64, _: &mut IntegrationWindow) -> Step {
             Step::Continue
         }
+    }
+    /// A faulty reader that asks for the pin on every response.
+    struct Repinning;
+    impl Reader for Repinning {
+        fn next(
+            &mut self,
+            _: bool,
+            _: &mut IntegrationWindow,
+        ) -> Result<IntegrationRequest, StoreError> {
+            Ok(IntegrationRequest::Todoist(TodoistRequest::User))
+        }
+        fn accept(&mut self, _: &IntegrationResponse, _: i64, _: &mut IntegrationWindow) -> Step {
+            Step::Pin("account-1".into())
+        }
+    }
+    #[test]
+    fn a_second_pin_of_an_already_written_scope_fails_with_409() -> Result<(), StoreError> {
+        let path = std::env::temp_dir().join(format!(
+            "ambient-integration-repin-{}.sqlite3",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&path);
+        let mut s = Store::open(&path)?;
+        s.set_model_session(9, true, true)?;
+        let a = s.prepare_check(true, ModelProfile::High)?;
+        let flag = a.cancellation();
+        let d = s.dispatch_check(a, 1)?;
+        s.finish_check(
+            d.id(),
+            ModelCheckResult {
+                outcome: CheckOutcome::Confirmed,
+                actual: ActualConfig {
+                    model: ActualModel::Luna,
+                    effort: ActualEffort::High,
+                    tier: ActualTier::Fast,
+                },
+                usage: None,
+            },
+        )?;
+        s.release_check(&flag);
+        let p = s.save_integration_profile(
+            0,
+            0,
+            "Personal",
+            None,
+            &IntegrationConfig::Todoist(TodoistConfig::default()),
+        )?;
+        let t = s.create_task("Discuss")?;
+        let op = s.begin_integration_read(
+            TaskVersion {
+                task_id: t.id,
+                revision: t.revision,
+            },
+            p.version(),
+            "task-1",
+            100,
+            1000,
+        )?;
+        s.start_integration_transport(op)?;
+        s.integration_read_mut(op)?.reader = Box::new(Repinning);
+        let response = || IntegrationResponse {
+            status: 200,
+            body: Vec::new(),
+            headers: IntegrationHeaders::default(),
+        };
+        s.permit_integration_step(op, 100)?;
+        s.accept_integration_response(op, response(), 100)?;
+        assert_eq!(
+            s.integration_profile(p.id)?.scope.as_deref(),
+            Some("account-1")
+        );
+        s.permit_integration_step(op, 101)?;
+        assert!(s.accept_integration_response(op, response(), 101).is_err());
+        assert_eq!(s.integration_read_status(op)?, 409);
+        s.finish_integration_transport(op)?;
+        drop(s);
+        let _ = std::fs::remove_file(path);
+        Ok(())
     }
     #[test]
     fn core_refuses_the_step_after_the_adapter_maximum() -> Result<(), StoreError> {

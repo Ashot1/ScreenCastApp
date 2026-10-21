@@ -200,6 +200,13 @@ public struct AssistantView: View {
                             } else {
                                 IntegrationDisabledView(kind: .jira)
                             }
+                            if model.integrations.isEnabled(.todoist) {
+                                IntegrationSourcesView(
+                                    model: model, chatGPT: chatGPT, task: task,
+                                    source: model.todoistSources)
+                            } else {
+                                IntegrationDisabledView(kind: .todoist)
+                            }
                             SelectedAssistanceView(
                                 model: model, chatGPT: chatGPT, task: task,
                                 notes: snapshot.evidence.items)

@@ -8,6 +8,8 @@ import Testing
 
 typealias JiraWindow = IntegrationWindow<JiraObject, JiraCoverage>
 typealias JiraPreview = IntegrationPreview<JiraObject>
+typealias TodoistWindow = IntegrationWindow<TodoistObject, TodoistCoverage>
+typealias TodoistPreview = IntegrationPreview<TodoistObject>
 
 /// An isolated file keychain; nothing touches the user's login keychain.
 @MainActor final class IntegrationKeychainFixture {
@@ -47,17 +49,20 @@ private func fixtureProfile(_ kind: IntegrationKind, _ memory: MemorySession) as
             repositories: [GitHubRepository(owner: "Example", repository: "Project")])
     case .jira:
         try await memory.saveJiraProfile(id: 0, expected: 0, name: "Work", cloudID: "Site-ID")
+    case .todoist:
+        try await memory.saveTodoistProfile(id: 0, expected: 0, name: "Work")
     }
 }
 private func fixtureSecret(_ kind: IntegrationKind, _ token: String) -> IntegrationSecret {
     switch kind {
     case .github: .githubToken(token: token)
     case .jira: .jiraBasic(email: "fixture@example.invalid", token: token)
+    case .todoist: .todoistToken(token: token)
     }
 }
 private func token(_ e: IntegrationEnvelope?) -> String? {
     switch e?.secret {
-    case .githubToken(let token): token
+    case .githubToken(let token), .todoistToken(let token): token
     case .jiraBasic(_, let token): token
     case nil: nil
     }
@@ -70,7 +75,9 @@ private func token(_ e: IntegrationEnvelope?) -> String? {
     #expect(MemoryLayout<AmbientGitHubRepository>.size == 32)
     #expect(IntegrationKind.github.abi == 3)
     #expect(IntegrationKind.jira.abi == 4)
+    #expect(IntegrationKind.todoist.abi == 5)
     #expect(IntegrationKind(namespace: "jira-cloud-rest-v1") == .jira)
+    #expect(IntegrationKind(namespace: "todoist-api-v1") == .todoist)
     #expect(IntegrationKind(namespace: "github-com-rest-v1") == .github)
     #expect(IntegrationKind(namespace: "local-git-branch-v1") == nil)
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(
@@ -94,6 +101,16 @@ private func token(_ e: IntegrationEnvelope?) -> String? {
     #expect(try await memory.integrationProfile(p.id, kind: .jira).config == .jira)
     await #expect(throws: IntegrationFailure.invalid) {
         try await memory.setIntegrationScopeExcluded(.github, scope: "10", excluded: true)
+    }
+    // A new Todoist profile has no account until a read writes it; renaming keeps that.
+    let t = try await memory.saveTodoistProfile(id: 0, expected: 0, name: "Personal")
+    #expect(t.kind == .todoist && t.scope == nil && t.config == .todoist)
+    let renamed = try await memory.saveTodoistProfile(
+        id: t.id, expected: t.settingsRevision, name: "Renamed")
+    #expect(renamed.name == "Renamed" && renamed.scope == nil)
+    await #expect(throws: IntegrationFailure.invalid) {
+        _ = try await memory.saveTodoistProfile(
+            id: p.id, expected: excluded.settingsRevision, name: "Other kind")
     }
     try await memory.close()
 }
@@ -166,13 +183,37 @@ private func token(_ e: IntegrationEnvelope?) -> String? {
     ] {
         #expect(throws: IntegrationFailure.invalid) { try bad.validate() }
     }
+    let todoist = IntegrationEnvelope(
+        version: 1, instance: envelope.instance, kind: .todoist, profileID: 7, generation: 9,
+        secret: .todoistToken(token: "opaque"))
+    try todoist.validate()
+    let todoistJSON = try #require(
+        try JSONSerialization.jsonObject(with: JSONEncoder().encode(todoist)) as? [String: Any])
+    #expect(todoistJSON["kind"] as? String == "todoist")
+    #expect(
+        try #require(todoistJSON["secret"] as? [String: [String: String]])
+            == ["todoist_token": ["token": "opaque"]])
+    #expect(
+        try JSONDecoder().decode(IntegrationEnvelope.self, from: JSONEncoder().encode(todoist))
+            == todoist)
+    #expect(IntegrationSecret.todoistToken(token: "opaque").parts == ("opaque", nil))
+    for bad in [
+        IntegrationEnvelope(
+            version: 1, instance: envelope.instance, kind: .github, profileID: 7, generation: 9,
+            secret: .todoistToken(token: "opaque")),
+        IntegrationEnvelope(
+            version: 1, instance: envelope.instance, kind: .todoist, profileID: 7, generation: 9,
+            secret: .todoistToken(token: "bad token")),
+    ] {
+        #expect(throws: IntegrationFailure.invalid) { try bad.validate() }
+    }
     let unknown = Data(#"{"other":{"token":"x"}}"#.utf8)
     #expect(throws: (any Error).self) {
         try JSONDecoder().decode(IntegrationSecret.self, from: unknown)
     }
 }
 
-@Test(arguments: [IntegrationKind.github, .jira]) @MainActor
+@Test(arguments: [IntegrationKind.github, .jira, .todoist]) @MainActor
 func secretOwnerReplacesCoreFirstAndSurvivesKeychainRestart(kind: IntegrationKind) async throws {
     let fixture = try IntegrationKeychainFixture()
     defer { fixture.remove() }
@@ -207,7 +248,7 @@ func secretOwnerReplacesCoreFirstAndSurvivesKeychainRestart(kind: IntegrationKin
     try await memory.close()
 }
 
-@Test(arguments: [IntegrationKind.github, .jira]) @MainActor
+@Test(arguments: [IntegrationKind.github, .jira, .todoist]) @MainActor
 func secretOfAnotherMemoryDatabaseNeverMatchesTheSameProfileAndGeneration(kind: IntegrationKind)
     async throws
 {
@@ -336,16 +377,17 @@ func secretOfAnotherMemoryDatabaseNeverMatchesTheSameProfileAndGeneration(kind: 
             try await memory.close()
         }
     }
-    @Test(arguments: [IntegrationKind.github, .jira]) @MainActor
+    @Test(arguments: [IntegrationKind.github, .jira, .todoist]) @MainActor
     func profileLoadIgnoresALateSecretAnswerForAnEarlierProfile(kind: IntegrationKind)
         async throws
     {
         switch kind {
         case .github: try await GuardAdapter<GitHubAdapter>.run(kind)
         case .jira: try await GuardAdapter<JiraAdapter>.run(kind)
+        case .todoist: try await GuardAdapter<TodoistAdapter>.run(kind)
         }
     }
-    @Test(arguments: [IntegrationKind.github, .jira]) @MainActor
+    @Test(arguments: [IntegrationKind.github, .jira, .todoist]) @MainActor
     func failedSecretWriteAndDeleteNeverReactivateTheOldEnvelope(kind: IntegrationKind)
         async throws
     {
@@ -386,7 +428,7 @@ func secretOfAnotherMemoryDatabaseNeverMatchesTheSameProfileAndGeneration(kind: 
         #expect(try store.load(instance: instance, profileID: active.id) == nil)
         try await reopened.close()
     }
-    @Test(arguments: [IntegrationKind.github, .jira]) @MainActor
+    @Test(arguments: [IntegrationKind.github, .jira, .todoist]) @MainActor
     func queuedOldDeletionCannotEraseAnActuallyLateSecretWrite(kind: IntegrationKind) async throws {
         let fixture = try IntegrationKeychainFixture()
         defer { fixture.remove() }
@@ -758,6 +800,132 @@ func secretOfAnotherMemoryDatabaseNeverMatchesTheSameProfileAndGeneration(kind: 
             try await memory.close()
         }
     }
+    private let todoistHTTPScript = #"""
+        import json,sys
+        from http.server import ThreadingHTTPServer,BaseHTTPRequestHandler
+        mode,capture=sys.argv[1:]
+        task={'id':'task-1','user_id':'owner-9','project_id':'project-1','content':'Buy **milk** [x](https://example.invalid)','description':'','checked':False,'is_deleted':False,'added_at':'2026-10-20T10:00:00Z','updated_at':'2026-10-20T11:00:00Z','completed_at':None,'due':{'date':'2026-10-21','timezone':None,'is_recurring':False,'string':'tomorrow','lang':'en'},'deadline':None,'duration':None}
+        class Handler(BaseHTTPRequestHandler):
+         def log_message(self,*args):pass
+         def do_GET(self):
+          assert self.headers['Authorization']=='Bearer local-test-PAT'
+          assert self.headers['Accept']=='application/json'
+          assert self.headers['User-Agent']=='Ambient/0.1.0'
+          with open(capture,'a') as f:f.write(json.dumps(self.path)+'\n')
+          if self.path=='/api/v1/user':body={'id':'account-1','email':'CANARY-EMAIL@example.invalid','token':'CANARY-TOKEN','websocket_url':'wss://canary.invalid'}
+          elif mode=='429':
+           data=json.dumps({'error':'CANARY-429','error_extra':{'retry_after':120}}).encode()
+           self.send_response(429);self.send_header('Retry-After','1');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data);return
+          elif self.path=='/api/v1/tasks/task-1':body=task
+          elif self.path=='/api/v1/projects/project-1':body={'id':'project-1','name':'Home','description':'','parent_id':None,'is_archived':False,'is_deleted':False,'created_at':None,'updated_at':None}
+          elif self.path=='/api/v1/comments?task_id=task-1&limit=50':body={'results':[{'id':'c-1','content':'Exact 🌿 note','posted_uid':'owner-9','posted_at':'2026-10-20T12:00:00Z','is_deleted':False,'file_attachment':None}],'next_cursor':None}
+          else:raise AssertionError('unexpected Todoist path')
+          data=json.dumps(body,ensure_ascii=False).encode()
+          self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
+        server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+        print('http://127.0.0.1:'+str(server.server_port),flush=True);server.serve_forever()
+        """#
+    @Test @MainActor func todoistKeychainHTTPPinBatchAnd08BShareOneStore() async throws {
+        let fixture = try IntegrationKeychainFixture()
+        defer { fixture.remove() }
+        let server = try IntegrationHTTPServer(
+            script: todoistHTTPScript, mode: "standard", directory: fixture.directory)
+        defer { server.stop() }
+        let model = try AssistanceHTTPServer(mode: "todoist")
+        defer { model.stop() }
+        let memory = MemorySession(databaseURL: fixture.databaseURL())
+        let coordinator = try await localReady(memory: memory, server: model)
+        let owner = integrationOwner(memory, fixture, server)
+        let original = try await memory.saveTodoistProfile(id: 0, expected: 0, name: "Personal")
+        let profile = try await owner.replace(
+            original, secret: .todoistToken(token: "local-test-PAT"))
+        #expect(profile.scope == nil)
+        let task = try await memory.createTask("Plan the week")
+        let op = try await coordinator.beginIntegrationRead(
+            task, profile: profile, target: "task-1")
+        let window: TodoistWindow = try await owner.read(op)
+        #expect(
+            try server.paths() == [
+                "/api/v1/user", "/api/v1/tasks/task-1", "/api/v1/projects/project-1",
+                "/api/v1/comments?task_id=task-1&limit=50", "/api/v1/tasks/task-1",
+            ])
+        #expect(
+            window.objects.map(\.metadata.content.fields.kind).sorted()
+                == ["comment", "project", "task"])
+        #expect(window.objects.allSatisfy { $0.key.scope == "account-1" })
+        let pinned = try await memory.integrationProfile(profile.id, kind: .todoist)
+        #expect(pinned.scope == "account-1")
+        #expect(pinned.settingsRevision == profile.settingsRevision)
+        #expect(pinned.credentialGeneration == profile.credentialGeneration)
+        #expect(
+            window.objects.first { $0.metadata.content.fields.kind == "task" }?.text
+                == "Buy **milk** [x](https://example.invalid)")
+        let preview: TodoistPreview = try await memory.integrationPreview(op, indices: [0, 1, 2])
+        #expect(preview.objects.count == 3)
+        let ids = try await coordinator.bindIntegrationObjects(op, indices: [0, 1, 2])
+        try op.release()
+        let current = try await memory.task(task.id)
+        let context = try await coordinator.prepareAssistance(current, notes: ids)
+        #expect(context.context.contains("todoist-api-v1"))
+        _ = try await coordinator.runAssistance(context.requestID)
+        let proposal = try #require(try await coordinator.proposalFeed().first)
+        let details = try await coordinator.proposalDetails(proposal.target)
+        guard case .todoist(let cited) = details.citations.first?.integration else {
+            Issue.record("cited Todoist metadata missing")
+            return
+        }
+        #expect(cited.account == "account-1")
+        let saved: IntegrationSavedPage<TodoistMetadata> =
+            try await memory.integrationSavedMetadata(.todoist, taskID: task.id)
+        #expect(saved.rows.count == 3)
+        try await memory.setIntegrationScopeExcluded(.todoist, scope: "account-1", excluded: true)
+        #expect(try await coordinator.proposalFeed().isEmpty)
+        // Saving the profile keeps the account Core wrote; native never sends one.
+        let latest = try await memory.integrationProfile(profile.id, kind: .todoist)
+        let renamed = try await memory.saveTodoistProfile(
+            id: latest.id, expected: latest.settingsRevision, name: "Renamed")
+        #expect(renamed.scope == "account-1" && renamed.name == "Renamed")
+        try await coordinator.shutdown()
+        try await memory.close()
+        let bytes = try Data(contentsOf: fixture.databaseURL())
+        for value in ["local-test-PAT", "CANARY-EMAIL", "CANARY-TOKEN", "wss://canary"] {
+            #expect(bytes.range(of: Data(value.utf8)) == nil, "\(value)")
+        }
+    }
+    @Test @MainActor func todoistRateLimitTakesTheLaterDeadlineAndKeepsNoErrorBody() async throws {
+        let fixture = try IntegrationKeychainFixture()
+        defer { fixture.remove() }
+        let server = try IntegrationHTTPServer(
+            script: todoistHTTPScript, mode: "429", directory: fixture.directory)
+        defer { server.stop() }
+        let model = try AssistanceHTTPServer(mode: "todoist")
+        defer { model.stop() }
+        let memory = MemorySession(databaseURL: fixture.databaseURL())
+        let coordinator = try await localReady(memory: memory, server: model)
+        let owner = integrationOwner(memory, fixture, server)
+        let original = try await memory.saveTodoistProfile(id: 0, expected: 0, name: "Personal")
+        let profile = try await owner.replace(
+            original, secret: .todoistToken(token: "local-test-PAT"))
+        let task = try await memory.createTask("Plan the week")
+        let started = Int64(Date().timeIntervalSince1970)
+        let op = try await coordinator.beginIntegrationRead(
+            task, profile: profile, target: "task-1")
+        await #expect(throws: IntegrationFailure.response(429)) {
+            let _: TodoistWindow = try await owner.read(op)
+        }
+        try op.release()
+        let paused = try await memory.integrationProfile(profile.id, kind: .todoist)
+        // The body's 120 s wins over the header's 1 s.
+        #expect(paused.serverDeadlineKnown)
+        #expect((paused.notBeforeUTC ?? 0) >= started + 119)
+        await #expect(throws: ModelCheckFailure.busy) {
+            _ = try await coordinator.beginIntegrationRead(task, profile: paused, target: "task-1")
+        }
+        try await coordinator.shutdown()
+        try await memory.close()
+        #expect(
+            try Data(contentsOf: fixture.databaseURL()).range(of: Data("CANARY-429".utf8)) == nil)
+    }
 #endif
 
 @Test @MainActor func jiraNestedPresenceKeepsNullMissingAndInvalidSeparateInPresentation() {
@@ -766,4 +934,13 @@ func secretOfAnotherMemoryDatabaseNeverMatchesTheSameProfileAndGeneration(kind: 
     #expect(value.flatMap { $0.name } == .null)
     let states: [JiraPresence<JiraNamed>] = [.missing, .null, .invalid]
     #expect(states.map { $0.flatMap { $0.name } } == [.missing, .null, .invalid])
+}
+
+@Test @MainActor func todoistPresentationKeepsLossKindsAndCopyKeys() {
+    #expect(TodoistAdapter.failureKey(.response(409)) == "todoist.error.changed")
+    #expect(TodoistAdapter.failureKey(.response(503)) == "todoist.error.rate")
+    #expect(TodoistAdapter.secret(TodoistDraft(name: "n", token: "t")) == .todoistToken(token: "t"))
+    #expect(TodoistAdapter.clearingSecret(TodoistDraft(name: "n", token: "t")).token.isEmpty)
+    let states: [TodoistPresence<TodoistDue>] = [.missing, .null, .invalid]
+    #expect(states.map { $0.flatMap { $0.date } } == [.missing, .null, .invalid])
 }

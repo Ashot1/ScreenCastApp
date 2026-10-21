@@ -9,6 +9,7 @@ pub(crate) const REGISTRY: crate::integration::Registry = crate::integration::Re
     ],
     extracted: &[crate::integration::ResponseHeader::RetryAfter],
     ambiguous_statuses: &[401, 429, 503],
+    error_body: &[],
 };
 
 /// Builds one of the selected Jira Cloud read URLs.
@@ -121,6 +122,7 @@ mod tests {
         );
         assert!(matches!(REGISTRY.extracted, [ResponseHeader::RetryAfter]));
         assert_eq!(REGISTRY.ambiguous_statuses, &[401, 429, 503]);
+        assert!(REGISTRY.error_body.is_empty());
         assert_eq!(
             display(0, "PROJ-7", 0, 50)?,
             "https://api.atlassian.com/ex/jira/Cloud-ID-123/rest/api/3/issue/PROJ-7?fields=summary%2Cdescription%2Cstatus%2Cissuetype%2Cproject%2Ccreated%2Cupdated%2Cparent%2Csubtasks%2Cissuelinks&updateHistory=false&failFast=false"

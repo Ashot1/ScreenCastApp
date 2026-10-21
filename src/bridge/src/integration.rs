@@ -37,11 +37,13 @@ pub const AMBIENT_INTEGRATION_LOCAL_PROJECTS: u32 = 1;
 pub const AMBIENT_INTEGRATION_CODEX: u32 = 2;
 pub const AMBIENT_INTEGRATION_GITHUB: u32 = 3;
 pub const AMBIENT_INTEGRATION_JIRA: u32 = 4;
+pub const AMBIENT_INTEGRATION_TODOIST: u32 = 5;
 /// Kind values are fixed in the header; only implemented kinds are accepted.
 fn kind(raw: u32) -> Result<IntegrationKind, u32> {
     match raw {
         AMBIENT_INTEGRATION_GITHUB => Ok(IntegrationKind::GitHub),
         AMBIENT_INTEGRATION_JIRA => Ok(IntegrationKind::Jira),
+        AMBIENT_INTEGRATION_TODOIST => Ok(IntegrationKind::Todoist),
         _ => Err(INVALID_ARGUMENT),
     }
 }
@@ -229,6 +231,41 @@ pub unsafe extern "C" fn ambient_integration_v1_github_profile_save(
                 name,
                 None,
                 &IntegrationConfig::GitHub(repositories),
+            )
+        })?;
+        unsafe {
+            out.write(reference(p));
+        }
+        Ok(())
+    })
+}
+/// # Safety
+/// Name and output obey ambient_integration.h.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ambient_integration_v1_todoist_profile_save(
+    h: u64,
+    id: u64,
+    revision: u64,
+    name: AmbientText,
+    out: *mut AmbientIntegrationProfileRef,
+) -> u32 {
+    boundary(|| {
+        output(out)?;
+        let name = unsafe { input(name, 256) }?;
+        // Core writes the account once during a read; the stored scope is passed back unchanged
+        // under the same Store lock, never taken from a native snapshot that may predate the pin.
+        let p = store(h, |s| {
+            let scope = if id == 0 {
+                None
+            } else {
+                s.integration_profile(id)?.scope
+            };
+            s.save_integration_profile(
+                id,
+                revision,
+                name,
+                scope.as_deref(),
+                &IntegrationConfig::Todoist(TodoistConfig::default()),
             )
         })?;
         unsafe {

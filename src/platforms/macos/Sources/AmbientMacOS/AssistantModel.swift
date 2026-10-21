@@ -55,6 +55,7 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
     let codexSources: CodexSourcesModel
     let githubSources: GitHubSourcesModel
     let jiraSources: JiraSourcesModel
+    let todoistSources: TodoistSourcesModel
     let integrations: IntegrationSwitchesModel
     private let session: MemorySession
     private enum OperationResult: Sendable {
@@ -80,6 +81,7 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         self.codexSources = CodexSourcesModel(memory: session)
         self.githubSources = GitHubSourcesModel(memory: session)
         self.jiraSources = JiraSourcesModel(memory: session)
+        self.todoistSources = TodoistSourcesModel(memory: session)
         self.integrations = IntegrationSwitchesModel(memory: session)
     }
     public var hasUnsavedChanges: Bool {
@@ -111,6 +113,7 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         codexSources.cancel()
         githubSources.cancel()
         jiraSources.cancel()
+        todoistSources.cancel()
     }
     /// Disabling makes Core cancel this kind's reads and clear dependent assistance, so native
     /// views follow; enabling clears nothing and keeps the current preview.
@@ -418,6 +421,7 @@ public enum MemoryPlanPage: Sendable { case steps, dependencies, references }
         await codexSources.close()
         await githubSources.close()
         await jiraSources.close()
+        await todoistSources.close()
         // An accepted FFI call finishes before disposal; cancellation would not prove it stopped.
         if let inFlight { _ = await inFlight.task.value }
         do {

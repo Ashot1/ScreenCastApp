@@ -22,6 +22,7 @@ pub(crate) static REGISTRY: crate::integration::Registry = crate::integration::R
         crate::integration::ResponseHeader::RateReset,
     ],
     ambiguous_statuses: &[401, 403, 429],
+    error_body: &[],
 };
 
 /// Builds a URL only for an approved GitHub read category.
@@ -141,6 +142,7 @@ mod tests {
             ]
         ));
         assert_eq!(REGISTRY.ambiguous_statuses, &[401, 403, 429]);
+        assert!(REGISTRY.error_body.is_empty());
         assert_eq!(
             display("octo-org", "screen_cast", 42, 0, 1).as_deref(),
             Some("https://api.github.com/repos/octo-org/screen_cast/pulls/42")

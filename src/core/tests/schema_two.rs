@@ -32,6 +32,8 @@ fn wal_only_fixture(
         include_str!("fixtures/schema-thirteen.sql")
     } else if version == 14 {
         include_str!("fixtures/schema-fourteen.sql")
+    } else if version == 15 {
+        include_str!("fixtures/schema-fifteen.sql")
     } else {
         include_str!("../src/schema.sql")
     })?;
@@ -39,7 +41,9 @@ fn wal_only_fixture(
     if version > 10 {
         c.execute("INSERT INTO store_identity VALUES(1,randomblob(16))", [])?;
     }
-    if version > 12 {
+    if version > 15 {
+        c.execute_batch("INSERT INTO integration_switches VALUES('local-projects',1),('codex',1),('github',1),('jira',1),('todoist',1);")?;
+    } else if version > 12 {
         c.execute_batch("INSERT INTO integration_switches VALUES('local-projects',1),('codex',1),('github',1),('jira',1);")?;
     }
     c.pragma_update(None, "user_version", version)?;
@@ -114,7 +118,7 @@ fn schema_eight_wal_only_is_rejected_without_writing_any_file()
 }
 
 #[test]
-fn schema_nine_through_fourteen_wal_only_are_rejected_without_writing_any_file()
+fn schema_nine_through_fifteen_wal_only_are_rejected_without_writing_any_file()
 -> Result<(), Box<dyn std::error::Error>> {
     for (name, replacement, version) in [
         ("wal-nine-intact", None, 9),
@@ -141,6 +145,10 @@ fn schema_nine_through_fourteen_wal_only_are_rejected_without_writing_any_file()
         ("wal-fourteen-empty", Some(Vec::new()), 14),
         ("wal-fourteen-truncated", Some(vec![0x5a; 7]), 14),
         ("wal-fourteen-corrupt", Some(vec![0x5a; 32768]), 14),
+        ("wal-fifteen-intact", None, 15),
+        ("wal-fifteen-empty", Some(Vec::new()), 15),
+        ("wal-fifteen-truncated", Some(vec![0x5a; 7]), 15),
+        ("wal-fifteen-corrupt", Some(vec![0x5a; 32768]), 15),
     ] {
         let path = wal_only_fixture(name, version)?;
         if let Some(bytes) = replacement {
@@ -169,7 +177,7 @@ fn current_wal_only_schema_opens_with_existing_shm_and_reopens_normally()
         ("wal-current-truncated", Some(vec![0x5a; 7])),
         ("wal-current-corrupt", Some(vec![0x5a; 32768])),
     ] {
-        let path = wal_only_fixture(name, 15)?;
+        let path = wal_only_fixture(name, 16)?;
         if let Some(bytes) = replacement {
             std::fs::write(format!("{}-shm", path.display()), bytes)?;
         }
@@ -199,7 +207,8 @@ fn missing_shm_is_storage_failure_without_recovery_or_new_sidecars()
         ("wal-twelve-missing", 12),
         ("wal-thirteen-missing", 13),
         ("wal-fourteen-missing", 14),
-        ("wal-current-missing", 15),
+        ("wal-fifteen-missing", 15),
+        ("wal-current-missing", 16),
     ] {
         let path = wal_only_fixture(name, version)?;
         std::fs::remove_file(format!("{}-shm", path.display()))?;

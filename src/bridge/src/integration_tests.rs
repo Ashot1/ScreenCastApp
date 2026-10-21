@@ -23,6 +23,11 @@ fn ready_github() -> Result<Ready, Box<dyn std::error::Error>> {
         ambient_integration_v1_github_profile_save(h, 0, 0, text("Work"), repository.as_ptr(), 1, p)
     })
 }
+fn ready_todoist() -> Result<Ready, Box<dyn std::error::Error>> {
+    ready_with(|h, p| unsafe {
+        ambient_integration_v1_todoist_profile_save(h, 0, 0, text("Personal"), p)
+    })
+}
 /// Opens memory through the ABI and makes assistance current through the Core test path.
 fn ready_with(
     save: impl FnOnce(u64, &mut AmbientIntegrationProfileRef) -> u32,
@@ -129,6 +134,36 @@ fn github_dispatch_takes_one_token_and_rejects_a_second_part_before_network()
     };
     for (first, second) in [(text("token"), text("second")), (text("bad token"), none)] {
         let op = begin_target(h, p, &task, PR).map_err(|e| format!("begin {e}"))?;
+        let mut outcome = 0xdead;
+        assert_eq!(
+            unsafe { ambient_integration_v1_dispatch(h, op, first, second, &mut outcome) },
+            INVALID_ARGUMENT
+        );
+        assert_eq!(outcome, 0xdead);
+        let slot = get_store(h).map_err(|_| "memory")?;
+        assert_eq!(
+            slot.store
+                .lock()
+                .map_err(|_| "store")?
+                .integration_read_status(op)?,
+            499
+        );
+        assert_eq!(ambient_integration_v1_release(h, op), 0);
+    }
+    assert_eq!(crate::ambient_v3_close(h), 0);
+    std::fs::remove_file(path)?;
+    Ok(())
+}
+#[test]
+fn todoist_dispatch_takes_one_token_and_rejects_a_second_part_before_network()
+-> Result<(), Box<dyn std::error::Error>> {
+    let (h, path, p, task) = ready_todoist()?;
+    let none = AmbientText {
+        bytes: std::ptr::null(),
+        length: 0,
+    };
+    for (first, second) in [(text("token"), text("second")), (text("bad token"), none)] {
+        let op = begin_target(h, p, &task, "task-1").map_err(|e| format!("begin {e}"))?;
         let mut outcome = 0xdead;
         assert_eq!(
             unsafe { ambient_integration_v1_dispatch(h, op, first, second, &mut outcome) },
@@ -357,6 +392,126 @@ fn github_loopback_dispatch_runs_until_core_ends_the_read_at_seventeen_requests(
         .integration_window_page(op, 0)?;
     assert!(page.contains("page_limit"));
     assert_eq!(ambient_integration_v1_release(h, op), 0);
+    assert_eq!(crate::ambient_v3_close(h), 0);
+    std::fs::remove_file(path)?;
+    Ok(())
+}
+#[cfg(feature = "model-test-support")]
+#[test]
+fn todoist_loopback_pins_the_account_and_ends_at_nine_requests()
+-> Result<(), Box<dyn std::error::Error>> {
+    use std::io::{BufRead, BufReader, Write};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+    let route = format!("http://{}/", listener.local_addr()?);
+    let server = std::thread::spawn(move || -> std::io::Result<Vec<String>> {
+        let mut paths = Vec::new();
+        let task = r#"{"id":"task-1","project_id":"project-1","content":"Task","description":"","checked":false,"is_deleted":false}"#;
+        while paths.len() < 9 {
+            let (socket, _) = listener.accept()?;
+            let mut reader = BufReader::new(socket.try_clone()?);
+            let mut line = String::new();
+            reader.read_line(&mut line)?;
+            let mut authorization = String::new();
+            loop {
+                let mut header = String::new();
+                reader.read_line(&mut header)?;
+                if header.to_ascii_lowercase().starts_with("authorization:") {
+                    authorization = header.trim_end().to_owned();
+                }
+                if header == "\r\n" || header.is_empty() {
+                    break;
+                }
+            }
+            assert_eq!(
+                authorization.split_once(':').map(|(_, v)| v.trim()),
+                Some("Bearer fixture-token")
+            );
+            let path = line.split(' ').nth(1).unwrap_or_default().to_owned();
+            let body = if path == "/api/v1/user" {
+                r#"{"id":"account-1","email":"fixture@example.invalid","token":"CANARY"}"#
+                    .to_owned()
+            } else if path.starts_with("/api/v1/comments?") {
+                let n = paths.len();
+                format!(
+                    r#"{{"results":[{{"id":"c-{n}","content":"Note","posted_uid":null,"posted_at":null,"is_deleted":false,"file_attachment":null}}],"next_cursor":"page{n}.next"}}"#
+                )
+            } else if path == "/api/v1/projects/project-1" {
+                r#"{"id":"project-1","name":"Home","description":"","is_archived":false,"is_deleted":false}"#.to_owned()
+            } else {
+                task.to_owned()
+            };
+            let mut socket = reader.into_inner();
+            write!(
+                socket,
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            )?;
+            paths.push(path);
+        }
+        Ok(paths)
+    });
+    let (h, path, p, task) = ready_todoist()?;
+    let op = begin_target(h, p, &task, "task-1").map_err(|e| format!("begin {e}"))?;
+    let mut outcome = 0;
+    let none = AmbientText {
+        bytes: std::ptr::null(),
+        length: 0,
+    };
+    assert_eq!(
+        unsafe {
+            ambient_integration_v1_test_dispatch(
+                h,
+                op,
+                text("fixture-token"),
+                none,
+                text(&route),
+                &mut outcome,
+            )
+        },
+        0
+    );
+    assert_eq!(outcome, 200);
+    let paths = server.join().map_err(|_| "server thread")??;
+    assert_eq!(paths.len(), 9);
+    assert_eq!(paths[0], "/api/v1/user");
+    assert_eq!(paths[1], "/api/v1/tasks/task-1");
+    assert_eq!(paths[2], "/api/v1/projects/project-1");
+    assert_eq!(paths[3], "/api/v1/comments?task_id=task-1&limit=50");
+    assert_eq!(
+        paths[4],
+        "/api/v1/comments?task_id=task-1&limit=50&cursor=page3.next"
+    );
+    assert_eq!(paths[8], "/api/v1/tasks/task-1");
+    assert_eq!(ambient_integration_v1_release(h, op), 0);
+    let slot = get_store(h).map_err(|_| "memory")?;
+    let pinned = slot
+        .store
+        .lock()
+        .map_err(|_| "store")?
+        .integration_profile(p.id)?;
+    assert_eq!(pinned.scope.as_deref(), Some("account-1"));
+    assert_eq!(pinned.settings_revision, p.settings_revision);
+    // The export reads the stored account itself, so a rename after the pin passes.
+    let mut renamed = AmbientIntegrationProfileRef::default();
+    assert_eq!(
+        unsafe {
+            ambient_integration_v1_todoist_profile_save(
+                h,
+                p.id,
+                p.settings_revision,
+                text("Renamed"),
+                &mut renamed,
+            )
+        },
+        0
+    );
+    let after = slot
+        .store
+        .lock()
+        .map_err(|_| "store")?
+        .integration_profile(p.id)?;
+    assert_eq!(after.scope.as_deref(), Some("account-1"));
+    assert_eq!(after.name, "Renamed");
     assert_eq!(crate::ambient_v3_close(h), 0);
     std::fs::remove_file(path)?;
     Ok(())

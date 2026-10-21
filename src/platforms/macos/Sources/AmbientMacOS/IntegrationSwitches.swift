@@ -1,7 +1,7 @@
 import Observation
 import SwiftUI
 
-/// Native view state of the four Core-owned integration switches (D61). Core enforces them;
+/// Native view state of the five Core-owned integration switches (D61). Core enforces them;
 /// this model only shows the saved values and forwards user changes.
 @MainActor @Observable final class IntegrationSwitchesModel {
     private let memory: MemorySession
@@ -97,6 +97,7 @@ extension BuiltInIntegration {
         case .codex: "integrations.codex"
         case .github: "integrations.github"
         case .jira: "integrations.jira"
+        case .todoist: "integrations.todoist"
         }
     }
 }

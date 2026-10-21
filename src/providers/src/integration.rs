@@ -1,7 +1,7 @@
 //! One bounded HTTP GET transport for built-in integrations. Core owns the cancel flag,
 //! limits and every decision about the response; secrets live only in this transport.
 use crate::wait::Stop;
-use crate::{github_registry, jira_registry};
+use crate::{github_registry, jira_registry, todoist_registry};
 use ambient_core::{
     IntegrationHeaders, IntegrationKind, IntegrationRequest, IntegrationResponse, IntegrationStep,
     MAX_INTEGRATION_BODY,
@@ -12,6 +12,10 @@ use std::{
     sync::{Arc, atomic::AtomicBool},
     time::{Duration, Instant},
 };
+
+/// Error bodies are read only for a registry's `error_body` statuses and only up to this size;
+/// the adapter treats a longer body (this size plus one byte) as giving no deadline.
+pub(crate) const MAX_INTEGRATION_ERROR_BODY: usize = 64 * 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum IntegrationTransportError {
@@ -37,11 +41,13 @@ pub(crate) enum ResponseHeader {
     RateReset,
 }
 /// Endpoint registry of one adapter beside its URL builder: fixed request headers, extracted
-/// response headers and the statuses whose oversized headers stay meaningful as ambiguous.
+/// response headers, the statuses whose oversized headers stay meaningful as ambiguous and the
+/// error statuses whose bounded body the adapter reads for a retry deadline.
 pub(crate) struct Registry {
     pub headers: &'static [(HeaderName, &'static str)],
     pub extracted: &'static [ResponseHeader],
     pub ambiguous_statuses: &'static [u16],
+    pub error_body: &'static [u16],
 }
 fn route(request: &IntegrationRequest) -> Option<(reqwest::Url, &'static Registry)> {
     match request {
@@ -52,6 +58,9 @@ fn route(request: &IntegrationRequest) -> Option<(reqwest::Url, &'static Registr
             jira_registry::url(&r.cloud_id, &r.issue, r.category, r.start_at, r.max_results)?,
             &jira_registry::REGISTRY,
         )),
+        IntegrationRequest::Todoist(r) => {
+            Some((todoist_registry::url(r)?, &todoist_registry::REGISTRY))
+        }
     }
 }
 
@@ -70,7 +79,9 @@ fn authorization(
     second: Option<&str>,
 ) -> Result<Authorization, IntegrationTransportError> {
     match (kind, second) {
-        (IntegrationKind::GitHub, None) if ascii_graphic(first, 16384) => {
+        (IntegrationKind::GitHub | IntegrationKind::Todoist, None)
+            if ascii_graphic(first, 16384) =>
+        {
             Ok(Authorization::Bearer(first.into()))
         }
         (IntegrationKind::Jira, Some(token))
@@ -203,6 +214,24 @@ impl IntegrationTransport {
                         return Err(IntegrationTransportError::Limit);
                     }
                     body.extend_from_slice(&chunk);
+                }
+            } else if registry.error_body.contains(&status) {
+                // Best effort and in memory only: a deadline or transport stop keeps the bytes
+                // read so far, so a header deadline is never lost; only cancellation is an error.
+                loop {
+                    match waiting(response.chunk(), &self.flag, deadline).await {
+                        Ok(Some(chunk)) => {
+                            let room = MAX_INTEGRATION_ERROR_BODY + 1 - body.len();
+                            body.extend_from_slice(&chunk[..chunk.len().min(room)]);
+                            if body.len() > MAX_INTEGRATION_ERROR_BODY {
+                                break;
+                            }
+                        }
+                        Err(IntegrationTransportError::Cancelled) => {
+                            return Err(IntegrationTransportError::Cancelled);
+                        }
+                        Ok(None) | Err(_) => break,
+                    }
                 }
             }
             Ok(IntegrationResponse {
@@ -470,6 +499,150 @@ mod tests {
                     assert_eq!(response.headers.rate_ambiguous, mode != "error-body");
                     assert_eq!(response.headers.retry_after, None);
                 }
+            }
+        }
+        Ok(())
+    }
+
+    fn todoist_step(remaining: Duration) -> IntegrationStep {
+        IntegrationStep {
+            request: IntegrationRequest::Todoist(ambient_core::TodoistRequest::Comments {
+                task_id: "task 1".into(),
+                cursor: Some("next.page".into()),
+            }),
+            remaining,
+        }
+    }
+    #[test]
+    fn todoist_secret_form_is_a_single_graphic_token_checked_before_any_network() {
+        let todoist = IntegrationKind::Todoist;
+        assert!(IntegrationTransport::new(todoist, "opaque-token", None, flag()).is_ok());
+        for token in ["", "a b", "a\n", "é", &"t".repeat(16385)] {
+            assert!(matches!(
+                IntegrationTransport::new(todoist, token, None, flag()),
+                Err(IntegrationTransportError::Invalid)
+            ));
+        }
+        assert!(matches!(
+            IntegrationTransport::new(todoist, "opaque-token", Some("second"), flag()),
+            Err(IntegrationTransportError::Invalid)
+        ));
+    }
+    /// Only a registry's error statuses get a body, bounded to 64 KiB plus one byte.
+    #[test]
+    fn todoist_reads_a_bounded_error_body_only_for_429_and_503()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let large = "y".repeat(70_000);
+        for (status, body, expected) in [
+            (
+                "429 Too Many Requests",
+                "{\"error_extra\":{\"retry_after\":7}}",
+                33,
+            ),
+            (
+                "503 Service Unavailable",
+                large.as_str(),
+                MAX_INTEGRATION_ERROR_BODY + 1,
+            ),
+            ("401 Unauthorized", "{\"error\":\"x\"}", 0),
+            ("403 Forbidden", "{\"error\":\"x\"}", 0),
+            ("404 Not Found", "{\"error\":\"x\"}", 0),
+        ] {
+            let (route, server) = serve_once(format!(
+                "HTTP/1.1 {status}\r\nRetry-After: 5\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            ))?;
+            let mut t = IntegrationTransport::test(
+                IntegrationKind::Todoist,
+                "test-token",
+                None,
+                flag(),
+                &route,
+            )?;
+            let result = t.get(todoist_step(Duration::from_secs(10)));
+            drop(t);
+            let wire = server.join().map_err(|_| "server thread")??;
+            let response = result?;
+            assert_eq!(response.body.len(), expected, "{status}");
+            assert_eq!(
+                response.headers.retry_after.as_deref(),
+                Some("5"),
+                "{status}"
+            );
+            assert!(wire.starts_with(
+                "GET /api/v1/comments?task_id=task+1&limit=50&cursor=next.page HTTP/1.1\r\n"
+            ));
+            let lower = wire.to_ascii_lowercase();
+            assert!(lower.contains("authorization: bearer test-token\r\n"));
+            assert!(lower.contains("accept: application/json\r\n"));
+            assert!(lower.contains("user-agent: ambient/0.1.0\r\n"));
+        }
+        // The same error body is never read for Jira, whose registry lists no error statuses.
+        let (route, server) = serve_once(
+            "HTTP/1.1 429 Too Many Requests\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello"
+                .into(),
+        )?;
+        let mut t = IntegrationTransport::test(
+            IntegrationKind::Jira,
+            "fixture@example.invalid",
+            Some("fixture-token"),
+            flag(),
+            &route,
+        )?;
+        let result = t.get(step("ID", 0, 0, Duration::from_secs(10)));
+        drop(t);
+        server.join().map_err(|_| "server thread")??;
+        assert!(result?.body.is_empty());
+        Ok(())
+    }
+    /// A stalled error body ends at the deadline with the header kept; cancellation stays an error.
+    #[test]
+    fn todoist_error_body_read_keeps_the_header_at_the_deadline_and_reports_cancellation()
+    -> Result<(), Box<dyn std::error::Error>> {
+        for cancel in [false, true] {
+            let listener = TcpListener::bind("127.0.0.1:0")?;
+            let route = format!("http://{}", listener.local_addr()?);
+            let server = std::thread::spawn(move || -> std::io::Result<()> {
+                let (mut socket, _) = listener.accept()?;
+                socket.set_read_timeout(Some(Duration::from_secs(2)))?;
+                let mut input = [0; 32768];
+                if socket.read(&mut input)? == 0 {
+                    return Err(std::io::Error::from(std::io::ErrorKind::UnexpectedEof));
+                }
+                socket.write_all(b"HTTP/1.1 429 Too Many Requests\r\nRetry-After: 9\r\nContent-Length: 100\r\nConnection: close\r\n\r\n{\"partial\":")?;
+                socket.flush()?;
+                std::thread::sleep(Duration::from_millis(2500));
+                Ok(())
+            });
+            let stop = flag();
+            let mut t = IntegrationTransport::test(
+                IntegrationKind::Todoist,
+                "test-token",
+                None,
+                stop.clone(),
+                &route,
+            )?;
+            let canceller = cancel.then(|| {
+                let stop = stop.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(500));
+                    stop.store(true, std::sync::atomic::Ordering::Release);
+                })
+            });
+            // A loaded machine still delivers the headers well before this deadline.
+            let result = t.get(todoist_step(Duration::from_millis(1500)));
+            drop(t);
+            if let Some(c) = canceller {
+                c.join().map_err(|_| "cancel thread")?;
+            }
+            let _ = server.join();
+            if cancel {
+                assert!(matches!(result, Err(IntegrationTransportError::Cancelled)));
+            } else {
+                let response = result?;
+                assert_eq!(response.status, 429);
+                assert_eq!(response.headers.retry_after.as_deref(), Some("9"));
+                assert_eq!(response.body, b"{\"partial\":");
             }
         }
         Ok(())

@@ -1,5 +1,28 @@
 # Результаты проверки основы
 
+## Приёмка 17A — 21 октября 2026
+
+Принят Todoist на общем движке интеграций ([ADR-018](decisions/0018-selected-todoist-task.md)):
+- схема 16, пятый переключатель;
+- запись аккаунта `Step::Pin` (D65);
+- пауза из заголовка и тела (D66);
+- запросы без конечного `/user` (D67);
+- ABI интеграций v1 — 18 экспортов;
+- интерфейс источника в macOS.
+
+Свежий yarn verify оркестратора:
+- первый прогон уронил давний тест голоса `voiceCancellationAndDeadlineKillIgnoredTERMAndWaitForActualExit` (окно 5 s, 6,7 s под нагрузкой); 17A его не трогал, отдельно тест прошёл 6 из 6;
+- повторный полный прогон: 8 tooling/358 Rust/91 Swift, exit 0.
+
+У исполнителя:
+- feature Swift 139, bridge 36;
+- аудит: 18 экспортов интеграций, 770 строк на язык;
+- 64+64 прогонов под нагрузкой без отказов;
+- эталоны GitHub и Jira 18/18 побайтно прежние;
+- 15/15 мутаций.
+
+Сохранена Ambient-todoist-17a.app; всего 22 приложения/378 файлов. Настоящий аккаунт Todoist, полная 17/G6 и UI не проверены. [Handoff](../target/verification/17a/handoff.txt), [приёмка](../target/verification/orchestration/17a-parent-inspection.md).
+
 ## Приёмка 24B (локальный объём) — 21 октября 2026
 
 Принят Google через управляемый `workspace-mcp` ([ADR-022](decisions/0022-local-mcp-servers.md)):

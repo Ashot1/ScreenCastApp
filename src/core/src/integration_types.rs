@@ -12,18 +12,21 @@ pub const MAX_INTEGRATION_WINDOW: usize = 512 * 1024;
 pub enum IntegrationKind {
     GitHub,
     Jira,
+    Todoist,
 }
 impl IntegrationKind {
     pub fn as_str(self) -> &'static str {
         match self {
             Self::GitHub => "github",
             Self::Jira => "jira",
+            Self::Todoist => "todoist",
         }
     }
     pub(crate) fn parse(raw: &str) -> Result<Self, StoreError> {
         match raw {
             "github" => Ok(Self::GitHub),
             "jira" => Ok(Self::Jira),
+            "todoist" => Ok(Self::Todoist),
             _ => Err(StoreError::UnsupportedSchema),
         }
     }
@@ -42,6 +45,7 @@ pub enum BuiltInIntegration {
     Codex,
     GitHub,
     Jira,
+    Todoist,
 }
 impl BuiltInIntegration {
     pub fn as_str(self) -> &'static str {
@@ -50,6 +54,7 @@ impl BuiltInIntegration {
             Self::Codex => "codex",
             Self::GitHub => "github",
             Self::Jira => "jira",
+            Self::Todoist => "todoist",
         }
     }
 }
@@ -58,6 +63,7 @@ impl From<IntegrationKind> for BuiltInIntegration {
         match kind {
             IntegrationKind::GitHub => Self::GitHub,
             IntegrationKind::Jira => Self::Jira,
+            IntegrationKind::Todoist => Self::Todoist,
         }
     }
 }
@@ -77,18 +83,21 @@ pub struct JiraConfig {}
 pub enum IntegrationConfig {
     GitHub(Vec<GitHubRepository>),
     Jira(JiraConfig),
+    Todoist(TodoistConfig),
 }
 impl IntegrationConfig {
     pub fn kind(&self) -> IntegrationKind {
         match self {
             Self::GitHub(_) => IntegrationKind::GitHub,
             Self::Jira(_) => IntegrationKind::Jira,
+            Self::Todoist(_) => IntegrationKind::Todoist,
         }
     }
     pub(crate) fn decode(kind: IntegrationKind, raw: &str) -> Result<Self, StoreError> {
         match kind {
             IntegrationKind::GitHub => serde_json::from_str(raw).map(Self::GitHub),
             IntegrationKind::Jira => serde_json::from_str(raw).map(Self::Jira),
+            IntegrationKind::Todoist => serde_json::from_str(raw).map(Self::Todoist),
         }
         .map_err(|_| StoreError::UnsupportedSchema)
     }
@@ -119,6 +128,7 @@ impl IntegrationProfile {
 pub enum IntegrationRequest {
     GitHub(GitHubRequest),
     Jira(JiraRequest),
+    Todoist(TodoistRequest),
 }
 #[derive(Clone, Debug)]
 pub struct IntegrationStep {
@@ -134,6 +144,23 @@ pub struct IntegrationHeaders {
     pub link_ambiguous: bool,
     pub rate_ambiguous: bool,
 }
+impl IntegrationHeaders {
+    /// `Retry-After` as delay seconds or an HTTP date; its age is not judged here. None when absent
+    /// or unreadable; callers that must tell those apart look at `retry_after` itself.
+    pub fn retry_after_deadline(&self, now: i64) -> Option<i64> {
+        let raw = self.retry_after.as_deref()?;
+        let delta = if !raw.is_empty() && raw.bytes().all(|b| b.is_ascii_digit()) {
+            raw.parse::<i64>().ok().and_then(|n| now.checked_add(n))
+        } else {
+            None
+        };
+        let date = httpdate::parse_http_date(raw)
+            .ok()
+            .and_then(|d| d.duration_since(std::time::UNIX_EPOCH).ok())
+            .and_then(|d| i64::try_from(d.as_secs()).ok());
+        delta.or(date)
+    }
+}
 #[derive(Clone, Debug)]
 pub struct IntegrationResponse {
     pub status: u16,
@@ -145,6 +172,7 @@ pub struct IntegrationResponse {
 pub enum IntegrationCoverage {
     GitHub(Vec<GitHubCoverage>),
     Jira(Vec<JiraCoverage>),
+    Todoist(Vec<TodoistCoverage>),
 }
 /// Untagged so each adapter's stored JSON stays exactly its previous shape.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
@@ -152,18 +180,21 @@ pub enum IntegrationCoverage {
 pub enum IntegrationMetadata {
     GitHub(GitHubMetadata),
     Jira(JiraMetadata),
+    Todoist(TodoistMetadata),
 }
 impl IntegrationMetadata {
     pub fn kind(&self) -> IntegrationKind {
         match self {
             Self::GitHub(_) => IntegrationKind::GitHub,
             Self::Jira(_) => IntegrationKind::Jira,
+            Self::Todoist(_) => IntegrationKind::Todoist,
         }
     }
     pub(crate) fn decode(kind: IntegrationKind, raw: &str) -> Result<Self, StoreError> {
         match kind {
             IntegrationKind::GitHub => serde_json::from_str(raw).map(Self::GitHub),
             IntegrationKind::Jira => serde_json::from_str(raw).map(Self::Jira),
+            IntegrationKind::Todoist => serde_json::from_str(raw).map(Self::Todoist),
         }
         .map_err(|_| StoreError::UnsupportedSchema)
     }
@@ -171,6 +202,7 @@ impl IntegrationMetadata {
         match kind {
             IntegrationKind::GitHub => serde_json::from_value(raw).map(Self::GitHub),
             IntegrationKind::Jira => serde_json::from_value(raw).map(Self::Jira),
+            IntegrationKind::Todoist => serde_json::from_value(raw).map(Self::Todoist),
         }
         .map_err(|_| StoreError::UnsupportedSchema)
     }
@@ -178,6 +210,7 @@ impl IntegrationMetadata {
         let (id, settings_revision, credential_generation) = match self {
             Self::GitHub(m) => (m.profile_id, m.settings_revision, m.credential_generation),
             Self::Jira(m) => (m.profile_id, m.settings_revision, m.credential_generation),
+            Self::Todoist(m) => (m.profile_id, m.settings_revision, m.credential_generation),
         };
         IntegrationProfileVersion {
             id,
@@ -264,6 +297,7 @@ pub struct CitationIntegration {
 pub(crate) enum IntegrationTarget {
     GitHub(GitHubTarget),
     Jira(JiraTarget),
+    Todoist(TodoistTarget),
 }
 pub(crate) struct Pause {
     pub until: Option<i64>,
@@ -278,6 +312,8 @@ pub(crate) enum Step {
     Continue,
     Done,
     Fail(u32),
+    /// Continue, but first write this scope into the profile once (D65: the Todoist account).
+    Pin(String),
 }
 #[derive(Serialize)]
 pub(crate) struct IntegrationWindow {
@@ -288,7 +324,7 @@ pub(crate) struct IntegrationWindow {
     pub objects: Vec<IntegrationObject>,
 }
 /// The built-in adapters; namespaces resolve to kinds through this table.
-pub(crate) const ADAPTERS: [&dyn Adapter; 2] = [&crate::GitHub, &crate::Jira];
+pub(crate) const ADAPTERS: [&dyn Adapter; 3] = [&crate::GitHub, &crate::Jira, &crate::Todoist];
 /// Service-specific behavior; the engine owns every shared lifecycle decision. A method given
 /// another adapter's variant returns an error instead of panicking.
 pub(crate) trait Adapter: Sync {
@@ -296,7 +332,8 @@ pub(crate) trait Adapter: Sync {
     fn namespace(&self) -> &'static str;
     fn max_requests(&self) -> u32;
     fn parse_target(&self, text: &str) -> Result<IntegrationTarget, StoreError>;
-    /// A kind either always has a scope (Jira Cloud ID) or never has one.
+    /// A kind always has a scope (Jira Cloud ID), never has one (GitHub), or has none until the
+    /// engine writes it once on the adapter's `Step::Pin` (Todoist account).
     fn validate_scope(&self, scope: Option<&str>) -> Result<(), StoreError>;
     fn validate_config(&self, config: &IntegrationConfig) -> Result<(), StoreError>;
     fn admit(
@@ -315,12 +352,7 @@ pub(crate) trait Adapter: Sync {
         profile: &IntegrationProfile,
         target: &IntegrationTarget,
     ) -> Result<Started, StoreError>;
-    fn pause(
-        &self,
-        status: u16,
-        headers: &IntegrationHeaders,
-        now: i64,
-    ) -> Result<Option<Pause>, StoreError>;
+    fn pause(&self, response: &IntegrationResponse, now: i64) -> Result<Option<Pause>, StoreError>;
     fn validate_metadata(&self, metadata: &IntegrationMetadata) -> Result<(), StoreError>;
     fn validate_object(
         &self,

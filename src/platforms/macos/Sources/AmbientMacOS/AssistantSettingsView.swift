@@ -74,6 +74,7 @@ public struct AssistantSettingsView: View {
                 PluginsSettingsView(plugins: chatGPT.plugins, chatGPT: chatGPT)
                 GitHubSettingsView(source: model.githubSources, chatGPT: chatGPT)
                 JiraSettingsView(source: model.jiraSources, chatGPT: chatGPT)
+                TodoistSettingsView(source: model.todoistSources, chatGPT: chatGPT)
                 ConnectionCheckView(model: model, chatGPT: chatGPT)
                 Text("reply.temporary", bundle: .module).font(.caption).foregroundStyle(.secondary)
                 Button {

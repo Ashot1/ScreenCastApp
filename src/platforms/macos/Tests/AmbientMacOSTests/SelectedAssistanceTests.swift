@@ -138,6 +138,16 @@ import Testing
                      assert source['jira']['coverage'][2]['omitted_prefix']==True
                     assert 'fixture@example.invalid' not in raw and 'local-test-PAT' not in raw
                     ground=context['sources'][0]['evidence_id']
+                   if mode=='todoist':
+                    assert len(context['sources'])==3
+                    for source in context['sources']:
+                     assert source['source']['namespace']=='todoist-api-v1'
+                     assert source['source']['scope']=='account-1'
+                     assert source['todoist']['observation']=='non_atomic_observation'
+                     assert source['todoist']['current_state']=='current_state_unverified'
+                     assert source['assertion_kind']==0
+                    assert 'local-test-PAT' not in raw and 'CANARY' not in raw
+                    ground=context['sources'][0]['evidence_id']
                    if mode=='codex':
                     source=context['sources'][0]
                     assert source['source']['namespace']=='codex-local-jsonl-v1'

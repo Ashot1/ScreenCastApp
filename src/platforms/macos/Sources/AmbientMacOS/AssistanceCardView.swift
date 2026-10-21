@@ -129,6 +129,7 @@ struct AssistanceCardView: View {
                             switch citation.integration {
                             case .github(let metadata): GitHubMetadataView(metadata: metadata)
                             case .jira(let metadata): JiraMetadataView(metadata: metadata)
+                            case .todoist(let metadata): TodoistMetadataView(metadata: metadata)
                             case nil: EmptyView()
                             }
                             if citation.integration != nil {

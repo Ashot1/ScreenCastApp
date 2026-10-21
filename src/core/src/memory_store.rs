@@ -67,9 +67,9 @@ impl Store {
             tx.execute("INSERT INTO local_source_clock VALUES(1,0)", [])?;
             // Secrets in native stores are bound to this random identity of one memory database.
             tx.execute("INSERT INTO store_identity VALUES(1,randomblob(16))", [])?;
-            tx.execute("INSERT INTO integration_switches VALUES('local-projects',1),('codex',1),('github',1),('jira',1)", [])?;
+            tx.execute("INSERT INTO integration_switches VALUES('local-projects',1),('codex',1),('github',1),('jira',1),('todoist',1)", [])?;
             tx.pragma_update(None, "application_id", APPLICATION_ID)?;
-            tx.pragma_update(None, "user_version", 15)?;
+            tx.pragma_update(None, "user_version", 16)?;
             tx.commit()?;
         }
         // A prior process may have submitted a request without receiving or saving its usage.
@@ -1039,7 +1039,7 @@ fn inspect_schema(c: &Connection) -> Result<bool, StoreError> {
         })
         .collect();
     expected.sort();
-    if version != 15 || identity != APPLICATION_ID || objects != expected {
+    if version != 16 || identity != APPLICATION_ID || objects != expected {
         return Err(StoreError::UnsupportedSchema);
     }
     validate_database(c)?;

@@ -187,7 +187,7 @@ CREATE TABLE store_identity (
 ) STRICT;
 CREATE TABLE integration_profiles (
     id INTEGER PRIMARY KEY CHECK (id > 0),
-    kind TEXT NOT NULL CHECK (kind IN ('github', 'jira')),
+    kind TEXT NOT NULL CHECK (kind IN ('github', 'jira', 'todoist')),
     settings_revision INTEGER NOT NULL CHECK (settings_revision > 0),
     credential_generation INTEGER NOT NULL CHECK (credential_generation > 0),
     name TEXT NOT NULL CHECK (length(CAST(name AS BLOB)) BETWEEN 1 AND 256),
@@ -198,7 +198,7 @@ CREATE TABLE integration_profiles (
 ) STRICT;
 CREATE UNIQUE INDEX integration_profile_scopes ON integration_profiles(kind, scope);
 CREATE TABLE integration_exclusions (
-    kind TEXT NOT NULL CHECK (kind IN ('github', 'jira')),
+    kind TEXT NOT NULL CHECK (kind IN ('github', 'jira', 'todoist')),
     scope TEXT NOT NULL CHECK (length(CAST(scope AS BLOB)) BETWEEN 1 AND 128),
     PRIMARY KEY (kind, scope)
 ) STRICT;
@@ -207,7 +207,7 @@ CREATE TABLE integration_metadata (
     data TEXT NOT NULL CHECK (length(CAST(data AS BLOB)) BETWEEN 2 AND 16384)
 ) STRICT;
 CREATE TABLE integration_switches (
-    kind TEXT PRIMARY KEY CHECK (kind IN ('local-projects', 'codex', 'github', 'jira')),
+    kind TEXT PRIMARY KEY CHECK (kind IN ('local-projects', 'codex', 'github', 'jira', 'todoist')),
     enabled INTEGER NOT NULL CHECK (enabled IN (0, 1))
 ) STRICT;
 CREATE TABLE plugins (

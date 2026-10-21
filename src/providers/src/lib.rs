@@ -205,4 +205,5 @@ mod github_registry;
 
 mod integration;
 mod jira_registry;
+mod todoist_registry;
 pub use integration::{IntegrationTransport, IntegrationTransportError};

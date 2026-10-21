@@ -8,11 +8,12 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT: AtomicU64 = AtomicU64::new(1);
-const ALL: [BuiltInIntegration; 4] = [
+const ALL: [BuiltInIntegration; 5] = [
     BuiltInIntegration::LocalProjects,
     BuiltInIntegration::Codex,
     BuiltInIntegration::GitHub,
     BuiltInIntegration::Jira,
+    BuiltInIntegration::Todoist,
 ];
 const PR: &str = "https://github.com/Example/Project/pull/3";
 
@@ -216,7 +217,7 @@ fn workspaces(db: &DB) -> Result<i64, Box<dyn std::error::Error>> {
 }
 
 #[test]
-fn new_database_enables_all_four_and_open_requires_exactly_four_switches()
+fn new_database_enables_all_five_and_open_requires_exactly_five_switches()
 -> Result<(), Box<dyn std::error::Error>> {
     let db = DB::new();
     let s = Store::open(&db.0)?;
@@ -227,9 +228,9 @@ fn new_database_enables_all_four_and_open_requires_exactly_four_switches()
     let c = Connection::open(&db.0)?;
     assert_eq!(
         c.pragma_query_value(None, "user_version", |r| r.get::<_, i32>(0))?,
-        15
+        16
     );
-    c.execute("DELETE FROM integration_switches WHERE kind='codex'", [])?;
+    c.execute("DELETE FROM integration_switches WHERE kind='todoist'", [])?;
     drop(c);
     let before = std::fs::read(&db.0)?;
     assert!(matches!(

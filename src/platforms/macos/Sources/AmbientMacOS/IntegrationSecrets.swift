@@ -14,28 +14,33 @@ func validInstance(_ s: String) -> Bool {
 enum IntegrationSecret: Codable, Equatable, Sendable {
     case githubToken(token: String)
     case jiraBasic(email: String, token: String)
+    case todoistToken(token: String)
     enum CodingKeys: String, CodingKey {
         case githubToken = "github_token"
         case jiraBasic = "jira_basic"
+        case todoistToken = "todoist_token"
     }
     enum GithubTokenCodingKeys: String, CodingKey { case token }
     enum JiraBasicCodingKeys: String, CodingKey { case email, token }
+    /// A Todoist personal token has GitHub's single-token form.
+    typealias TodoistTokenCodingKeys = GithubTokenCodingKeys
     var kind: IntegrationKind {
         switch self {
         case .githubToken: .github
         case .jiraBasic: .jira
+        case .todoistToken: .todoist
         }
     }
     /// The two borrowed dispatch parts; an absent second part crosses the ABI as `{NULL, 0}`.
     var parts: (first: String, second: String?) {
         switch self {
-        case .githubToken(let token): (token, nil)
+        case .githubToken(let token), .todoistToken(let token): (token, nil)
         case .jiraBasic(let email, let token): (email, token)
         }
     }
     func validate() throws {
         switch self {
-        case .githubToken(let token):
+        case .githubToken(let token), .todoistToken(let token):
             guard graphic(token, 16384) else { throw IntegrationFailure.invalid }
         case .jiraBasic(let email, let token):
             guard graphic(email, 254), !email.utf8.contains(58), graphic(token, 16384) else {

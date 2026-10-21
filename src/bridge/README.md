@@ -1,5 +1,9 @@
 # Bridge
 
+## Todoist в ABI интеграций v1 (17A)
+
+ABI остаётся v1, 18 экспортов: `AMBIENT_INTEGRATION_TODOIST 5u` принимается экспортами профилей, исключений и переключателей (виды 1..5); `ambient_integration_v1_todoist_profile_save(h, id, revision, name, out)` без аргумента `scope`: внутри одного `store(h, …)` читает хранимый аккаунт (ID 0 → нет) и передаёт его сохранению под той же блокировкой Store. Dispatch Todoist: первая часть — личный токен, вторая обязана быть `{NULL, 0}`. Тесты: `tests/integration_abi.rs` (вид 5, сохранение без `scope`, чужой вид), `src/integration_tests.rs` (вторая часть секрета, loopback: закрепление аккаунта, 9 запросов, переименование сохраняет аккаунт).
+
 ## Google в `ambient_plugin.h` v2 (24B / ADR-022)
 
 Тот же v2 (выпуска между 24C и 24B не было), 21 экспорт: `builtin(id)` — байты встроенного пакета JSON `{"files":[{kind,path,text}]}` для обычного просмотра и установки; `managed_status(root, id)` — `{"status":…}` без состояния; `managed_install(op, root, id)` — блокирующая установка на описателе операции (`busy` до фактического возврата, отмена флагом), `{"status", "stderr_tail"?}`; `oauth_begin(id, redirect)`, `oauth_exchange(id, redirect, query, state, verifier)`, `oauth_refresh(id, refresh)`, `oauth_revoke(id, refresh)` — без состояния, JSON со `status`. Неизвестный ID, неверный корень, текст вне печатного ASCII — код 1 до любого запуска или сети. JSON строится `serde` (прямые зависимости моста `serde`/`serde_json`, те же записи lock). Тесты: `tests/plugin_abi.rs` (встроенный пакет через просмотр и установку, проверки ввода статуса, установки и OAuth, отменённая установка ничего не запускает), `src/plugin_tests.rs` (test-support: встроенный пакет → тестовая venv → обнаружение с токеном и разметкой списка → одобрение → вызов моделью через `test_dispatch` → процесс остановлен до возврата, токен не в SQLite и журнале).

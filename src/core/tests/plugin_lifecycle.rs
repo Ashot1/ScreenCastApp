@@ -303,11 +303,12 @@ fn the_plugin_namespace_is_reserved_for_saved_tool_results() -> Result<(), Store
 }
 
 #[test]
-fn schemas_thirteen_and_fourteen_are_rejected_and_tampered_pins_or_interrupted_calls_are_handled_at_open()
+fn schemas_thirteen_through_fifteen_are_rejected_and_tampered_pins_or_interrupted_calls_are_handled_at_open()
 -> Result<(), Box<dyn std::error::Error>> {
     for (fixture, version) in [
         (include_str!("fixtures/schema-thirteen.sql"), 13),
         (include_str!("fixtures/schema-fourteen.sql"), 14),
+        (include_str!("fixtures/schema-fifteen.sql"), 15),
     ] {
         let old = Database::new();
         let c = Connection::open(&old.0)?;

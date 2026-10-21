@@ -81,7 +81,7 @@ fn integration_abi_profiles_use_same_handle_and_reject_wrong_kind_or_scope()
             1
         );
         // Local projects and Codex keep their own ABIs; they are not engine kinds.
-        for kind in [0, 1, 2, 5] {
+        for kind in [0, 1, 2, 6] {
             assert_eq!(
                 ambient_integration_v1_profiles(
                     h,
@@ -289,6 +289,7 @@ fn integration_switches_accept_all_four_kinds_and_a_closed_boolean()
         AMBIENT_INTEGRATION_CODEX,
         AMBIENT_INTEGRATION_GITHUB,
         AMBIENT_INTEGRATION_JIRA,
+        AMBIENT_INTEGRATION_TODOIST,
     ];
     for kind in kinds {
         let mut enabled = 7;
@@ -320,7 +321,7 @@ fn integration_switches_accept_all_four_kinds_and_a_closed_boolean()
         );
     }
     let mut enabled = 7;
-    for kind in [0, 5] {
+    for kind in [0, 6] {
         unsafe {
             assert_eq!(
                 ambient_integration_v1_enabled(h, kind, &mut enabled),
@@ -359,6 +360,99 @@ fn integration_switches_accept_all_four_kinds_and_a_closed_boolean()
         );
     }
     assert_eq!(enabled, 1);
+    assert_eq!(ambient_v3_close(h), 0);
+    std::fs::remove_file(path)?;
+    Ok(())
+}
+
+#[test]
+fn todoist_profile_save_has_no_scope_argument_and_keeps_the_stored_account()
+-> Result<(), Box<dyn std::error::Error>> {
+    let path = std::env::temp_dir().join(format!(
+        "ambient-integration-abi-todoist-{}.sqlite3",
+        std::process::id()
+    ));
+    let bytes = path.to_str().ok_or("path")?.as_bytes();
+    let mut h = 0;
+    unsafe {
+        assert_eq!(
+            ambient_v3_open(bytes.as_ptr(), bytes.len() as u32, &mut h),
+            0
+        );
+    }
+    assert_eq!(AMBIENT_INTEGRATION_TODOIST, 5);
+    let mut p = AmbientIntegrationProfileRef::default();
+    let mut jira = AmbientIntegrationProfileRef::default();
+    unsafe {
+        assert_eq!(
+            ambient_integration_v1_todoist_profile_save(h, 0, 0, text("Personal"), &mut p),
+            0
+        );
+        assert_eq!(
+            ambient_integration_v1_jira_profile_save(
+                h,
+                0,
+                0,
+                text("Work"),
+                text("Site"),
+                &mut jira
+            ),
+            0
+        );
+        // A profile ID of another kind is never saved as Todoist.
+        let mut out = AmbientIntegrationProfileRef::default();
+        assert_eq!(
+            ambient_integration_v1_todoist_profile_save(
+                h,
+                jira.id,
+                jira.settings_revision,
+                text("Other"),
+                &mut out
+            ),
+            INVALID_ARGUMENT
+        );
+        assert_eq!(out.id, 0);
+        let mut renamed = AmbientIntegrationProfileRef::default();
+        assert_eq!(
+            ambient_integration_v1_todoist_profile_save(
+                h,
+                p.id,
+                p.settings_revision,
+                text("Renamed"),
+                &mut renamed
+            ),
+            0
+        );
+        assert_eq!(renamed.id, p.id);
+        assert!(renamed.settings_revision > p.settings_revision);
+        assert_eq!(renamed.credential_generation, p.credential_generation);
+        let mut out = vec![0u8; 1024 * 1024];
+        let mut used = 0;
+        assert_eq!(
+            ambient_integration_v1_profiles(
+                h,
+                AMBIENT_INTEGRATION_TODOIST,
+                out.as_mut_ptr(),
+                1024 * 1024,
+                &mut used
+            ),
+            0
+        );
+        let settings: serde_json::Value = serde_json::from_slice(&out[..used as usize])?;
+        assert_eq!(settings["kind"], "todoist");
+        assert_eq!(settings["profiles"][0]["name"], "Renamed");
+        assert_eq!(settings["profiles"][0]["scope"], serde_json::Value::Null);
+        assert_eq!(settings["profiles"][0]["config"], serde_json::json!({}));
+        assert_eq!(
+            ambient_integration_v1_scope_excluded(
+                h,
+                AMBIENT_INTEGRATION_TODOIST,
+                text("account-1"),
+                1
+            ),
+            0
+        );
+    }
     assert_eq!(ambient_v3_close(h), 0);
     std::fs::remove_file(path)?;
     Ok(())

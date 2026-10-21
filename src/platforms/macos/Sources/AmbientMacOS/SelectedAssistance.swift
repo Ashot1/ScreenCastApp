@@ -119,12 +119,14 @@ struct PluginCitation: Equatable, Sendable, Decodable {
 enum IntegrationCitation: Equatable, Sendable, Decodable {
     case github(GitHubMetadata)
     case jira(JiraMetadata)
+    case todoist(TodoistMetadata)
     private enum CodingKeys: String, CodingKey { case kind, metadata }
     init(from decoder: any Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         switch try c.decode(IntegrationKind.self, forKey: .kind) {
         case .github: self = .github(try c.decode(GitHubMetadata.self, forKey: .metadata))
         case .jira: self = .jira(try c.decode(JiraMetadata.self, forKey: .metadata))
+        case .todoist: self = .todoist(try c.decode(TodoistMetadata.self, forKey: .metadata))
         }
     }
 }
