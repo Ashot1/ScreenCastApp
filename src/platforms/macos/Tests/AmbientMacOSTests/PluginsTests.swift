@@ -94,6 +94,24 @@ private func tool() -> DiscoveredTool {
         ])
 }
 
+/// The «Ambient Visual» build looks for Codex plugins only inside its verification folder.
+@Test @MainActor func codexPluginsAreListedFromTheGivenHome() async throws {
+    let home = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "ambient-codex-home-" + UUID().uuidString)
+    defer { try? FileManager.default.removeItem(at: home) }
+    let version = home.appending(
+        path: ".codex/plugins/cache/market/plans/1.0.0", directoryHint: .isDirectory)
+    try FileManager.default.createDirectory(at: version, withIntermediateDirectories: true)
+    let memory = MemorySession(databaseURL: home.appending(path: "memory.sqlite3"))
+    let model = ChatGPTModel(
+        session: memory, chatGPTKeychainService: "dev.ambient.foundation.visual.chatgpt",
+        codexHome: home)
+    #expect(
+        model.plugins.codexFolders.map { $0.resolvingSymlinksInPath().path }
+            == [version.resolvingSymlinksInPath().path])
+    try await memory.close()
+}
+
 @Test @MainActor func pluginSecretsGoCoreFirstAndBindToTheDatabaseInstance() async throws {
     let fixture = try IntegrationKeychainFixture()
     defer { fixture.remove() }

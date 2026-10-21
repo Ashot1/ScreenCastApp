@@ -43,10 +43,16 @@ import Observation
     private var feedGeneration: UInt64 = 0
     private var detailsGeneration: UInt64 = 0
     private var edgeDismissed = false
-    public init(session: MemorySession = MemorySession()) {
-        coordinator = ChatGPTCoordinator(memory: session)
+    /// The «Ambient Visual» build passes its own ChatGPT Keychain service and Codex home.
+    public init(
+        session: MemorySession = MemorySession(),
+        chatGPTKeychainService: String = "dev.ambient.foundation.chatgpt",
+        codexHome: URL = FileManager.default.homeDirectoryForCurrentUser
+    ) {
+        coordinator = ChatGPTCoordinator(
+            store: ChatGPTKeychain(service: chatGPTKeychainService), memory: session)
         voice = .production()
-        plugins = PluginsModel(memory: session, secrets: coordinator.plugins)
+        plugins = PluginsModel(memory: session, secrets: coordinator.plugins, codexHome: codexHome)
     }
     init(coordinator: ChatGPTCoordinator, voice: VoiceReplyModel? = nil) {
         self.coordinator = coordinator

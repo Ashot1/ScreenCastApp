@@ -398,6 +398,22 @@ private func authFixture() -> ChatGPTEnvelope {
     #expect((found as? [Any])?.count == 1)
 }
 
+/// The «Ambient Visual» build names its own ChatGPT service, so it never reads the daily record.
+@Test @MainActor func chatGPTKeychainServiceSeparatesRecords() throws {
+    let fixture = try IntegrationKeychainFixture()
+    defer { fixture.remove() }
+    let privateKeychain = fixture.keychain
+    let daily = ChatGPTKeychain(keychain: privateKeychain)
+    try daily.save(ChatGPTEnvelope(host: "urn:uuid:12345678-1234-4234-9234-123456789abc"))
+    let visual = ChatGPTKeychain(
+        service: "dev.ambient.foundation.visual.chatgpt", keychain: privateKeychain)
+    #expect(try visual.load() == nil)
+    let e = ChatGPTEnvelope(host: "urn:uuid:87654321-4321-4321-8321-cba987654321")
+    try visual.save(e)
+    #expect(try visual.load()?.host == e.host)
+    #expect(try daily.load()?.host == "urn:uuid:12345678-1234-4234-9234-123456789abc")
+}
+
 @Test func chatGPTEnvelopeRejectsCorruptionAndRetainsRegistrationAfterLocalSignOut() throws {
     var e = ChatGPTEnvelope(host: "urn:uuid:12345678-1234-4234-9234-123456789abc")
     let decoded = try ChatGPTEnvelope.decode(e.encoded())

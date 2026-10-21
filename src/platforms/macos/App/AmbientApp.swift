@@ -31,9 +31,17 @@ import SwiftUI
     private var edgeCard: EdgeCardController?
     override init() {
         AmbientProcess.launch()
-        let session = MemorySession()
+        #if AMBIENT_VISUAL_FIXTURE
+            let root = visualFixtureRoot()
+            let session = MemorySession(databaseURL: root.appending(path: "memory.sqlite3"))
+            chatGPT = ChatGPTModel(
+                session: session, chatGPTKeychainService: "dev.ambient.foundation.visual.chatgpt",
+                codexHome: root)
+        #else
+            let session = MemorySession()
+            chatGPT = ChatGPTModel(session: session)
+        #endif
         model = AssistantModel(session: session)
-        chatGPT = ChatGPTModel(session: session)
         super.init()
     }
 
@@ -56,3 +64,19 @@ import SwiftUI
         return .terminateLater
     }
 }
+
+#if AMBIENT_VISUAL_FIXTURE
+    /// «Ambient Visual» (ADR-024) runs only on a test folder under `target/verification/`. There is
+    /// no fallback to the user's memory: a missing or foreign folder stops the launch.
+    private func visualFixtureRoot() -> URL {
+        let path = ProcessInfo.processInfo.environment["AMBIENT_VISUAL_ROOT"] ?? ""
+        let root = URL(filePath: path, directoryHint: .isDirectory).standardizedFileURL
+            .resolvingSymlinksInPath()
+        guard path.hasPrefix("/"), root.path.contains("/target/verification/") else {
+            FileHandle.standardError.write(
+                Data("AMBIENT_VISUAL_ROOT must be a folder under target/verification/\n".utf8))
+            exit(EXIT_FAILURE)
+        }
+        return root
+    }
+#endif

@@ -4,13 +4,17 @@ import Security
 /// Security owns the immutable reference and synchronizes SecItem operations. The coordinator
 /// serializes logical read/commit/logout; the optional reference confines integration tests.
 final class ChatGPTKeychain: ChatGPTCredentialStore, @unchecked Sendable {
+    private let service: String
     private let keychain: SecKeychain?
-    init(keychain: SecKeychain? = nil) { self.keychain = keychain }
+    init(service: String = "dev.ambient.foundation.chatgpt", keychain: SecKeychain? = nil) {
+        self.service = service
+        self.keychain = keychain
+    }
 
     private func query(add: Bool = false) -> [String: Any] {
         var q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: "dev.ambient.foundation.chatgpt",
+            kSecAttrService as String: service,
             kSecAttrAccount as String: "installation",
             kSecAttrSynchronizable as String: false,
         ]

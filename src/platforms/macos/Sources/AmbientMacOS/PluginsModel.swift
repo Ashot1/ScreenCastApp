@@ -42,6 +42,7 @@ enum GoogleSignIn: Error {
     private let discovery = PluginDiscovery()
     private let managed = ManagedServers()
     private let openBrowser: @MainActor @Sendable (URL) -> Bool
+    private let codexHome: URL
     /// Install state of each managed server id, read from disk when plugins load.
     private(set) var managedStatus: [String: ManagedStatus] = [:]
     /// The running install, which «Cancel» stops; «installing» is UI state only (ADR-022).
@@ -66,12 +67,14 @@ enum GoogleSignIn: Error {
     var draft: Draft?
     init(
         memory: MemorySession, secrets: PluginSecretOwner,
+        codexHome: URL = FileManager.default.homeDirectoryForCurrentUser,
         openBrowser: @escaping @MainActor @Sendable (URL) -> Bool = {
             NSWorkspace.shared.open($0)
         }
     ) {
         self.memory = memory
         self.secrets = secrets
+        self.codexHome = codexHome
         self.openBrowser = openBrowser
     }
     func load() async {
@@ -124,7 +127,7 @@ enum GoogleSignIn: Error {
         } catch { fail(error) }
         await load()
     }
-    var codexFolders: [URL] { PluginPackageReader.codexPlugins() }
+    var codexFolders: [URL] { PluginPackageReader.codexPlugins(home: codexHome) }
     func chooseFolder() async {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
