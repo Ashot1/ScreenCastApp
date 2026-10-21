@@ -67,7 +67,9 @@ struct IntegrationSwitchesView: View {
                     }.disabled(model.integrations.changing)
                 }
                 if let failure = model.integrations.failureKey {
-                    Text(LocalizedStringKey(failure), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failure), bundle: .module))
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
         } label: {

@@ -2,7 +2,7 @@ import ServiceManagement
 import SwiftUI
 
 struct LoginItemView: View {
-    @State private var model = LoginItemModel()
+    let model: LoginItemModel
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -11,7 +11,9 @@ struct LoginItemView: View {
                 Text("loginItem.help", bundle: .module)
                 Text(LocalizedStringKey(model.statusKey), bundle: .module)
                 if let failureKey = model.failureKey {
-                    Text(LocalizedStringKey(failureKey), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failureKey), bundle: .module))
                 }
                 switch model.status {
                 case .notRegistered:

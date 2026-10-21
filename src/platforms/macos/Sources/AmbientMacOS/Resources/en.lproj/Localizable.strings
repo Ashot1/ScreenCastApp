@@ -25,6 +25,8 @@
 "settings.connection" = "Connection";
 "settings.cloud" = "Analysis unavailable";
 "settings.description" = "This version stores tasks, notes, source evidence and your corrections locally. Cloud assistance is unavailable.";
+"settings.general" = "General";
+"settings.usage" = "Check and usage";
 "integrations.title" = "Integrations";
 "integrations.help" = "Turning an integration off stops its reading at once and clears assistance discussions that used its information. Information already saved to tasks stays in task memory and is used again after you turn the integration back on.";
 "integrations.localProjects" = "Local projects";

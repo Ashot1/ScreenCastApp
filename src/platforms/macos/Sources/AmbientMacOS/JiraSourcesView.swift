@@ -215,7 +215,9 @@ struct JiraSettingsView: View {
                     }
                 }
                 if let failure = source.failureKey {
-                    Text(LocalizedStringKey(failure), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failure), bundle: .module))
                 }
             }.disabled(source.changingCredential)
         } label: {

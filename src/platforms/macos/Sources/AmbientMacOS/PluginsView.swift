@@ -65,7 +65,9 @@ struct PluginsSettingsView: View {
                     }
                 }.disabled(plugins.working)
                 if let failure = plugins.failureKey {
-                    Text(LocalizedStringKey(failure), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failure), bundle: .module))
                 }
                 PluginCallLogView(calls: plugins.calls)
             }.frame(maxWidth: .infinity, alignment: .leading)
@@ -275,7 +277,9 @@ private struct PluginReviewView: View {
                     }
                     Text("plugins.dataNotice", bundle: .module).font(.caption)
                     if let failure = plugins.failureKey {
-                        Text(LocalizedStringKey(failure), bundle: .module).foregroundStyle(.red)
+                        Callout(
+                            tone: Theme.error, systemImage: "exclamationmark.circle",
+                            message: Text(LocalizedStringKey(failure), bundle: .module))
                     }
                     HStack {
                         Button(role: .cancel) {
@@ -299,7 +303,7 @@ private struct PluginReviewView: View {
                     }.disabled(plugins.working)
                 }.padding(20)
             }
-            .frame(width: 520, height: 600)
+            .frame(width: 892, height: 756)
         }
     }
 }
@@ -486,10 +490,11 @@ private struct PluginManagedControls: View {
                 }
             }
             if let result = plugins.installResult, result.status != .installed {
-                Text(
-                    LocalizedStringKey("plugins.google.result.\(result.status.rawValue)"),
-                    bundle: .module
-                ).foregroundStyle(.red)
+                Callout(
+                    tone: Theme.error, systemImage: "exclamationmark.circle",
+                    message: Text(
+                        LocalizedStringKey("plugins.google.result.\(result.status.rawValue)"),
+                        bundle: .module))
                 if let tail = result.stderrTail {
                     Text("plugins.stderr", bundle: .module).font(.caption)
                     Text(verbatim: tail).font(.caption2.monospaced()).textSelection(.enabled)
@@ -582,7 +587,9 @@ private struct PluginDiscoveryStatus: View {
     var body: some View {
         if let found, found.status != .ok {
             let key = LocalizedStringKey("plugins.discovery.\(found.status.rawValue)")
-            Text(key, bundle: .module).foregroundStyle(.red)
+            Callout(
+                tone: Theme.error, systemImage: "exclamationmark.circle",
+                message: Text(key, bundle: .module))
             if let stderr = found.stderr {
                 Text("plugins.stderr", bundle: .module).font(.caption)
                 Text(verbatim: stderr).font(.caption2.monospaced()).textSelection(.enabled)

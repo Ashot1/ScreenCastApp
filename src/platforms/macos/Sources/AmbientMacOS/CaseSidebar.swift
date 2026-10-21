@@ -146,7 +146,7 @@ struct CaseSidebar: View {
 }
 
 /// The sidebar's status capsule: ring, the existing status texts and the pause controls.
-private struct SidebarStatus: View {
+struct SidebarStatus: View {
     let model: AssistantModel
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

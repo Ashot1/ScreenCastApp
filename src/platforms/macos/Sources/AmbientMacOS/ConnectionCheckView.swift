@@ -50,14 +50,17 @@ struct ConnectionCheckView: View {
                             || !model.canToggleManualPause)
                 }
                 if let failure = chatGPT.journalFailure {
-                    Text(LocalizedStringKey(failure.key), bundle: .module).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(LocalizedStringKey(failure.key), bundle: .module))
                 }
                 if let failure = chatGPT.checkFailure {
-                    Text(
-                        LocalizedStringKey(
-                            failure == .storage ? "check.error.recording" : failure.key),
-                        bundle: .module
-                    ).foregroundStyle(.red)
+                    Callout(
+                        tone: Theme.error, systemImage: "exclamationmark.circle",
+                        message: Text(
+                            LocalizedStringKey(
+                                failure == .storage ? "check.error.recording" : failure.key),
+                            bundle: .module))
                 }
                 if let summary = chatGPT.checkSummary {
                     LabeledContent {

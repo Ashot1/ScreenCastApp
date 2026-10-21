@@ -1,5 +1,17 @@
 # Результаты проверки основы
 
+## Приёмка 25G — 21 октября 2026
+
+Настройки с боковой панелью ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25g-parent-inspection.md)).
+
+- **Исполнитель:** yarn verify 99 Swift, feature Swift 147; перечень проверок 113 → 114; аудит и подписи. Новой логики нет.
+- **Оркестратор:**
+  - свежий yarn verify 20:52–20:56Z, exit 0, 358 Rust / 99 Swift;
+  - хэши совпадают;
+  - 28 прежних контрольных сборок (510 файлов) целы;
+  - новая `Ambient-settings-25g.app`.
+- **Не проверено:** вид настроек (смотрит пользователь, D77), окно 940×800 на экранах ниже ~830 pt, CI на `macos-26`.
+
 ## Приёмка 25F — 21 октября 2026
 
 Вкладки заметок, связей, источников и помощи ([ADR-023](decisions/0023-ui-redesign-liquid-glass.md), [приёмка](../target/verification/orchestration/25f-parent-inspection.md)).

@@ -6,7 +6,7 @@ Spec: [ADR-023](../../../decisions/0023-ui-redesign-liquid-glass.md). Decisions:
 
 **Blocked by:** приёмка 25G.
 
-**Status:** blocked
+**Status:** ready — 25G принята; исполнитель запускается оркестратором (D80)
 
 - [ ] Метка `MenuBarExtra` (символ по состоянию и «Ambient»), явный `.menuBarExtraStyle(.menu)`, пункты через `Label`.
 - [ ] `AssistantModel.beginClosing()` вызывается первым в `applicationShouldTerminate`; тест: после него `canToggleManualPause == false`, `requestSelection` ничего не делает.

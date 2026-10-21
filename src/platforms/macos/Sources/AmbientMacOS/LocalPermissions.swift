@@ -21,7 +21,7 @@ import SwiftUI
 }
 
 struct LocalPermissionsView: View {
-    @State private var permissions = LocalPermissions()
+    @Binding var permissions: LocalPermissions
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
