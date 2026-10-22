@@ -21,6 +21,7 @@ impl AttemptId {
 pub enum ModelPurpose {
     Connectivity = 1,
     Assistance = 2,
+    Observation = 3,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u32)]
@@ -44,8 +45,10 @@ impl CheckAdmission {
     }
 }
 pub struct CheckDispatch {
+    pub(crate) purpose: ModelPurpose,
     pub(crate) profile: ModelProfile,
     pub(crate) snapshot: Option<Arc<crate::assistance_types::AssistanceSnapshot>>,
+    pub(crate) observation: Option<Arc<crate::ObservationRequest>>,
     pub(crate) id: AttemptId,
     pub(crate) cancelled: Arc<AtomicBool>,
 }
@@ -54,14 +57,14 @@ impl CheckDispatch {
         self.profile
     }
     pub fn purpose(&self) -> ModelPurpose {
-        if self.snapshot.is_some() {
-            ModelPurpose::Assistance
-        } else {
-            ModelPurpose::Connectivity
-        }
+        self.purpose
     }
+    /// The assistance context only; an observation request has its own body (27D).
     pub fn context(&self) -> Option<&str> {
         self.snapshot.as_ref().map(|s| s.preview.context.as_str())
+    }
+    pub fn observation(&self) -> Option<&crate::ObservationRequest> {
+        self.observation.as_deref()
     }
     pub fn id(&self) -> AttemptId {
         self.id

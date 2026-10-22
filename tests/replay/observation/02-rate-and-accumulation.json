@@ -1,0 +1,1483 @@
+{
+ "format": 1,
+ "source": "synthetic: hand-written for ADR-025 ticket 27B; no screen was captured",
+ "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
+ "schema_version": 17,
+ "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
+ "geometry": {
+  "displays": [
+   {
+    "key": "display-A",
+    "pixels": [
+     2560,
+     1600
+    ],
+    "scale": 2
+   },
+   {
+    "key": "display-B",
+    "pixels": [
+     1920,
+     1080
+    ],
+    "scale": 1
+   }
+  ],
+  "rects": "Vision normalized, origin bottom-left; word rects are not needed before 27C and are omitted"
+ },
+ "name": "rate-and-accumulation",
+ "adr_episode": 2,
+ "summary": "25 significant frames in 10 minutes at 20/h; every send takes exactly the frames since the previous one; the rolling hour frees at exactly 60 minutes; failed and 429 attempts count and back off; losses at the request limit and pruned unsent rows are explicit",
+ "steps": [
+  {
+   "t": 0,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 0,
+   "op": "session",
+   "epoch": 1,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 0,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 1:\namber-1 birch-1 cedar-1 delta-1 ember-1 fjord-1 grove-1 harbor-1 iris-1 juniper-1 kestrel-1 lumen-1",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F1"
+  },
+  {
+   "t": 12,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 12,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F1"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 13,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 24,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 2:\namber-2 birch-2 cedar-2 delta-2 ember-2 fjord-2 grove-2 harbor-2 iris-2 juniper-2 kestrel-2 lumen-2",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F2"
+  },
+  {
+   "t": 36,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 36,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F2"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 37,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 48,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 3:\namber-3 birch-3 cedar-3 delta-3 ember-3 fjord-3 grove-3 harbor-3 iris-3 juniper-3 kestrel-3 lumen-3",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F3"
+  },
+  {
+   "t": 60,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 60,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F3"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 61,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 72,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 4:\namber-4 birch-4 cedar-4 delta-4 ember-4 fjord-4 grove-4 harbor-4 iris-4 juniper-4 kestrel-4 lumen-4",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F4"
+  },
+  {
+   "t": 84,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 84,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F4"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 85,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 96,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 5:\namber-5 birch-5 cedar-5 delta-5 ember-5 fjord-5 grove-5 harbor-5 iris-5 juniper-5 kestrel-5 lumen-5",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F5"
+  },
+  {
+   "t": 108,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 108,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F5"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 109,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 120,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 6:\namber-6 birch-6 cedar-6 delta-6 ember-6 fjord-6 grove-6 harbor-6 iris-6 juniper-6 kestrel-6 lumen-6",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F6"
+  },
+  {
+   "t": 132,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 132,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F6"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 133,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 144,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 7:\namber-7 birch-7 cedar-7 delta-7 ember-7 fjord-7 grove-7 harbor-7 iris-7 juniper-7 kestrel-7 lumen-7",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F7"
+  },
+  {
+   "t": 156,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 156,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F7"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 157,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 168,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 8:\namber-8 birch-8 cedar-8 delta-8 ember-8 fjord-8 grove-8 harbor-8 iris-8 juniper-8 kestrel-8 lumen-8",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F8"
+  },
+  {
+   "t": 180,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 180,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F8"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 181,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 192,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 9:\namber-9 birch-9 cedar-9 delta-9 ember-9 fjord-9 grove-9 harbor-9 iris-9 juniper-9 kestrel-9 lumen-9",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F9"
+  },
+  {
+   "t": 204,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 204,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F9"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 205,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 216,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 10:\namber-10 birch-10 cedar-10 delta-10 ember-10 fjord-10 grove-10 harbor-10 iris-10 juniper-10 kestrel-10 lumen-10",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F10"
+  },
+  {
+   "t": 228,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 228,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F10"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 229,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 240,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 11:\namber-11 birch-11 cedar-11 delta-11 ember-11 fjord-11 grove-11 harbor-11 iris-11 juniper-11 kestrel-11 lumen-11",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F11"
+  },
+  {
+   "t": 252,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 252,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F11"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 253,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 264,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 12:\namber-12 birch-12 cedar-12 delta-12 ember-12 fjord-12 grove-12 harbor-12 iris-12 juniper-12 kestrel-12 lumen-12",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F12"
+  },
+  {
+   "t": 276,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 276,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F12"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 277,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 288,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 13:\namber-13 birch-13 cedar-13 delta-13 ember-13 fjord-13 grove-13 harbor-13 iris-13 juniper-13 kestrel-13 lumen-13",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F13"
+  },
+  {
+   "t": 300,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 300,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F13"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 301,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 312,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 14:\namber-14 birch-14 cedar-14 delta-14 ember-14 fjord-14 grove-14 harbor-14 iris-14 juniper-14 kestrel-14 lumen-14",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F14"
+  },
+  {
+   "t": 324,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 324,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F14"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 325,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 336,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 15:\namber-15 birch-15 cedar-15 delta-15 ember-15 fjord-15 grove-15 harbor-15 iris-15 juniper-15 kestrel-15 lumen-15",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F15"
+  },
+  {
+   "t": 348,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 348,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F15"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 349,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 360,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 16:\namber-16 birch-16 cedar-16 delta-16 ember-16 fjord-16 grove-16 harbor-16 iris-16 juniper-16 kestrel-16 lumen-16",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F16"
+  },
+  {
+   "t": 372,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 372,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F16"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 373,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 384,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 17:\namber-17 birch-17 cedar-17 delta-17 ember-17 fjord-17 grove-17 harbor-17 iris-17 juniper-17 kestrel-17 lumen-17",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F17"
+  },
+  {
+   "t": 396,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 396,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F17"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 397,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 408,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 18:\namber-18 birch-18 cedar-18 delta-18 ember-18 fjord-18 grove-18 harbor-18 iris-18 juniper-18 kestrel-18 lumen-18",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F18"
+  },
+  {
+   "t": 420,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 420,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F18"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 421,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 432,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 19:\namber-19 birch-19 cedar-19 delta-19 ember-19 fjord-19 grove-19 harbor-19 iris-19 juniper-19 kestrel-19 lumen-19",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F19"
+  },
+  {
+   "t": 444,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 444,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F19"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 445,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 456,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 20:\namber-20 birch-20 cedar-20 delta-20 ember-20 fjord-20 grove-20 harbor-20 iris-20 juniper-20 kestrel-20 lumen-20",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F20"
+  },
+  {
+   "t": 468,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 468,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F20"
+    ],
+    "images": 1,
+    "dropped_images": 0,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 469,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 480,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 21:\namber-21 birch-21 cedar-21 delta-21 ember-21 fjord-21 grove-21 harbor-21 iris-21 juniper-21 kestrel-21 lumen-21",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F21"
+  },
+  {
+   "t": 492,
+   "op": "begin",
+   "expect": "hourly_limit"
+  },
+  {
+   "t": 504,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 22:\namber-22 birch-22 cedar-22 delta-22 ember-22 fjord-22 grove-22 harbor-22 iris-22 juniper-22 kestrel-22 lumen-22",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F22"
+  },
+  {
+   "t": 516,
+   "op": "begin",
+   "expect": "hourly_limit"
+  },
+  {
+   "t": 528,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 23:\namber-23 birch-23 cedar-23 delta-23 ember-23 fjord-23 grove-23 harbor-23 iris-23 juniper-23 kestrel-23 lumen-23",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F23"
+  },
+  {
+   "t": 540,
+   "op": "begin",
+   "expect": "hourly_limit"
+  },
+  {
+   "t": 552,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 24:\namber-24 birch-24 cedar-24 delta-24 ember-24 fjord-24 grove-24 harbor-24 iris-24 juniper-24 kestrel-24 lumen-24",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F24"
+  },
+  {
+   "t": 564,
+   "op": "begin",
+   "expect": "hourly_limit"
+  },
+  {
+   "t": 576,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes 25:\namber-25 birch-25 cedar-25 delta-25 ember-25 fjord-25 grove-25 harbor-25 iris-25 juniper-25 kestrel-25 lumen-25",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F25"
+  },
+  {
+   "t": 588,
+   "op": "begin",
+   "expect": "hourly_limit"
+  },
+  {
+   "t": 3611,
+   "op": "begin",
+   "expect": "hourly_limit",
+   "note": "the first send at t=12 still counts at 59:59"
+  },
+  {
+   "t": 3612,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 3612,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F25",
+     "F24",
+     "F23",
+     "F22",
+     "F21"
+    ],
+    "images": 2,
+    "dropped_images": 3,
+    "dropped_frames": 0,
+    "dropped_bytes": 0
+   }
+  },
+  {
+   "t": 3613,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 3613,
+   "op": "journal",
+   "expect": {
+    "sends": 21,
+    "unsent_frames": 0
+   }
+  },
+  {
+   "t": 3700,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes G1:\namber-g1 birch-g1 cedar-g1 delta-g1 ember-g1 fjord-g1 grove-g1 harbor-g1 iris-g1 juniper-g1 kestrel-g1 lumen-g1",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "G1"
+  },
+  {
+   "t": 3712,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 3712,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "G1"
+    ],
+    "images": 1
+   }
+  },
+  {
+   "t": 3713,
+   "op": "finish",
+   "outcome": "provider",
+   "answer": null,
+   "expect": {
+    "outcome": "provider",
+    "applied": false
+   }
+  },
+  {
+   "t": 3713,
+   "op": "journal",
+   "expect": {
+    "sends": 22,
+    "unsent_frames": 1,
+    "last": {
+     "outcome": "provider",
+     "frames": [
+      "G1",
+      "G1"
+     ]
+    }
+   }
+  },
+  {
+   "t": 3800,
+   "op": "begin",
+   "expect": "cloud_unavailable"
+  },
+  {
+   "t": 3800,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Seen during the backoff",
+   "image": true,
+   "expect": {
+    "disposition": "cloud_unavailable",
+    "next": "hold"
+   }
+  },
+  {
+   "t": 3801,
+   "op": "tick",
+   "idle": 0,
+   "app_switched": false,
+   "expect": {
+    "next": "hold"
+   }
+  },
+  {
+   "t": 4012,
+   "op": "begin",
+   "expect": "cloud_unavailable",
+   "note": "the backoff runs 5 minutes from the failed finish at t=3713"
+  },
+  {
+   "t": 4013,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 4013,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "G1"
+    ],
+    "images": 0,
+    "dropped_images": 1
+   }
+  },
+  {
+   "t": 4014,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 4014,
+   "op": "journal",
+   "expect": {
+    "sends": 23,
+    "hour_attempts": 6
+   }
+  },
+  {
+   "t": 4100,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes H1:\namber-h1 birch-h1 cedar-h1 delta-h1 ember-h1 fjord-h1 grove-h1 harbor-h1 iris-h1 juniper-h1 kestrel-h1 lumen-h1",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "H1"
+  },
+  {
+   "t": 4112,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 4112,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "H1"
+    ]
+   }
+  },
+  {
+   "t": 4113,
+   "op": "finish",
+   "outcome": "quota",
+   "answer": null,
+   "expect": {
+    "outcome": "quota",
+    "applied": false
+   }
+  },
+  {
+   "t": 4412,
+   "op": "begin",
+   "expect": "cloud_unavailable"
+  },
+  {
+   "t": 7712,
+   "op": "begin",
+   "expect": "cloud_unavailable",
+   "note": "the 429 backoff runs one hour from the finish at t=4113"
+  },
+  {
+   "t": 7713,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 7713,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "H1"
+    ],
+    "images": 0
+   }
+  },
+  {
+   "t": 7714,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 7800,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "K1",
+   "repeat": {
+    "line": "Archive K1 row {i}: amber-K1-{i} birch-K1-{i} cedar-K1-{i} delta-K1-{i} ember-K1-{i} fjord-K1-{i} grove-K1-{i}",
+    "count": 250
+   }
+  },
+  {
+   "t": 7801,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "K2",
+   "repeat": {
+    "line": "Archive K2 row {i}: amber-K2-{i} birch-K2-{i} cedar-K2-{i} delta-K2-{i} ember-K2-{i} fjord-K2-{i} grove-K2-{i}",
+    "count": 250
+   }
+  },
+  {
+   "t": 7802,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "K3",
+   "repeat": {
+    "line": "Archive K3 row {i}: amber-K3-{i} birch-K3-{i} cedar-K3-{i} delta-K3-{i} ember-K3-{i} fjord-K3-{i} grove-K3-{i}",
+    "count": 250
+   }
+  },
+  {
+   "t": 7815,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 7815,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "K3",
+     "K2"
+    ],
+    "images": 2,
+    "dropped_images": 1,
+    "dropped_frames": 1,
+    "dropped_bytes": 26885
+   }
+  },
+  {
+   "t": 7816,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 8000,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes P1:\namber-p1 birch-p1 cedar-p1 delta-p1 ember-p1 fjord-p1 grove-p1 harbor-p1 iris-p1 juniper-p1 kestrel-p1 lumen-p1",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "P1"
+  },
+  {
+   "t": 94401,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Planning notes P2:\namber-p2 birch-p2 cedar-p2 delta-p2 ember-p2 fjord-p2 grove-p2 harbor-p2 iris-p2 juniper-p2 kestrel-p2 lumen-p2",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "P2"
+  },
+  {
+   "t": 94413,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 94413,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "P2"
+    ],
+    "images": 1,
+    "dropped_images": 1,
+    "dropped_frames": 1,
+    "dropped_bytes": 130
+   }
+  },
+  {
+   "t": 94414,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 94414,
+   "op": "journal",
+   "expect": {
+    "log_frames": 1,
+    "unsent_frames": 0
+   }
+  }
+ ]
+}

@@ -332,8 +332,11 @@ fn changed_epoch_pause_cancel_and_invalid_citations_cannot_publish_or_copy()
         ),
     )?;
     s.set_model_session(43, true, true)?;
-    assert!(s.copy_proposal(r).is_err());
+    // Card actions need only a valid session and no pause, not a new check (ADR-025 «Карточки»).
+    assert_eq!(s.copy_proposal(r)?, "current");
     assert!(!s.assistance_available()?);
+    s.set_model_session(43, false, true)?;
+    assert_eq!(s.copy_proposal(r).err(), Some(StoreError::SessionRequired));
     Ok(())
 }
 #[test]
@@ -724,7 +727,7 @@ fn reply_stale_parent_epoch_and_exact_suppression_never_retarget()
     let pending = prepare_reply(&mut s, r, "answer")?;
     s.set_model_session(43, true, true)?;
     assert!(s.begin_assistance(pending.request_id).is_err());
-    assert!(s.copy_proposal(r).is_err());
+    assert_eq!(s.copy_proposal(r)?, "Q");
     ready(&mut s)?;
     let p = prepare_new(&mut s, first.id, 1, &[])?;
     let r = run(

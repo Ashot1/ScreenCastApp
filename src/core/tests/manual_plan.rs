@@ -19,13 +19,13 @@ impl Drop for Database {
     }
 }
 #[test]
-fn new_database_uses_schema_sixteen() -> Result<(), Box<dyn std::error::Error>> {
+fn new_database_uses_schema_seventeen() -> Result<(), Box<dyn std::error::Error>> {
     let db = Database::new();
     let _store = Store::open(&db.0)?;
     let c = Connection::open(&db.0)?;
     assert_eq!(
         c.pragma_query_value(None, "user_version", |r| r.get::<_, i32>(0))?,
-        16
+        17
     );
     Ok(())
 }

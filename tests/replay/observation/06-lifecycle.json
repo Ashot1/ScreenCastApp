@@ -1,0 +1,449 @@
+{
+ "format": 1,
+ "source": "synthetic: hand-written for ADR-025 ticket 27B; no screen was captured",
+ "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
+ "schema_version": 17,
+ "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
+ "geometry": {
+  "displays": [
+   {
+    "key": "display-A",
+    "pixels": [
+     2560,
+     1600
+    ],
+    "scale": 2
+   },
+   {
+    "key": "display-B",
+    "pixels": [
+     1920,
+     1080
+    ],
+    "scale": 1
+   }
+  ],
+  "rects": "Vision normalized, origin bottom-left; word rects are not needed before 27C and are omitted"
+ },
+ "name": "lifecycle",
+ "adr_episode": 6,
+ "summary": "pause and stop clear the ring; a late answer after stop or a session change is discarded; restart resumes without a manual check (D103); the log outlives stop for 24 hours (D101); an observation failure keeps manual assistance (card parts belong to 27C)",
+ "steps": [
+  {
+   "t": 0,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 0,
+   "op": "session",
+   "epoch": 1,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 0,
+   "op": "connectivity_check"
+  },
+  {
+   "t": 0,
+   "op": "assistance_available",
+   "expect": true
+  },
+  {
+   "t": 0,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Lifecycle notes L1:\namber-l1 birch-l1 cedar-l1 delta-l1 ember-l1 fjord-l1 grove-l1 harbor-l1 iris-l1 juniper-l1 kestrel-l1 lumen-l1",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "L1"
+  },
+  {
+   "t": 5,
+   "op": "pause",
+   "paused": true
+  },
+  {
+   "t": 6,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Seen while paused",
+   "image": true,
+   "expect": {
+    "disposition": "paused",
+    "next": "hold"
+   }
+  },
+  {
+   "t": 7,
+   "op": "begin",
+   "expect": "paused"
+  },
+  {
+   "t": 8,
+   "op": "pause",
+   "paused": false
+  },
+  {
+   "t": 12,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 12,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "L1"
+    ],
+    "images": 0,
+    "dropped_images": 0
+   }
+  },
+  {
+   "t": 13,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 20,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Lifecycle notes L2:\namber-l2 birch-l2 cedar-l2 delta-l2 ember-l2 fjord-l2 grove-l2 harbor-l2 iris-l2 juniper-l2 kestrel-l2 lumen-l2",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "L2"
+  },
+  {
+   "t": 32,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 32,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "L2"
+    ],
+    "images": 1
+   }
+  },
+  {
+   "t": 33,
+   "op": "policy",
+   "started": false,
+   "per_hour_limit": 20,
+   "credit_acknowledged": false
+  },
+  {
+   "t": 40,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "cancelled",
+    "applied": false
+   },
+   "note": "a late answer after stop is discarded"
+  },
+  {
+   "t": 41,
+   "op": "journal",
+   "expect": {
+    "started": false,
+    "log_frames": 2,
+    "unsent_frames": 1,
+    "last": {
+     "outcome": "cancelled"
+    }
+   }
+  },
+  {
+   "t": 41,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Seen after stop",
+   "image": true,
+   "expect": {
+    "disposition": "not_started",
+    "next": "hold"
+   }
+  },
+  {
+   "t": 42,
+   "op": "begin",
+   "expect": "not_started"
+  },
+  {
+   "t": 42,
+   "op": "tick",
+   "idle": 0,
+   "app_switched": true,
+   "expect": {
+    "next": "hold"
+   }
+  },
+  {
+   "t": 43,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": false,
+   "expect_error": true,
+   "note": "start requires the credit acknowledgement (D103)"
+  },
+  {
+   "t": 50,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 60,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Lifecycle notes L3:\namber-l3 birch-l3 cedar-l3 delta-l3 ember-l3 fjord-l3 grove-l3 harbor-l3 iris-l3 juniper-l3 kestrel-l3 lumen-l3",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "L3"
+  },
+  {
+   "t": 72,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 72,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "L3",
+     "L2"
+    ],
+    "images": 1
+   }
+  },
+  {
+   "t": 73,
+   "op": "finish",
+   "outcome": "provider",
+   "answer": null,
+   "expect": {
+    "outcome": "provider",
+    "applied": false
+   }
+  },
+  {
+   "t": 74,
+   "op": "assistance_available",
+   "expect": true,
+   "note": "an observation failure keeps manual assistance"
+  },
+  {
+   "t": 400,
+   "op": "restart"
+  },
+  {
+   "t": 400,
+   "op": "journal",
+   "expect": {
+    "started": true,
+    "credit_acknowledged": true,
+    "unsent_frames": 2
+   }
+  },
+  {
+   "t": 400,
+   "op": "session",
+   "epoch": 2,
+   "valid": true,
+   "reported": true,
+   "note": "Swift passes the persisted credit acknowledgement as reported; no manual connection check"
+  },
+  {
+   "t": 410,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Lifecycle notes L4:\namber-l4 birch-l4 cedar-l4 delta-l4 ember-l4 fjord-l4 grove-l4 harbor-l4 iris-l4 juniper-l4 kestrel-l4 lumen-l4",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "L4"
+  },
+  {
+   "t": 422,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 422,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "L4",
+     "L3",
+     "L2"
+    ],
+    "images": 1
+   }
+  },
+  {
+   "t": 423,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 500,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Notes",
+   "bundle": "com.apple.Notes",
+   "title": "Planning",
+   "idle": 0,
+   "text": "Lifecycle notes L5:\namber-l5 birch-l5 cedar-l5 delta-l5 ember-l5 fjord-l5 grove-l5 harbor-l5 iris-l5 juniper-l5 kestrel-l5 lumen-l5",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "L5"
+  },
+  {
+   "t": 512,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 512,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "L5"
+    ]
+   }
+  },
+  {
+   "t": 513,
+   "op": "session",
+   "epoch": 3,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 514,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "cancelled",
+    "applied": false
+   },
+   "note": "a late answer after a session change is discarded"
+  },
+  {
+   "t": 600,
+   "op": "policy",
+   "started": false,
+   "per_hour_limit": 20,
+   "credit_acknowledged": false
+  },
+  {
+   "t": 601,
+   "op": "journal",
+   "expect": {
+    "started": false,
+    "log_frames": 5,
+    "unsent_frames": 1
+   },
+   "note": "stop keeps the log (D101)"
+  },
+  {
+   "t": 86899,
+   "op": "journal",
+   "expect": {
+    "log_frames": 1,
+    "unsent_frames": 1
+   },
+   "note": "each row lives 24 hours: only L5 (t=500) is younger"
+  },
+  {
+   "t": 86901,
+   "op": "journal",
+   "expect": {
+    "log_frames": 0,
+    "unsent_frames": 0
+   }
+  },
+  {
+   "t": 86902,
+   "op": "restart"
+  },
+  {
+   "t": 86902,
+   "op": "journal",
+   "expect": {
+    "started": false,
+    "credit_acknowledged": false,
+    "log_frames": 0
+   }
+  }
+ ]
+}

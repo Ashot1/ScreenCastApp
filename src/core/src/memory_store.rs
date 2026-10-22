@@ -6,6 +6,8 @@ mod checks;
 mod codex;
 #[path = "integration_store.rs"]
 mod integrations;
+#[path = "observation_store.rs"]
+mod observation;
 #[path = "plan_store.rs"]
 mod plan;
 #[path = "plugin_loop.rs"]
@@ -37,6 +39,7 @@ pub struct Store {
     prepared: Option<std::sync::Arc<AssistanceSnapshot>>,
     next_request: u64,
     consumed_request: u64,
+    observation: observation::ObservationState,
 }
 impl Store {
     pub fn open(path: impl AsRef<Path>) -> Result<Self, StoreError> {
@@ -63,13 +66,16 @@ impl Store {
         if empty {
             let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
             tx.execute_batch(SCHEMA)?;
-            tx.execute("INSERT INTO settings VALUES(1,0)", [])?;
+            tx.execute(
+                "INSERT INTO settings VALUES(1,0,0,?1,0,0,0,0)",
+                [DEFAULT_PER_HOUR_LIMIT],
+            )?;
             tx.execute("INSERT INTO local_source_clock VALUES(1,0)", [])?;
             // Secrets in native stores are bound to this random identity of one memory database.
             tx.execute("INSERT INTO store_identity VALUES(1,randomblob(16))", [])?;
             tx.execute("INSERT INTO integration_switches VALUES('local-projects',1),('codex',1),('github',1),('jira',1),('todoist',1)", [])?;
             tx.pragma_update(None, "application_id", APPLICATION_ID)?;
-            tx.pragma_update(None, "user_version", 16)?;
+            tx.pragma_update(None, "user_version", 17)?;
             tx.commit()?;
         }
         // A prior process may have submitted a request without receiving or saving its usage.
@@ -77,6 +83,7 @@ impl Store {
             "UPDATE connection_checks SET stage=2,outcome=7 WHERE stage=1",
             [],
         )?;
+        c.execute("UPDATE observation_sends SET outcome=7 WHERE outcome=0", [])?;
         // A call admitted before a restart may have reached the plugin server: it was interrupted.
         c.execute(
             "UPDATE plugin_calls SET stage=2,outcome=9 WHERE stage=1",
@@ -94,6 +101,7 @@ impl Store {
             prepared: None,
             next_request: 1,
             consumed_request: 0,
+            observation: observation::ObservationState::default(),
         })
     }
     fn change<T>(
@@ -133,6 +141,7 @@ impl Store {
             self.cancel_all_reads();
             self.cancel_check();
             self.clear_assistance();
+            self.stop_observation();
         }
         Ok(())
     }
@@ -820,6 +829,7 @@ fn validate_database(c: &Connection) -> Result<(), StoreError> {
     integrations::validate_integrations(c).map_err(|_| StoreError::UnsupportedSchema)?;
     plugins::validate_plugins(c).map_err(|_| StoreError::UnsupportedSchema)?;
     proposals::validate_workspaces(c).map_err(|_| StoreError::UnsupportedSchema)?;
+    observation::validate_observation(c).map_err(|_| StoreError::UnsupportedSchema)?;
     Ok(())
 }
 
@@ -1039,7 +1049,7 @@ fn inspect_schema(c: &Connection) -> Result<bool, StoreError> {
         })
         .collect();
     expected.sort();
-    if version != 16 || identity != APPLICATION_ID || objects != expected {
+    if version != 17 || identity != APPLICATION_ID || objects != expected {
         return Err(StoreError::UnsupportedSchema);
     }
     validate_database(c)?;

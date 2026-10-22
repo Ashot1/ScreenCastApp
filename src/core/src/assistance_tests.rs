@@ -108,7 +108,7 @@ fn cancellation_during_sqlite_write_wait_cannot_grant_capability_or_a_receipt()
 }
 
 #[test]
-fn persistent_workspace_schema_is_sixteen() -> Result<(), Box<dyn std::error::Error>> {
+fn persistent_workspace_schema_is_seventeen() -> Result<(), Box<dyn std::error::Error>> {
     let path = std::env::temp_dir().join(format!("ambient-schema8-{}.sqlite3", std::process::id()));
     let s = Store::open(&path)?;
     let version: i32 = s
@@ -116,6 +116,6 @@ fn persistent_workspace_schema_is_sixteen() -> Result<(), Box<dyn std::error::Er
         .pragma_query_value(None, "user_version", |r| r.get(0))?;
     drop(s);
     std::fs::remove_file(path)?;
-    assert_eq!(version, 16, "the Todoist integration requires schema16");
+    assert_eq!(version, 17, "the observation core requires schema17");
     Ok(())
 }

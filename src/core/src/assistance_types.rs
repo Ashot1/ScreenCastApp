@@ -239,6 +239,8 @@ pub(crate) struct ActiveModel {
     pub epoch: u64,
     pub request_id: Option<u64>,
     pub attempt: Option<AttemptId>,
+    /// The request an observation admission was built with at begin.
+    pub observation: Option<Arc<crate::ObservationRequest>>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

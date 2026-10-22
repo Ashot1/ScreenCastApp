@@ -6,7 +6,7 @@ Spec: [ADR-025](../../../decisions/0025-background-observation.md). Decisions: [
 
 **Blocked by:** приёмка 27B
 
-**Status:** blocked
+**Status:** ready — 27B принята; исполнитель запускается оркестратором (D102)
 
 - [ ] Эпизоды replay 1, 4, 5: опечатка, подмена команд и неверный ответ, подавление.
 - [ ] Общий `validate_proposal`, если проверка плана есть в ленте.

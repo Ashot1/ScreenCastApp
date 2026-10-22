@@ -3,10 +3,12 @@ mod assistance_types;
 mod check_types;
 mod memory_store;
 mod memory_types;
+mod observation_types;
 pub use assistance_types::*;
 pub use check_types::*;
 pub use memory_store::Store;
 pub use memory_types::*;
+pub use observation_types::*;
 
 mod local_git;
 mod local_source_types;

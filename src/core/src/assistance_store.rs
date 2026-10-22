@@ -17,6 +17,9 @@ impl Store {
         if epoch == 0 {
             return Err(StoreError::InvalidInput);
         }
+        if self.model_session.epoch != epoch {
+            self.reset_observation_backoff();
+        }
         if self.model_session.epoch != epoch || !valid || !reported {
             self.cancel_all_reads();
             self.high_capability = None;
@@ -55,6 +58,17 @@ impl Store {
         }
         if !self.current_high_capability() {
             return Err(StoreError::CapabilityRequired);
+        }
+        Ok(())
+    }
+    /// Card actions are local: copy and show need a valid session and no pause, not the
+    /// connection check or the credit acknowledgement (ADR-025 «Карточки»).
+    pub(super) fn require_card_action(&self) -> Result<(), StoreError> {
+        if self.manual_pause()? {
+            return Err(StoreError::Paused);
+        }
+        if !self.model_session.valid {
+            return Err(StoreError::SessionRequired);
         }
         Ok(())
     }

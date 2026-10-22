@@ -1,0 +1,718 @@
+{
+ "format": 1,
+ "source": "synthetic: hand-written for ADR-025 ticket 27B; no screen was captured",
+ "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
+ "schema_version": 17,
+ "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
+ "geometry": {
+  "displays": [
+   {
+    "key": "display-A",
+    "pixels": [
+     2560,
+     1600
+    ],
+    "scale": 2
+   },
+   {
+    "key": "display-B",
+    "pixels": [
+     1920,
+     1080
+    ],
+    "scale": 1
+   }
+  ],
+  "rects": "Vision normalized, origin bottom-left; word rects are not needed before 27C and are omitted"
+ },
+ "name": "insignificant-changes",
+ "adr_episode": 3,
+ "summary": "clock ticks, even many of them, and a cursor do not send; a fleeting alert between sends reaches the next request; A->B->A keeps B; dedupe compares only with the same display; an app switch is significant",
+ "steps": [
+  {
+   "t": 0,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 0,
+   "op": "session",
+   "epoch": 1,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 0,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:00",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "S1"
+  },
+  {
+   "t": 12,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 12,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "S1"
+    ]
+   }
+  },
+  {
+   "t": 13,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 60,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:01",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "S2"
+  },
+  {
+   "t": 65,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:01",
+   "image": true,
+   "expect": {
+    "disposition": "duplicate",
+    "next": 5
+   }
+  },
+  {
+   "t": 75,
+   "op": "begin",
+   "expect": "not_due",
+   "note": "a clock tick is not significant"
+  },
+  {
+   "t": 80,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:01",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "S3"
+  },
+  {
+   "t": 95,
+   "op": "begin",
+   "expect": "not_due",
+   "note": "a blinking cursor is not significant"
+  },
+  {
+   "t": 96,
+   "op": "tick",
+   "idle": 3,
+   "app_switched": false,
+   "expect": {
+    "next": 5
+   }
+  },
+  {
+   "t": 96,
+   "op": "tick",
+   "idle": 45,
+   "app_switched": false,
+   "expect": {
+    "next": 30
+   }
+  },
+  {
+   "t": 96,
+   "op": "tick",
+   "idle": 601,
+   "app_switched": false,
+   "expect": {
+    "next": "hold"
+   }
+  },
+  {
+   "t": 100,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\nMessage from Alex: the staging deploy key rotates tonight, please update the vault entry before standup\n12:01",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "X"
+  },
+  {
+   "t": 104,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "S4"
+  },
+  {
+   "t": 110,
+   "op": "begin",
+   "expect": "not_due",
+   "note": "the screen changed 6 s ago and has not settled"
+  },
+  {
+   "t": 114,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 114,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "S4",
+     "X",
+     "S3",
+     "S2"
+    ],
+    "images": 2,
+    "dropped_images": 2
+   }
+  },
+  {
+   "t": 115,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 200,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "A1"
+  },
+  {
+   "t": 203,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks, merged the rollout plan changes and updated the release checklist for the weekend window",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "B"
+  },
+  {
+   "t": 206,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "A2"
+  },
+  {
+   "t": 220,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 220,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "A2",
+     "B",
+     "A1"
+    ],
+    "images": 2,
+    "dropped_images": 1
+   }
+  },
+  {
+   "t": 221,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 230,
+   "op": "frame",
+   "display": "display-B",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "D2"
+  },
+  {
+   "t": 235,
+   "op": "frame",
+   "display": "display-B",
+   "app": "Pages",
+   "bundle": "com.apple.iWork.Pages",
+   "title": "Report",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning",
+   "image": true,
+   "expect": {
+    "disposition": "duplicate",
+    "next": 5
+   }
+  },
+  {
+   "t": 250,
+   "op": "begin",
+   "expect": "not_due",
+   "note": "the same text on another display is recorded but not new"
+  },
+  {
+   "t": 300,
+   "op": "tick",
+   "idle": 0,
+   "app_switched": true,
+   "expect": {
+    "next": 0
+   }
+  },
+  {
+   "t": 300,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "M"
+  },
+  {
+   "t": 312,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 312,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "M",
+     "D2"
+    ],
+    "images": 2
+   }
+  },
+  {
+   "t": 313,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": []
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true
+   }
+  },
+  {
+   "t": 400,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:10",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 405,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:11",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 410,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:12",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 415,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:13",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 420,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:14",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 425,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:15",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 430,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:16",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 435,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:17",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 440,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:18",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 445,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:19",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 450,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:20",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 455,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:21",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 460,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:22",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 465,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:23",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 470,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:24",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 475,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:25",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 480,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:26",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 485,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:27",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 490,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:28",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 495,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Quarterly report draft|\nRevenue grew in the northern region while costs stayed flat across the quarter\n12:02\nDraft reply: thanks for the review, I will address the comments about the rollout plan tomorrow morning\n12:29",
+   "image": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   }
+  },
+  {
+   "t": 510,
+   "op": "begin",
+   "expect": "not_due",
+   "note": "20 clock ticks (100 digits) still are not significant"
+  }
+ ]
+}

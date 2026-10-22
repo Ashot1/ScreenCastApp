@@ -1,6 +1,13 @@
 CREATE TABLE settings (
     singleton INTEGER PRIMARY KEY CHECK (singleton = 1),
-    manual_pause INTEGER NOT NULL CHECK (manual_pause IN (0, 1))
+    manual_pause INTEGER NOT NULL CHECK (manual_pause IN (0, 1)),
+    observation_started INTEGER NOT NULL CHECK (observation_started IN (0, 1)),
+    per_hour_limit INTEGER NOT NULL CHECK (per_hour_limit BETWEEN 1 AND 60),
+    credit_acknowledged INTEGER NOT NULL CHECK (credit_acknowledged IN (0, 1)),
+    dropped_frames INTEGER NOT NULL CHECK (dropped_frames >= 0),
+    dropped_bytes INTEGER NOT NULL CHECK (dropped_bytes >= 0),
+    dropped_images INTEGER NOT NULL CHECK (dropped_images >= 0),
+    CHECK (observation_started = credit_acknowledged)
 ) STRICT;
 CREATE TABLE tasks (
     id INTEGER PRIMARY KEY CHECK (id > 0),
@@ -100,7 +107,7 @@ CREATE UNIQUE INDEX live_dependencies ON plan_dependencies(predecessor, dependen
 CREATE INDEX references_by_task ON useful_references(task_id, id);
 CREATE TABLE connection_checks (
     id INTEGER PRIMARY KEY CHECK (id > 0),
-    purpose INTEGER NOT NULL CHECK (purpose IN (1, 2)),
+    purpose INTEGER NOT NULL CHECK (purpose IN (1, 2, 3)),
     at_utc INTEGER NOT NULL,
     stage INTEGER NOT NULL CHECK (stage IN (1, 2)),
     outcome INTEGER NOT NULL CHECK (outcome BETWEEN 0 AND 9),
@@ -249,11 +256,40 @@ CREATE TABLE plugin_calls (
     CHECK ((stage = 1 AND outcome = 0 AND result_bytes = 0) OR (stage = 2 AND outcome != 0))
 ) STRICT;
 CREATE TABLE connection_check_totals (
-    purpose INTEGER PRIMARY KEY CHECK (purpose IN (1, 2)),
+    purpose INTEGER PRIMARY KEY CHECK (purpose IN (1, 2, 3)),
     attempts INTEGER NOT NULL CHECK (attempts > 0),
     input_tokens INTEGER NOT NULL CHECK (input_tokens >= 0),
     output_tokens INTEGER NOT NULL CHECK (output_tokens >= 0),
     total_tokens INTEGER NOT NULL CHECK (total_tokens >= 0),
     unknown INTEGER NOT NULL CHECK (unknown >= 0 AND unknown <= attempts),
     CHECK (input_tokens <= total_tokens AND output_tokens = total_tokens - input_tokens)
+) STRICT;
+CREATE TABLE observation_frames (
+    id INTEGER PRIMARY KEY AUTOINCREMENT CHECK (id > 0),
+    at_utc INTEGER NOT NULL,
+    last_seen_utc INTEGER NOT NULL CHECK (last_seen_utc >= at_utc),
+    display_key TEXT NOT NULL CHECK (length(CAST(display_key AS BLOB)) BETWEEN 1 AND 128 AND instr(display_key, char(0)) = 0),
+    bundle_id TEXT NOT NULL CHECK (length(CAST(bundle_id AS BLOB)) <= 256),
+    app_name TEXT NOT NULL CHECK (length(CAST(app_name AS BLOB)) <= 256),
+    title TEXT NOT NULL CHECK (length(CAST(title AS BLOB)) <= 1024),
+    text TEXT NOT NULL CHECK (length(CAST(text AS BLOB)) <= 32768),
+    text_hash BLOB NOT NULL CHECK (length(text_hash) = 32),
+    sent_in INTEGER CHECK (sent_in IS NULL OR sent_in > 0)
+) STRICT;
+CREATE INDEX observation_frames_by_display ON observation_frames(display_key, id);
+CREATE INDEX observation_frames_by_send ON observation_frames(sent_in, id);
+CREATE TABLE observation_sends (
+    attempt_id INTEGER PRIMARY KEY CHECK (attempt_id > 0),
+    at_utc INTEGER NOT NULL,
+    first_frame INTEGER NOT NULL CHECK (first_frame > 0),
+    last_frame INTEGER NOT NULL CHECK (last_frame >= first_frame),
+    apps TEXT NOT NULL CHECK (length(CAST(apps AS BLOB)) BETWEEN 2 AND 16384 AND json_valid(apps)),
+    images INTEGER NOT NULL CHECK (images BETWEEN 0 AND 2),
+    dropped_frames INTEGER NOT NULL CHECK (dropped_frames >= 0),
+    dropped_bytes INTEGER NOT NULL CHECK (dropped_bytes >= 0),
+    dropped_images INTEGER NOT NULL CHECK (dropped_images >= 0),
+    outcome INTEGER NOT NULL CHECK (outcome BETWEEN 0 AND 9),
+    tier INTEGER NOT NULL CHECK (tier BETWEEN 0 AND 4),
+    added_cards INTEGER NOT NULL CHECK (added_cards >= 0),
+    rejected_items INTEGER NOT NULL CHECK (rejected_items >= 0)
 ) STRICT;

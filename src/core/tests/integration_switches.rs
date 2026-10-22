@@ -228,7 +228,7 @@ fn new_database_enables_all_five_and_open_requires_exactly_five_switches()
     let c = Connection::open(&db.0)?;
     assert_eq!(
         c.pragma_query_value(None, "user_version", |r| r.get::<_, i32>(0))?,
-        16
+        17
     );
     c.execute("DELETE FROM integration_switches WHERE kind='todoist'", [])?;
     drop(c);

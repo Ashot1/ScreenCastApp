@@ -53,9 +53,8 @@ import Testing
             modelBridge: LocalAssistanceBridge(url: server.url))
         #expect(try await coordinator.proposalFeed() == rows)
         try await coordinator.setCreditReport(true)
-        await #expect(throws: ModelCheckFailure.capability) {
-            _ = try await coordinator.copyProposal(rows[0].target)
-        }
+        // Copying a kept card needs only a valid session and no pause, not a new check (ADR-025).
+        #expect(try await coordinator.copyProposal(rows[0].target) == rows[0].message)
         try await coordinator.setCreditReport(true)
         _ = try await coordinator.runCheck(profile: .high)
         #expect(try await coordinator.copyProposal(rows[0].target) == rows[0].message)

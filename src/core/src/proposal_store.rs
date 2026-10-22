@@ -279,6 +279,7 @@ impl Store {
         &self,
         target: ProposalTarget,
     ) -> Result<AssistanceKind, StoreError> {
+        // A reply to a card leads to a new assistance request, so it keeps the assistance gate.
         self.require_assistance()?;
         let tx = self.connection.unchecked_transaction()?;
         let p = details(&tx, target)?.proposal;
@@ -288,7 +289,7 @@ impl Store {
         Ok(p.kind)
     }
     pub fn copy_proposal(&self, target: ProposalTarget) -> Result<String, StoreError> {
-        self.require_assistance()?;
+        self.require_card_action()?;
         let tx = self.connection.unchecked_transaction()?;
         let p = details(&tx, target)?.proposal;
         if p.stale {
@@ -302,7 +303,7 @@ impl Store {
         visible: bool,
     ) -> Result<(), StoreError> {
         if visible {
-            self.require_assistance()?;
+            self.require_card_action()?;
         }
         self.change(|c| {
             let p = proposal(c, target)?;

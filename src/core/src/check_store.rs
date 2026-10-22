@@ -46,6 +46,7 @@ impl Store {
             epoch,
             request_id,
             attempt: None,
+            observation: None,
         });
         Ok(CheckAdmission {
             cancelled,
@@ -76,9 +77,15 @@ impl Store {
         at_utc: i64,
     ) -> Result<CheckDispatch, StoreError> {
         let (id, snapshot) = self.dispatch_attempt(&admission, at_utc)?;
+        let observation = self
+            .active_check
+            .as_ref()
+            .and_then(|a| a.observation.clone());
         Ok(CheckDispatch {
+            purpose: admission.purpose,
             profile: admission.profile,
             snapshot,
+            observation,
             id,
             cancelled: admission.cancelled,
         })
@@ -105,6 +112,17 @@ impl Store {
                 return Err(StoreError::Cancelled);
             }
             Some(snapshot)
+        } else {
+            None
+        };
+        let observation = if admission.purpose == ModelPurpose::Observation {
+            self.require_observation(admission.epoch)?;
+            Some(
+                self.active_check
+                    .as_ref()
+                    .and_then(|a| a.observation.clone())
+                    .ok_or(StoreError::InvalidInput)?,
+            )
         } else {
             None
         };
@@ -136,11 +154,17 @@ impl Store {
                 "INSERT INTO connection_checks VALUES(?1,?2,?3,1,0,1,?4,1,0,0,0,NULL,NULL,NULL)",
                 params![id, admission.purpose as u32, at_utc,admission.profile as u32],
             )?;
+                if let Some(request) = &observation {
+                    observation::reserve_send(c, AttemptId(id), request, at_utc)?;
+                }
                 Ok(AttemptId(id))
             })?;
         // This committed possible-send record is the dispatch acceptance point, serialized with pause.
         if let Some(active) = &mut self.active_check {
             active.attempt = Some(id);
+        }
+        if let Some(request) = &observation {
+            self.observation_sent(request);
         }
         Ok((id, snapshot))
     }
@@ -157,11 +181,12 @@ impl Store {
             .as_ref()
             .filter(|a| a.attempt == Some(id))
             .ok_or(StoreError::InvalidInput)?;
-        let (purpose, profile, epoch, cancelled) = (
+        let (purpose, profile, epoch, cancelled, observation) = (
             active.purpose,
             active.profile,
             active.epoch,
             active.cancelled.clone(),
+            active.observation.clone(),
         );
         if cancelled.load(Ordering::Acquire) {
             result.outcome = CheckOutcome::Cancelled;
@@ -170,7 +195,9 @@ impl Store {
             result.outcome = CheckOutcome::Mismatch;
         }
         // An old completion can account usage, but cannot revoke or confirm a newer connection.
-        if epoch == self.model_session.epoch
+        // Observation failures never revoke manual assistance; only session errors do (D103).
+        if purpose != ModelPurpose::Observation
+            && epoch == self.model_session.epoch
             && result.outcome != CheckOutcome::Confirmed
             && result.outcome != CheckOutcome::Cancelled
         {
@@ -183,18 +210,22 @@ impl Store {
    if cancelled.load(Ordering::Acquire) {result.outcome=CheckOutcome::Cancelled;}
    let changed=c.execute("UPDATE connection_checks SET stage=2,outcome=?1,actual_model=?2,actual_effort=?3,actual_tier=?4,input_tokens=?5,output_tokens=?6,total_tokens=?7 WHERE id=?8 AND stage=1",params![result.outcome as u32,result.actual.model as u32,result.actual.effort as u32,result.actual.tier as u32,result.usage.map(|v|v.input() as i64),result.usage.map(|v|v.output() as i64),result.usage.map(|v|v.total() as i64),id.0])?;
    if changed!=1 {return Err(StoreError::InvalidInput)}
+   if let Some(request) = &observation {
+       observation::settle_send(c, id, &result, request)?;
+   }
    // Validate checked aggregates before committing; overflow leaves the durable unknown intact.
    summary(c)?; Ok(())
   });
         if let Err(error) = commit {
-            if epoch == self.model_session.epoch {
+            if purpose != ModelPurpose::Observation && epoch == self.model_session.epoch {
                 self.cancel_all_reads();
                 self.high_capability = None;
                 self.prepared = None;
             }
             return Err(error);
         }
-        if cancelled.load(Ordering::Acquire) {
+        // An observation result stays as committed, so the caller and the send journal agree.
+        if purpose != ModelPurpose::Observation && cancelled.load(Ordering::Acquire) {
             result.outcome = CheckOutcome::Cancelled;
         }
         if purpose == ModelPurpose::Connectivity
@@ -235,7 +266,7 @@ fn fold(c: &Connection, rows: i64) -> Result<(), StoreError> {
     if (folded.len() as i64) < rows {
         return Err(StoreError::ResourceLimit);
     }
-    for purpose in [1i64, 2] {
+    for purpose in [1i64, 2, 3] {
         let (mut attempts, mut input, mut output, mut total, mut unknown): (i64, i64, i64, i64, i64) = c
             .query_row(
                 "SELECT attempts,input_tokens,output_tokens,total_tokens,unknown FROM connection_check_totals WHERE purpose=?1",
@@ -391,6 +422,7 @@ fn summary(c: &Connection) -> Result<CheckSummary, StoreError> {
         let purpose = match r.get::<_, u32>(10)? {
             1 => ModelPurpose::Connectivity,
             2 => ModelPurpose::Assistance,
+            3 => ModelPurpose::Observation,
             _ => return Err(StoreError::UnsupportedSchema),
         };
         let profile = match r.get::<_, u32>(11)? {
@@ -398,8 +430,13 @@ fn summary(c: &Connection) -> Result<CheckSummary, StoreError> {
             2 => ModelProfile::High,
             _ => return Err(StoreError::UnsupportedSchema),
         };
-        if purpose == ModelPurpose::Assistance && profile != ModelProfile::High {
+        if purpose != ModelPurpose::Connectivity && profile != ModelProfile::High {
             return Err(StoreError::UnsupportedSchema);
+        }
+        // Totals include observation; the latest check stays connectivity or assistance, and
+        // observation attempts are shown by the observation journal.
+        if purpose == ModelPurpose::Observation {
+            continue;
         }
         s.latest = Some(CheckAttempt {
             purpose,
