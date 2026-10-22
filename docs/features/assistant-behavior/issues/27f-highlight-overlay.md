@@ -6,7 +6,7 @@ Spec: [ADR-025](../../../decisions/0025-background-observation.md). Decisions: [
 
 **Blocked by:** приёмка 27D (принята)
 
-**Status:** ready — исполнитель запускается оркестратором (D102: параллельно с 26D и 27E, без общих файлов)
+**Status:** ready — исполнитель запускается оркестратором (D102: параллельно с 26E и 27E, без общих файлов)
 
 - [ ] Договор с 27E: `@MainActor final class HighlightOverlay` с `show(normalizedRect:displayKey:)` и `hide()`; `displayKey` — UUID дисплея строкой; прямоугольник нормализован, как у Vision.
 - [ ] Тест перевода координат (Retina, несколько дисплеев).
