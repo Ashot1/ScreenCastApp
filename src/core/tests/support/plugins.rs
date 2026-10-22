@@ -92,6 +92,7 @@ pub fn calls(names: &[(&str, Value)]) -> ModelResponse {
             usage: CheckUsage::new(10, 2, 12).ok(),
         },
         answer: None,
+        observation: None,
         calls: names
             .iter()
             .enumerate()
@@ -126,6 +127,7 @@ pub fn answered(task: TaskId, evidence: &[&str]) -> ModelResponse {
             }],
             rationale: "Full set".into(),
         }),
+        observation: None,
         calls: Vec::new(),
         forwarded: Vec::new(),
     }

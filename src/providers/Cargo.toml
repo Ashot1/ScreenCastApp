@@ -19,6 +19,8 @@ tokio = { version = "=1.53.3", features = ["rt", "net", "time"] }
 oauth2 = { version = "=5.0.0", default-features = false }
 # Names the managed server's install folder by the hash of its pinned requirements (ADR-022).
 sha2 = { version = "=0.11.1", default-features = false }
+# Screenshots travel as data URLs in the observation request (ADR-025): the lock entry reqwest uses.
+base64 = { version = "=0.22.1", default-features = false, features = ["std"] }
 
 [build-dependencies]
 serde_json = "=1.0.154"

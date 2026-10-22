@@ -17,6 +17,7 @@ fn check_only(
         std::path::Path::new("/nonexistent-root"),
         out,
         check,
+        |_| panic!("connectivity is not an observation"),
         |_| panic!("connectivity has no plugin loop"),
         |_, _, _| panic!("connectivity calls no tools"),
     )

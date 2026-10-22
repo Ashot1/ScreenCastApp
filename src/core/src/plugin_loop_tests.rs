@@ -61,6 +61,7 @@ fn tool_step() -> ModelResponse {
             usage: None,
         },
         answer: None,
+        observation: None,
         calls: vec![ToolCall {
             call_id: "c".into(),
             name: "search".into(),

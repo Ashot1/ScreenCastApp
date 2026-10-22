@@ -21,11 +21,13 @@ mod model;
 mod model_registry;
 mod oauth;
 mod oauth_registry;
+mod observation;
 pub use model::{run_model, run_model_step, validate_assistance_body};
 pub use oauth::{
     OAuthBegin, OAuthOutcome, OAuthRevoke, OAuthStart, OAuthTokens, oauth_begin, oauth_exchange,
     oauth_refresh, oauth_revoke,
 };
+pub use observation::run_observation;
 mod protocol;
 mod transport;
 mod wait;
@@ -200,6 +202,8 @@ impl std::error::Error for AuthError {}
 
 #[cfg(feature = "model-test-support")]
 pub use model::{run_model_loopback, run_model_step_loopback};
+#[cfg(feature = "model-test-support")]
+pub use observation::run_observation_loopback;
 
 mod github_registry;
 

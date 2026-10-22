@@ -201,11 +201,13 @@ pub struct ToolCall {
     pub arguments: serde_json::Map<String, serde_json::Value>,
 }
 /// Calls win over text: a response with calls never carries an answer. `forwarded` holds the
-/// reasoning and call items returned unchanged in the next POST of the same request.
+/// reasoning and call items returned unchanged in the next POST of the same request. An
+/// observation POST carries only `observation`, never an assistance answer or calls.
 #[derive(Debug)]
 pub struct ModelResponse {
     pub check: ModelCheckResult,
     pub answer: Option<crate::AssistanceAnswer>,
+    pub observation: Option<crate::ObservationAnswer>,
     pub calls: Vec<ToolCall>,
     pub forwarded: Vec<serde_json::Value>,
 }
@@ -214,6 +216,7 @@ impl ModelResponse {
         Self {
             check: ModelCheckResult::unknown(outcome),
             answer: None,
+            observation: None,
             calls: Vec::new(),
             forwarded: Vec::new(),
         }

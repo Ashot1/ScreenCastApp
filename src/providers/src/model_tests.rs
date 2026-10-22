@@ -451,7 +451,7 @@ fn assistance_stream(text: &str, effort: &str, tier: &str) -> Vec<u8> {
 #[test]
 fn high_assistance_decodes_json_above_low_limit_and_preserves_usage_on_bad_answers() {
     let text=json!({"proposals":[{"proposal_id":null,"kind":"suggestion","message":"x".repeat(300),"rationale":"Saved note","evidence_ids":["note:1"],"step_id":null}],"rationale":"Full set"}).to_string();
-    let mut d = SseDecoder::new(ModelProfile::High, true);
+    let mut d = SseDecoder::new(ModelProfile::High, Answer::Assistance);
     for c in assistance_stream(&text, "high", "fast").chunks(3) {
         assert!(d.push(c).is_ok());
     }
@@ -473,10 +473,10 @@ fn high_assistance_decodes_json_above_low_limit_and_preserves_usage_on_bad_answe
    json!({"kind":"silence","message":"not silence","rationale":"reason","evidence_ids":[],"step_id":null}).to_string(),
    "x".repeat(MAX_ASSISTANCE_TEXT+1),
  ] {
-   let mut d=SseDecoder::new(ModelProfile::High,true);let _=d.push(&assistance_stream(&text,"high","fast"));let r=d.finish();
+   let mut d=SseDecoder::new(ModelProfile::High,Answer::Assistance);let _=d.push(&assistance_stream(&text,"high","fast"));let r=d.finish();
    assert_eq!(r.check.outcome,CheckOutcome::Invalid);assert_eq!(r.check.usage.map(|u|u.total()),Some(11));assert!(r.answer.is_none());
  }
-    let mut d = SseDecoder::new(ModelProfile::High, true);
+    let mut d = SseDecoder::new(ModelProfile::High, Answer::Assistance);
     assert!(d.push(&assistance_stream(&text, "low", "priority")).is_ok());
     let r = d.finish();
     assert_eq!(r.check.outcome, CheckOutcome::Mismatch);
@@ -490,7 +490,7 @@ fn high_connectivity_requires_exact_marker_and_actual_high_on_any_tier() {
         ("low", "fast", CheckOutcome::Mismatch),
         ("low", "default", CheckOutcome::Mismatch),
     ] {
-        let mut d = SseDecoder::new(ModelProfile::High, false);
+        let mut d = SseDecoder::new(ModelProfile::High, Answer::Marker);
         assert!(
             d.push(&assistance_stream("AMBIENT_OK", effort, tier))
                 .is_ok()
@@ -669,7 +669,7 @@ fn call_stream(arguments: &str, effort: &str) -> Vec<u8> {
     b
 }
 fn decode_tools(b: &[u8], tools: bool) -> ModelResponse {
-    let mut d = SseDecoder::new(ModelProfile::High, true).tools(tools);
+    let mut d = SseDecoder::new(ModelProfile::High, Answer::Assistance).tools(tools);
     for c in b.chunks(5) {
         if d.push(c).is_err() {
             d.invalid = true;

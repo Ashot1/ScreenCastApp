@@ -13,13 +13,13 @@ use std::{
 };
 const STREAM_LIMIT: usize = 2 * 1024 * 1024;
 const FRAME_LIMIT: usize = 512 * 1024;
-struct Options {
+pub(crate) struct Options {
     url: String,
     timeout: Duration,
     read: Duration,
 }
 impl Options {
-    fn production() -> Self {
+    pub(crate) fn production() -> Self {
         Self {
             url: RESPONSES_ENDPOINT.into(),
             timeout: Duration::from_secs(60),
@@ -27,7 +27,7 @@ impl Options {
         }
     }
     #[cfg(any(test, feature = "model-test-support"))]
-    fn test(url: String) -> Self {
+    pub(crate) fn test(url: String) -> Self {
         Self {
             url,
             timeout: Duration::from_secs(2),
@@ -140,7 +140,8 @@ pub fn run_model_step(step: &ModelStep<'_>, token: &str) -> ModelResponse {
     run_step_http(step, token, options)
 }
 fn run_step_http(step: &ModelStep<'_>, token: &str, options: Options) -> ModelResponse {
-    let decoder = SseDecoder::new(ModelProfile::High, true).tools(step.mode == StepMode::Tools);
+    let decoder =
+        SseDecoder::new(ModelProfile::High, Answer::Assistance).tools(step.mode == StepMode::Tools);
     post(
         step_body(step),
         token,
@@ -262,10 +263,15 @@ fn run_model_http(
     context: Option<&str>,
     options: Options,
 ) -> ModelResponse {
-    let decoder = SseDecoder::new(profile, context.is_some());
+    let answer = if context.is_some() {
+        Answer::Assistance
+    } else {
+        Answer::Marker
+    };
+    let decoder = SseDecoder::new(profile, answer);
     post(build_body(profile, context), token, flag, decoder, options)
 }
-fn post(
+pub(crate) fn post(
     body: Result<String, CheckOutcome>,
     token: &str,
     flag: Arc<AtomicBool>,
@@ -353,14 +359,48 @@ fn post(
     }
     if r.check.outcome != CheckOutcome::Confirmed {
         r.answer = None;
+        r.observation = None;
         r.calls.clear();
         r.forwarded.clear();
     }
     r
 }
-struct SseDecoder {
+/// What the text of a completed response must be.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Answer {
+    /// The exact connectivity marker.
+    Marker,
+    Assistance,
+    Observation,
+}
+impl Answer {
+    fn text_limit(self) -> usize {
+        match self {
+            Answer::Marker => 256,
+            Answer::Assistance => MAX_ASSISTANCE_TEXT,
+            Answer::Observation => crate::observation::MAX_OBSERVATION_TEXT,
+        }
+    }
+    /// Serialized output items: the answer JSON is escaped once more inside them.
+    fn item_limit(self) -> usize {
+        match self {
+            Answer::Observation => 2 * crate::observation::MAX_OBSERVATION_TEXT,
+            _ => MAX_RESPONSE_ITEMS,
+        }
+    }
+}
+/// Parts of a completed response: an assistance answer, an observation answer, or calls with
+/// their forwarded items, never two of these.
+#[derive(Clone, Default)]
+struct Decoded {
+    answer: Option<AssistanceAnswer>,
+    observation: Option<ObservationAnswer>,
+    calls: Vec<ToolCall>,
+    forwarded: Vec<Value>,
+}
+pub(crate) struct SseDecoder {
     profile: ModelProfile,
-    assistance: bool,
+    answer: Answer,
     /// Only a POST that offered tools accepts `function_call` items and their argument events.
     tools: bool,
     total: usize,
@@ -379,14 +419,14 @@ struct SseDecoder {
 }
 impl Default for SseDecoder {
     fn default() -> Self {
-        Self::new(ModelProfile::Low, false)
+        Self::new(ModelProfile::Low, Answer::Marker)
     }
 }
 impl SseDecoder {
-    fn new(profile: ModelProfile, assistance: bool) -> Self {
+    pub(crate) fn new(profile: ModelProfile, answer: Answer) -> Self {
         Self {
             profile,
-            assistance,
+            answer,
             tools: false,
             total: 0,
             frame: 0,
@@ -407,7 +447,7 @@ impl SseDecoder {
         self.tools = tools;
         self
     }
-    fn push(&mut self, bytes: &[u8]) -> Result<(), ()> {
+    pub(crate) fn push(&mut self, bytes: &[u8]) -> Result<(), ()> {
         self.total = self
             .total
             .checked_add(bytes.len())
@@ -522,7 +562,7 @@ impl SseDecoder {
                 self.item_bytes = self
                     .item_bytes
                     .checked_add(item.to_string().len())
-                    .filter(|v| *v <= MAX_RESPONSE_ITEMS)
+                    .filter(|v| *v <= self.answer.item_limit())
                     .ok_or(())?;
                 self.items.insert(index, item.clone());
             }
@@ -534,12 +574,13 @@ impl SseDecoder {
                 };
                 // Retain independently verified usage even if the terminal payload is functionally invalid.
                 let validation = self.completed(response, &mut result);
-                let (answer, calls, forwarded) = validation.clone().unwrap_or_default();
+                let d = validation.clone().unwrap_or_default();
                 self.terminal = Some(ModelResponse {
                     check: result,
-                    answer,
-                    calls,
-                    forwarded,
+                    answer: d.answer,
+                    observation: d.observation,
+                    calls: d.calls,
+                    forwarded: d.forwarded,
                 });
                 validation?;
             }
@@ -574,12 +615,7 @@ impl SseDecoder {
         }
         Ok(())
     }
-    #[allow(clippy::type_complexity)]
-    fn completed(
-        &self,
-        r: &Value,
-        result: &mut ModelCheckResult,
-    ) -> Result<(Option<AssistanceAnswer>, Vec<ToolCall>, Vec<Value>), ()> {
+    fn completed(&self, r: &Value, result: &mut ModelCheckResult) -> Result<Decoded, ()> {
         result.actual = actual_config(r)?;
         if r.get("status").and_then(Value::as_str) != Some("completed") {
             return Err(());
@@ -631,54 +667,55 @@ impl SseDecoder {
                 .cloned()
                 .collect();
             return Ok(if confirmed {
-                (None, calls, forwarded)
+                Decoded {
+                    calls,
+                    forwarded,
+                    ..Decoded::default()
+                }
             } else {
-                Default::default()
+                Decoded::default()
             });
         }
         let mut text = String::new();
+        let limit = self.answer.text_limit();
         for item in self.items.values() {
-            let limit = if self.assistance {
-                MAX_ASSISTANCE_TEXT
-            } else {
-                256
-            };
             let part = item_text(item, limit)?;
             if text.len().checked_add(part.len()).is_none_or(|n| n > limit) {
                 return Err(());
             }
             text.push_str(&part);
         }
-        let answer = if self.assistance {
-            Some(parse_assistance(&text)?)
-        } else {
-            if text != CONNECTION_CHECK_EXPECTED_OUTPUT {
-                return Err(());
-            }
-            None
+        let decoded = match self.answer {
+            Answer::Marker if text == CONNECTION_CHECK_EXPECTED_OUTPUT => Decoded::default(),
+            Answer::Marker => return Err(()),
+            Answer::Assistance => Decoded {
+                answer: Some(parse_assistance(&text)?),
+                ..Decoded::default()
+            },
+            Answer::Observation => Decoded {
+                observation: Some(crate::observation::parse_observation(&text)?),
+                ..Decoded::default()
+            },
         };
         result.outcome = if result.actual.confirmed(self.profile) {
             CheckOutcome::Confirmed
         } else {
             CheckOutcome::Mismatch
         };
-        Ok((
-            if result.outcome == CheckOutcome::Confirmed {
-                answer
-            } else {
-                None
-            },
-            Vec::new(),
-            Vec::new(),
-        ))
+        Ok(if result.outcome == CheckOutcome::Confirmed {
+            decoded
+        } else {
+            Decoded::default()
+        })
     }
-    fn finish(self) -> ModelResponse {
+    pub(crate) fn finish(self) -> ModelResponse {
         let mut result = self
             .terminal
             .unwrap_or_else(|| ModelResponse::unknown(CheckOutcome::Invalid));
         if self.invalid || !self.line.is_empty() || !self.data.is_empty() || self.frame != 0 {
             result.check.outcome = CheckOutcome::Invalid;
             result.answer = None;
+            result.observation = None;
         }
         result
     }
@@ -837,7 +874,7 @@ fn is_quota(v: &Value) -> bool {
 mod tests;
 
 #[cfg(feature = "model-test-support")]
-fn loopback(url: &str) -> bool {
+pub(crate) fn loopback(url: &str) -> bool {
     reqwest::Url::parse(url).is_ok_and(|parsed| {
         parsed.scheme() == "http"
             && parsed.host_str() == Some("127.0.0.1")

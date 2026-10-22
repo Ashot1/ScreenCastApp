@@ -6,14 +6,14 @@ use std::{
         atomic::{AtomicBool, Ordering},
     },
 };
-const INVALID: u32 = 1;
+pub(crate) const INVALID: u32 = 1;
 const PAUSED: u32 = 2;
 const CANCELLED: u32 = 3;
 const BUSY: u32 = 4;
-const STORAGE: u32 = 5;
-const LIMIT: u32 = 6;
-const HANDLE: u32 = 7;
-const PANIC: u32 = 8;
+pub(crate) const STORAGE: u32 = 5;
+pub(crate) const LIMIT: u32 = 6;
+pub(crate) const HANDLE: u32 = 7;
+pub(crate) const PANIC: u32 = 8;
 const REPORT: u32 = 9;
 #[derive(Clone, Copy, Default)]
 #[repr(C)]
@@ -53,16 +53,24 @@ struct Slot {
     busy: AtomicBool,
     closed: AtomicBool,
     at_utc: i64,
+    /// Only for an observation attempt, which must not touch the manual assistance preview.
+    observation: Option<ObservationClock>,
+}
+/// The caller's monotonic clock at begin; the finish inside dispatch continues both of the
+/// caller's clocks (with `Slot::at_utc`) by the elapsed time.
+struct ObservationClock {
+    monotonic_ms: u64,
+    started: std::time::Instant,
 }
 static MODEL: Mutex<(u64, BTreeMap<u64, Arc<Slot>>)> = Mutex::new((1, BTreeMap::new()));
-fn boundary(call: impl FnOnce() -> Result<(), u32>) -> u32 {
+pub(crate) fn boundary(call: impl FnOnce() -> Result<(), u32>) -> u32 {
     match std::panic::catch_unwind(std::panic::AssertUnwindSafe(call)) {
         Ok(Ok(())) => 0,
         Ok(Err(e)) => e,
         Err(_) => PANIC,
     }
 }
-fn error(e: StoreError) -> u32 {
+pub(crate) fn error(e: StoreError) -> u32 {
     match e {
         StoreError::Paused => PAUSED,
         StoreError::Cancelled => CANCELLED,
@@ -177,15 +185,7 @@ pub unsafe extern "C" fn ambient_model_v6_begin(
             return Err(INVALID);
         }
         let store = crate::get_store(memory).map_err(|_| HANDLE)?;
-        let id = {
-            let mut reg = MODEL.lock().map_err(|_| PANIC)?;
-            if reg.1.len() >= 64 {
-                return Err(LIMIT);
-            }
-            let id = reg.0;
-            reg.0 = id.checked_add(1).ok_or(LIMIT)?;
-            id
-        };
+        let id = reserve_id()?;
         let admission = {
             let mut s = store.store.lock().map_err(|_| PANIC)?;
             if store.closed.load(Ordering::Acquire) {
@@ -198,28 +198,53 @@ pub unsafe extern "C" fn ambient_model_v6_begin(
                 s.begin_assistance(request).map_err(error)?
             }
         };
-        let cancelled = admission.cancellation();
-        let slot = Arc::new(Slot {
-            store: store.clone(),
-            cancelled: cancelled.clone(),
-            admission: Mutex::new(Some(admission)),
-            busy: AtomicBool::new(false),
-            closed: AtomicBool::new(false),
-            at_utc,
-        });
-        if let Ok(mut reg) = MODEL.lock() {
-            reg.1.insert(id, slot);
-        } else {
-            store
-                .store
-                .lock()
-                .map_err(|_| PANIC)?
-                .release_check(&cancelled);
-            return Err(PANIC);
-        }
+        register(id, store, admission, at_utc, None)?;
         unsafe { out.write(id) };
         Ok(())
     })
+}
+/// An operation ID under the shared limit of 64 open operations; an unused ID is never reused.
+pub(crate) fn reserve_id() -> Result<u64, u32> {
+    let mut reg = MODEL.lock().map_err(|_| PANIC)?;
+    if reg.1.len() >= 64 {
+        return Err(LIMIT);
+    }
+    let id = reg.0;
+    reg.0 = id.checked_add(1).ok_or(LIMIT)?;
+    Ok(id)
+}
+/// Serves an admission under `id` through dispatch/cancel/close; an observation brings its clocks.
+pub(crate) fn register(
+    id: u64,
+    store: Arc<crate::StoreSlot>,
+    admission: CheckAdmission,
+    at_utc: i64,
+    observation_ms: Option<u64>,
+) -> Result<(), u32> {
+    let cancelled = admission.cancellation();
+    let slot = Arc::new(Slot {
+        store: store.clone(),
+        cancelled: cancelled.clone(),
+        admission: Mutex::new(Some(admission)),
+        busy: AtomicBool::new(false),
+        closed: AtomicBool::new(false),
+        at_utc,
+        observation: observation_ms.map(|monotonic_ms| ObservationClock {
+            monotonic_ms,
+            started: std::time::Instant::now(),
+        }),
+    });
+    if let Ok(mut reg) = MODEL.lock() {
+        reg.1.insert(id, slot);
+        Ok(())
+    } else {
+        store
+            .store
+            .lock()
+            .map_err(|_| PANIC)?
+            .release_check(&cancelled);
+        Err(PANIC)
+    }
 }
 /// One borrowed plugin key per (plugin, server); the secret stays in this call's arguments.
 #[derive(Clone, Copy)]
@@ -284,13 +309,14 @@ pub(crate) unsafe fn root<'a>(t: crate::AmbientText) -> Result<&'a std::path::Pa
     Ok(std::path::Path::new(text))
 }
 #[allow(clippy::too_many_arguments)]
-fn dispatch_with(
+pub(crate) fn dispatch_with(
     handle: u64,
     token: &str,
     keys: &Keys<'_>,
     root: &std::path::Path,
     out: &mut AmbientModelCompletion,
     check: impl FnOnce(CheckDispatch) -> ModelResponse,
+    observe: impl FnOnce(CheckDispatch) -> ModelResponse,
     model: impl Fn(&ModelStep<'_>) -> ModelResponse,
     mut tool: impl FnMut(
         &mut ambient_providers::LocalHost,
@@ -323,6 +349,39 @@ fn dispatch_with(
             }
             Ok(s)
         };
+        if let Some(clock) = &slot.observation {
+            // One POST without tools or a loop: the answer only proposes writes to Ambient's
+            // memory. The core discards a late answer itself; the summary skips observation rows,
+            // so the finish result is the receipt and the stored outcome is reported unchanged.
+            let dispatch = admit()?
+                .dispatch_check(admission, slot.at_utc)
+                .map_err(error)?;
+            let id = dispatch.id();
+            let response = observe(dispatch);
+            let elapsed = clock.started.elapsed();
+            let now = ObservationTime {
+                utc: slot.at_utc.saturating_add(elapsed.as_secs() as i64),
+                monotonic_ms: clock
+                    .monotonic_ms
+                    .saturating_add(elapsed.as_millis() as u64),
+            };
+            let finish = account()?
+                .finish_observation(id, response.check, response.observation, now)
+                .map_err(error)?;
+            *out = AmbientModelCompletion {
+                attempt: encode(
+                    id.get(),
+                    slot.at_utc,
+                    2,
+                    ModelPurpose::Observation,
+                    ModelProfile::High,
+                    finish.result,
+                ),
+                published_task: 0,
+                workspace_revision: 0,
+            };
+            return Ok(());
+        }
         let receipt = if admission.purpose() == ModelPurpose::Connectivity {
             let dispatch = admit()?
                 .dispatch_check(admission, slot.at_utc)
@@ -441,6 +500,7 @@ pub unsafe extern "C" fn ambient_model_v6_dispatch(
             root,
             &mut record,
             |permit| ambient_providers::run_model(permit, text),
+            |permit| ambient_providers::run_observation(permit, text),
             |step| ambient_providers::run_model_step(step, text),
             |host, permit, key| host.call_tool(permit, key),
         );
@@ -456,11 +516,13 @@ pub extern "C" fn ambient_model_v6_cancel(handle: u64) -> u32 {
     boundary(|| {
         let slot = get(handle)?;
         slot.cancelled.store(true, Ordering::Release);
-        slot.store
-            .store
-            .lock()
-            .map_err(|_| PANIC)?
-            .clear_assistance();
+        if slot.observation.is_none() {
+            slot.store
+                .store
+                .lock()
+                .map_err(|_| PANIC)?
+                .clear_assistance();
+        }
         Ok(())
     })
 }
@@ -482,7 +544,7 @@ pub extern "C" fn ambient_model_v6_close(handle: u64) -> u32 {
             .remove(&handle)
             .ok_or(HANDLE)?;
         let mut store = slot.store.store.lock().map_err(|_| PANIC)?;
-        if unused {
+        if unused && slot.observation.is_none() {
             store.clear_assistance();
         }
         store.release_check(&slot.cancelled);

@@ -48,6 +48,7 @@ pub unsafe extern "C" fn ambient_model_test_dispatch(
             root,
             &mut record,
             |permit| ambient_providers::run_model_loopback(permit, text, url),
+            |permit| ambient_providers::run_observation_loopback(permit, text, url),
             |step| ambient_providers::run_model_step_loopback(step, text, url),
             |host, permit, key| host.call_tool(permit, key),
         );

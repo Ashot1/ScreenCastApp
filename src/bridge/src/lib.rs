@@ -4,6 +4,7 @@ mod auth;
 mod codex;
 mod integration;
 mod model;
+mod observe;
 mod plugin;
 #[cfg(all(test, feature = "model-test-support"))]
 #[path = "plugin_tests.rs"]
@@ -15,6 +16,7 @@ pub use auth::*;
 pub use codex::*;
 pub use integration::*;
 pub use model::*;
+pub use observe::*;
 pub use plugin::*;
 pub use source::*;
 use std::collections::BTreeMap;

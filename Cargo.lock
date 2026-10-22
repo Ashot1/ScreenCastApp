@@ -33,6 +33,7 @@ name = "ambient-providers"
 version = "0.1.0"
 dependencies = [
  "ambient-core",
+ "base64 0.22.1",
  "oauth2",
  "openidconnect",
  "reqwest",
