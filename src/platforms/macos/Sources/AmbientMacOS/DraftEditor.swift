@@ -6,22 +6,55 @@ import SwiftUI
 struct DraftEditor: View {
     @Bindable var model: AssistantModel
     var titleFont: Font = .title.weight(.semibold)
+    /// Replaces the editor's own title, e.g. with the step's position.
+    var title: Text? = nil
     var done: () -> Void = {}
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if model.isCompletingTask, let task = model.snapshot?.selectedTask {
+                HStack(spacing: 4) {
+                    Text("case.title", bundle: .module)
+                    Text(verbatim: "·").accessibilityHidden(true)
+                    Text(verbatim: task.text).lineLimit(1).truncationMode(.tail)
+                }
+                .font(.callout).foregroundStyle(.secondary)
+            }
             HStack(spacing: 10) {
-                Text(LocalizedStringKey(model.editorKey), bundle: .module).font(titleFont)
-                    .accessibilityAddTraits(.isHeader)
+                (title ?? Text(LocalizedStringKey(model.editorKey), bundle: .module))
+                    .font(titleFont).accessibilityAddTraits(.isHeader)
                 if model.hasUnsavedChanges {
-                    Pill(text: Text("intent.unsaved", bundle: .module), tone: Theme.stale)
+                    HStack(spacing: 5) {
+                        Circle().fill(Theme.stale.text).frame(width: 6, height: 6)
+                            .accessibilityHidden(true)
+                        Text("intent.unsavedShort", bundle: .module)
+                    }
+                    .font(.callout).foregroundStyle(Theme.stale.text)
                 }
             }
-            TextEditor(text: $model.draft).font(.body).frame(minHeight: 120)
-                .scrollContentBackground(.hidden).padding(8)
-                .background(.fill.quaternary, in: RoundedRectangle(cornerRadius: 12))
-                .accessibilityLabel(
-                    Text(LocalizedStringKey(model.editorKey), bundle: .module))
+            // A dependency is chosen from the plan's steps below; its draft holds step IDs.
+            if !model.isEditingDependency {
+                VStack(alignment: .leading, spacing: 8) {
+                    if let caption {
+                        Text(caption, bundle: .module).font(.callout).foregroundStyle(.secondary)
+                    }
+                    TextEditor(text: $model.draft).font(.body).frame(minHeight: 110)
+                        .scrollContentBackground(.hidden).padding(10)
+                        .ambientInset()
+                        .accessibilityLabel(
+                            Text(caption ?? LocalizedStringKey(model.editorKey), bundle: .module))
+                }
+            }
             PlanDraftFields(model: model)
+            // What completion deletes stays visible next to its confirmation (D83).
+            if model.isCompletingTask {
+                Label {
+                    Text("lifecycle.cleanup", bundle: .module)
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle").foregroundStyle(
+                        Theme.stale.text)
+                }
+                .font(.callout).padding(.top, 8)
+            }
             HStack {
                 Button {
                     Task { if await model.save() { done() } }
@@ -42,7 +75,14 @@ struct DraftEditor: View {
                 }
                 .buttonStyle(.bordered)
             }
-            .buttonBorderShape(.capsule)
+            .buttonBorderShape(.capsule).controlSize(.large)
+        }
+    }
+    private var caption: LocalizedStringKey? {
+        switch model.editorKind {
+        case .step, .newStep: "plan.stepText"
+        case .completion: "lifecycle.summary"
+        default: nil
         }
     }
 }

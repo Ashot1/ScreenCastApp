@@ -144,6 +144,7 @@ enum CasePage: Equatable {
     }
     /// D81: only the first step page shows «Следующий шаг»; an earlier page may hold a ready step.
     var nextStep: MemoryStep? { stepsAfter == 0 ? snapshot?.nextStep : nil }
+    var stepPositions: [UInt64: Int]? { snapshot?.stepPositions(fromStart: stepsAfter == 0) }
     var isEditingNote: Bool { editorKind == .note || editorKind == .newNote }
     var isCreatingTask: Bool { editorKind == .newTask }
     /// Also called by the window root when assistance becomes unavailable and when it closes.
@@ -600,11 +601,11 @@ enum CasePage: Equatable {
         case .task(let task): task.lifecycle == .completed ? "lifecycle.summary" : "intent.editor"
         case .newNote, .note: "notes.editor"
         case .newStep: "plan.newStep"
-        case .step: "plan.editStep"
+        case .step: "plan.editingStep"
         case .newCheck: "plan.newCheck"
         case .check: "plan.editCheck"
         case .newDependency: "plan.newDependency"
-        case .completion: "lifecycle.summary"
+        case .completion: "lifecycle.completing"
         }
     }
     private func clearAdditionalDraft() {
@@ -639,8 +640,7 @@ enum CasePage: Equatable {
                 replaceEditor: false,
                 { [session] in
                     try await session.load(
-                        selectedTaskID: selected.id, tasksAfter: tc, selectedStepID: acceptedStepID,
-                        stepsAfter: acceptedStepID.map { $0 - 1 } ?? 0)
+                        selectedTaskID: selected.id, tasksAfter: tc, selectedStepID: acceptedStepID)
                 }), let task = snapshot?.selectedTask
         else { return }
         clearAdditionalDraft()
@@ -662,7 +662,9 @@ enum CasePage: Equatable {
         default: return
         }
         draft = editor.savedText
-        stepsAfter = acceptedStepID.map { $0 - 1 } ?? 0
+        // The whole plan from its first page stays loaded, so the step page knows step positions;
+        // the session loads a selected step beyond that page separately.
+        stepsAfter = 0
         dependenciesAfter = 0
         referencesAfter = 0
         pendingSelection = nil

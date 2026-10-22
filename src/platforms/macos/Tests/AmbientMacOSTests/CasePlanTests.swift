@@ -46,6 +46,72 @@ import Testing
     #expect(otherPage.waitingSteps(for: step(4), dependenciesFromStart: true) == [3])
 }
 
+/// Step numbers are positions in the plan (ADR-024, 26C): known only when the whole plan is loaded
+/// from its first page, never guessed from IDs.
+@Test func stepPositionsAreKnownOnlyForTheWholePlan() {
+    let whole = plan([step(4), step(7), step(9)])
+    #expect(whole.stepPositions(fromStart: true) == [4: 1, 7: 2, 9: 3])
+    #expect(whole.stepPositions(fromStart: false) == nil)
+    #expect(plan([step(4), step(7)], next: 7).stepPositions(fromStart: true) == nil)
+    #expect(plan([]).stepPositions(fromStart: true) == [:])
+}
+
+/// «Шаг N ждёт этот шаг» names unfinished dependents of an unfinished step, only when every
+/// dependency and every dependent are loaded.
+@Test func waitingDependentsAreShownOnlyWhenLoaded() {
+    let steps = [step(1), step(2), step(3), step(4, done: true), step(5, done: true)]
+    let deps = [dependency(1, 1, 2), dependency(2, 1, 3), dependency(3, 1, 4), dependency(4, 5, 2)]
+    let loaded = plan(steps, dependencies: deps)
+    #expect(loaded.waitingDependents(of: steps[0], dependenciesFromStart: true) == [2, 3])
+    #expect(loaded.waitingDependents(of: steps[1], dependenciesFromStart: true) == [])
+    // A finished step holds nothing back.
+    #expect(loaded.waitingDependents(of: steps[4], dependenciesFromStart: true) == nil)
+
+    #expect(loaded.waitingDependents(of: steps[0], dependenciesFromStart: false) == nil)
+    let morePages = plan(steps, dependencies: deps, dependenciesNext: 4)
+    #expect(morePages.waitingDependents(of: steps[0], dependenciesFromStart: true) == nil)
+    // A dependent outside the loaded step page: unknown whether it is finished.
+    let otherPage = plan([step(1), step(2)], next: 2, dependencies: deps)
+    #expect(otherPage.waitingDependents(of: step(1), dependenciesFromStart: true) == nil)
+}
+
+/// Tab and check counts show only for a page loaded from its start with nothing after it.
+@Test func pageCountIsKnownOnlyForAWholeList() {
+    let page = MemoryPage(items: [1, 2, 3].map { step($0) }, nextAfter: nil)
+    #expect(page.wholeCount(fromStart: true) == 3)
+    #expect(page.wholeCount(fromStart: false) == nil)
+    #expect(MemoryPage(items: [step(1)], nextAfter: 1).wholeCount(fromStart: true) == nil)
+}
+
+/// The step page keeps the whole plan, so it knows «Шаг N из M»; a later plan page does not.
+@MainActor @Test func theStepPageKnowsItsPositionInTheWholePlan() async throws {
+    let directory = try temporaryDirectory()
+    defer { try? FileManager.default.removeItem(at: directory) }
+    let s = MemorySession(databaseURL: directory.appendingPathComponent("memory.sqlite3"))
+    let task = try await s.createTask("Affair")
+    var ids: [UInt64] = []
+    for index in 1...3 {
+        ids.append(
+            try await s.addStep(
+                to: try await s.task(task.id),
+                input: MemoryStepInput(description: "Step \(index)", prompt: nil, reference: nil)))
+    }
+    let model = AssistantModel(session: s)
+    await model.reload()
+    await model.requestSelection(.step(ids[2]))
+    #expect(model.snapshot?.selectedStep?.id == ids[2])
+    #expect(model.stepPositions == [ids[0]: 1, ids[1]: 2, ids[2]: 3])
+
+    for index in 4...52 {
+        _ = try await s.addStep(
+            to: try await s.task(task.id),
+            input: MemoryStepInput(description: "Step \(index)", prompt: nil, reference: nil))
+    }
+    await model.requestSelection(.task(task.id))
+    #expect(model.stepPositions == nil)
+    #expect(await model.close())
+}
+
 /// D76: a source read belongs to one case revision and to the unpaused state. The model cancels
 /// all five sources on a case change (ID or revision) and on a pause change, and opening a step
 /// or an editor keeps the selected case and the read.

@@ -135,7 +135,7 @@ public struct AssistantView: View {
             Text(model.isCompletingTask ? "lifecycle.cleanup" : "switch.message", bundle: .module)
         }
         .confirmationDialog(
-            Text("delete.title", bundle: .module),
+            deletion.map(deletionTitle) ?? Text(verbatim: ""),
             isPresented: Binding(
                 get: { deletion != nil }, set: { if !$0 { deletion = nil } }
             ), titleVisibility: .visible
@@ -159,7 +159,22 @@ public struct AssistantView: View {
                 Text("switch.cancel", bundle: .module)
             }
         } message: {
-            Text("delete.message", bundle: .module)
+            deletion.map(deletionMessage)
+        }
+        .dialogIcon(Image(systemName: "trash"))
+    }
+    /// The case alert names the case and what goes with it (page 20); a note keeps its 25x text.
+    private func deletionTitle(_ deletion: CaseDeletion) -> Text {
+        switch deletion {
+        case .task: Text("delete.taskTitle", bundle: .module)
+        case .note: Text("delete.title", bundle: .module)
+        }
+    }
+    private func deletionMessage(_ deletion: CaseDeletion) -> Text {
+        switch deletion {
+        case .task:
+            Text("delete.taskMessage \(model.snapshot?.selectedTask?.text ?? "")", bundle: .module)
+        case .note: Text("delete.message", bundle: .module)
         }
     }
     /// A failed save keeps its draft visible: the fields also show while there are unsaved changes.

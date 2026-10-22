@@ -14,6 +14,8 @@ public struct MemoryPage<Item: Equatable & Sendable>: Equatable, Sendable {
     public var taskRevision: UInt64? = nil
     public var planCompleteness: MemoryCompleteness? = nil
     static var empty: Self { Self(items: [], nextAfter: nil) }
+    /// The number of items, or nil unless the page starts the list and nothing follows it.
+    func wholeCount(fromStart: Bool) -> Int? { fromStart && nextAfter == nil ? items.count : nil }
 }
 public enum MemoryCompleteness: UInt32, Sendable { case unknown, partial, complete }
 public enum MemoryAssertionKind: UInt32, Sendable { case sourceFact, assumption, userConfirmation }
@@ -94,6 +96,26 @@ public struct MemorySnapshot: Equatable, Sendable {
             guard let predecessor = steps.items.first(where: { $0.id == dependency.predecessor })
             else { return nil }
             if predecessor.completedAtUTC == nil { waiting.append(predecessor.id) }
+        }
+        return waiting
+    }
+    /// Step numbers shown to the user: 1-based positions by step ID, or nil unless the whole plan
+    /// is loaded from its first page (ADR-024, 26C).
+    func stepPositions(fromStart: Bool) -> [UInt64: Int]? {
+        guard steps.wholeCount(fromStart: fromStart) != nil else { return nil }
+        return Dictionary(
+            uniqueKeysWithValues: steps.items.enumerated().map { ($1.id, $0 + 1) })
+    }
+    /// Unfinished steps that depend on an unfinished step, or nil when that is unknown: every
+    /// dependency (from the first page) and every dependent step must be loaded.
+    func waitingDependents(of step: MemoryStep, dependenciesFromStart: Bool) -> [UInt64]? {
+        guard step.completedAtUTC == nil, dependenciesFromStart, dependencies.nextAfter == nil
+        else { return nil }
+        var waiting: [UInt64] = []
+        for dependency in dependencies.items where dependency.predecessor == step.id {
+            guard let dependent = steps.items.first(where: { $0.id == dependency.dependent })
+            else { return nil }
+            if dependent.completedAtUTC == nil { waiting.append(dependent.id) }
         }
         return waiting
     }

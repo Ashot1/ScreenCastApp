@@ -340,12 +340,14 @@ private struct DatabaseDirectory {
     let s = MemorySession(databaseURL: d.databaseURL)
     let task = try await s.createTask("Affair")
     var current = task
+    var first: UInt64 = 0
     var last: UInt64 = 0
     for index in 1...51 {
         last = try await s.addStep(
             to: current,
             input: MemoryStepInput(description: "Step \(index)", prompt: nil, reference: nil))
         current = try await s.task(task.id)
+        if index == 1 { first = last }
     }
     _ = try await s.addCheck(to: current, stepID: last, description: "Final check")
     let model = AssistantModel(session: s)
@@ -353,7 +355,14 @@ private struct DatabaseDirectory {
     await model.requestSelection(.step(last))
     await model.reload()
     await model.reload()
-    #expect(model.snapshot?.steps.items.first?.id == last)
+    // The step page keeps the plan from its first page (ADR-024, 26C); the step beyond it is
+    // loaded on its own.
+    #expect(model.snapshot?.steps.items.first?.id == first)
+    #expect(model.snapshot?.selectedStep?.id == last)
+    // A later plan page is the cursor the refreshes below must keep.
+    await model.pagePlan(.steps, after: try #require(model.snapshot?.steps.nextAfter))
+    let paged = try #require(model.snapshot?.steps.items.first?.id)
+    #expect(paged != first)
     let refreshes: [() async -> Void] = [
         { await model.pageTasks(after: 0) }, { await model.pageNotes(after: 0) },
         { await model.pageLinks(after: 0) }, { await model.pageDecisions(after: 0) },
@@ -362,7 +371,7 @@ private struct DatabaseDirectory {
     model.draft = "Unsaved task text"
     for refresh in refreshes {
         await refresh()
-        #expect(model.snapshot?.steps.items.first?.id == last)
+        #expect(model.snapshot?.steps.items.first?.id == paged)
         #expect(model.snapshot?.selectedStep?.id == last)
         #expect(model.snapshot?.checks.items.first?.description == "Final check")
         #expect(model.draft == "Unsaved task text")

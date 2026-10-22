@@ -21,6 +21,11 @@ extension View {
         groupBoxStyle(AmbientInsetGroupBoxStyle())
     }
 
+    /// The design's quiet inset fill for fields and lists on the white sheet.
+    func ambientInset(cornerRadius: CGFloat = 14) -> some View {
+        background(.fill.quaternary, in: RoundedRectangle(cornerRadius: cornerRadius))
+    }
+
     /// The design's primary action: a black capsule with its own tint.
     func ambientPrimary() -> some View {
         buttonStyle(.borderedProminent).buttonBorderShape(.capsule).tint(Theme.ink)

@@ -62,7 +62,9 @@ private func seedCases(_ s: MemorySession) async throws {
         description: "Итог не теряется при закрытии окна")
     try await s.setCheckResult(
         try await s.task(main.id), id: kept, result: .passed, at: october21 + 40_000)
-    try await s.setPlanCompleteness(try await s.task(main.id), value: .partial)
+    // Core marks steps ready only in a confirmed plan, so the main plan is confirmed (next step,
+    // «Готов к работе»); the review plan below shows the partial footer.
+    try await s.setPlanCompleteness(try await s.task(main.id), value: .complete)
 
     // Notes: a user note, an assumption and source facts. Integration namespaces are reserved for
     // the integrations themselves, so the fixture uses its own namespace.
@@ -113,6 +115,7 @@ private func seedCases(_ s: MemorySession) async throws {
         input: MemoryStepInput(
             description: "Прочитать изменения ленты в краевой панели", prompt: nil,
             reference: "https://github.com/owner/ambient-mac/pull/482"))
+    try await s.setPlanCompleteness(try await s.task(review.id), value: .partial)
     _ = try await s.addNote(
         to: try await s.task(reply.id), text: "Ответ ждут до конца недели.", at: october21)
 
@@ -125,10 +128,17 @@ private func seedCases(_ s: MemorySession) async throws {
     _ = try await s.addNote(
         to: try await s.task(done.id), text: "Сканирование пропускает папки сборки.",
         at: october21 - 600_000)
-    // Completion keeps the link to the main case and one useful reference.
+    // Reminders are off for it; completion keeps the link to the main case and three useful
+    // references.
+    try await s.setInitiativeSuppressed(try await s.task(done.id), value: true)
     try await s.completeTask(
         try await s.task(done.id), summary: "Проверить исключения папок при сканировании Git",
-        keep: [main.id], references: ["https://github.com/owner/ambient-mac/pull/455"])
+        keep: [main.id],
+        references: [
+            "https://github.com/owner/ambient-mac/pull/455",
+            "https://github.com/owner/ambient-mac/commit/5d2e8a1",
+            "https://github.com/owner/ambient-mac/tree/fix/folder-exclusions",
+        ])
 
     let open = try await s.tasks().items
     #expect(open.count == 6)
