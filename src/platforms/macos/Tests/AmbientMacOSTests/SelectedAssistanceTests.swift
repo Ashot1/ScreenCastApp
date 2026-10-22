@@ -949,3 +949,30 @@ import Testing
         }
     }
 #endif
+
+/// A note names the built-in source whose history saved it («из истории GitHub») only for that
+/// source's own namespace; the same notes, and user notes, are the ones help can select.
+@Test func noteSourceIsKnownOnlyForBuiltInNamespaces() {
+    func note(_ namespace: String?) -> MemoryEvidence {
+        MemoryEvidence(
+            id: 1, taskID: 1, text: "n",
+            origin: namespace.map {
+                .external(
+                    key: MemorySourceKey(namespace: $0, scope: "s", objectID: "o"), version: nil)
+            } ?? .user,
+            observedAtUTC: nil, completeness: .unknown, kind: .sourceFact)
+    }
+    let expected: [(String, BuiltInIntegration)] = [
+        ("local-git-branch-v1", .localProjects), ("codex-local-jsonl-v1", .codex),
+        ("github-com-rest-v1", .github), ("jira-cloud-rest-v1", .jira),
+        ("todoist-api-v1", .todoist),
+    ]
+    for (namespace, source) in expected {
+        #expect(note(namespace).source == source)
+        #expect(note(namespace).assistanceSelectable)
+    }
+    #expect(note("visual-fixture").source == nil)
+    #expect(!note("visual-fixture").assistanceSelectable)
+    #expect(note(nil).source == nil)
+    #expect(note(nil).assistanceSelectable)
+}

@@ -67,19 +67,33 @@ struct CaseDetailView: View {
         if task.lifecycle == .open, let step = model.nextStep {
             NextStepBlock(model: model, step: step)
         }
-        Picker(
-            selection: Binding(get: { shownTab(task) }, set: { tab = $0 })
-        ) {
-            ForEach(CaseTab.tabs(for: task), id: \.self) { item in
-                tabTitle(item).tag(item)
+        HStack {
+            Picker(
+                selection: Binding(get: { shownTab(task) }, set: { tab = $0 })
+            ) {
+                ForEach(CaseTab.tabs(for: task), id: \.self) { item in
+                    tabTitle(item).tag(item)
+                }
+            } label: {
+                Text("case.sections", bundle: .module)
             }
-        } label: {
-            Text("case.sections", bundle: .module)
+            .pickerStyle(.segmented).labelsHidden().fixedSize()
+            Spacer()
+            if shownTab(task) == .notes {
+                Button {
+                    Task { await model.requestSelection(.newNote) }
+                } label: {
+                    Image(systemName: "plus")
+                }
+                .buttonStyle(.glass).buttonBorderShape(.circle).controlSize(.large)
+                .accessibilityLabel(Text("notes.add", bundle: .module))
+                .help(Text("notes.add", bundle: .module))
+                .disabled(task.lifecycle == .completed)
+            }
         }
-        .pickerStyle(.segmented).labelsHidden().fixedSize()
         switch shownTab(task) {
         case .plan: ManualPlanView(model: model, snapshot: snapshot)
-        case .notes: NotesTab(model: model, snapshot: snapshot, task: task, deletion: $deletion)
+        case .notes: NotesTab(model: model, snapshot: snapshot, deletion: $deletion)
         case .links: LinksTab(model: model, snapshot: snapshot, linkTarget: $linkTarget)
         case .sources: SourcesTab(model: model, chatGPT: chatGPT, task: task, source: $source)
         case .help:

@@ -179,9 +179,22 @@ extension MemoryEvidence {
     var assistanceSelectable: Bool {
         switch origin {
         case .user: true
-        case .external(let key, _):
-            key.namespace == "local-git-branch-v1" || key.namespace == "codex-local-jsonl-v1"
-                || IntegrationKind(namespace: key.namespace) != nil
+        case .external: source != nil
+        }
+    }
+    /// The built-in source whose own path saved this note, read from the binding namespace.
+    var source: BuiltInIntegration? {
+        guard case .external(let key, _) = origin else { return nil }
+        switch key.namespace {
+        case "local-git-branch-v1": return .localProjects
+        case "codex-local-jsonl-v1": return .codex
+        default:
+            switch IntegrationKind(namespace: key.namespace) {
+            case .github: return .github
+            case .jira: return .jira
+            case .todoist: return .todoist
+            case nil: return nil
+            }
         }
     }
 }

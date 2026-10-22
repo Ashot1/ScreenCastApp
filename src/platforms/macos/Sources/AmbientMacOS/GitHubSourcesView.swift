@@ -23,7 +23,7 @@ struct GitHubMetadataView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("integration.history", bundle: .module).font(.caption).foregroundStyle(.secondary)
             Text(verbatim: "\(metadata.repositoryFullName) #\(metadata.prNumber)")
-            Text(LocalizedStringKey("github.kind.\(metadata.fields.kind)"), bundle: .module)
+            Text(LocalizedStringKey("github.kind." + metadata.fields.kind), bundle: .module)
             row("integration.author", metadata.fields.author)
             if let state = metadata.fields.state {
                 row("github.state", state.raw, unknown: state.unknown)
@@ -111,7 +111,7 @@ struct GitHubCoverageView: View {
     let coverage: GitHubCoverage
     var body: some View {
         HStack {
-            Text(LocalizedStringKey("github.kind.\(coverage.kind)"), bundle: .module)
+            Text(LocalizedStringKey("github.kind." + coverage.kind), bundle: .module)
             Text(
                 LocalizedStringKey(
                     ["not_read", "read"].contains(coverage.status)

@@ -18,7 +18,7 @@ struct JiraMetadataView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("integration.history", bundle: .module).font(.caption).foregroundStyle(.secondary)
             Text(verbatim: metadata.cloudID + " • " + metadata.content.observedIssueKey)
-            Text(LocalizedStringKey("jira.kind.\(metadata.content.tag)"), bundle: .module)
+            Text(LocalizedStringKey("jira.kind." + metadata.content.tag), bundle: .module)
             Text("jira.projection", bundle: .module).font(.caption)
             row("jira.status", metadata.content.fields.status?.flatMap { $0.name })
             row("jira.issueType", metadata.content.fields.issueType?.flatMap { $0.name })
@@ -74,7 +74,7 @@ struct JiraLossView: View {
                 Text(verbatim: String(reason[reason.index(after: colon)...]))
             }.font(.caption)
         } else {
-            Text(LocalizedStringKey("jira.reason.\(reason)"), bundle: .module).font(.caption)
+            Text(LocalizedStringKey("jira.reason." + reason), bundle: .module).font(.caption)
         }
     }
 }
@@ -83,7 +83,7 @@ struct JiraCoverageView: View {
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text(LocalizedStringKey("jira.category.\(coverage.kind)"), bundle: .module)
+                Text(LocalizedStringKey("jira.category." + coverage.kind), bundle: .module)
                 Text(
                     LocalizedStringKey(
                         coverage.status == "partial"

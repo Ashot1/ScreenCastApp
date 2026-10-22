@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// The five sources as a second row of tabs, names only (ADR-023 #4, #5). Only the shown source is
-/// built; switching sources does not cancel a read, which the model and the window root own (D76).
+/// The five sources as a quiet second row of tabs (system palette picker), names only (ADR-023 #4,
+/// #5; D73: a status exists only inside the shown source). Only the shown source is built; switching
+/// sources does not cancel a read, which the model and the window root own (D76).
 struct SourcesTab: View {
     let model: AssistantModel
     let chatGPT: ChatGPTModel
@@ -15,7 +16,7 @@ struct SourcesTab: View {
         } label: {
             Text("case.sources", bundle: .module)
         }
-        .pickerStyle(.segmented).labelsHidden()
+        .pickerStyle(.palette).labelsHidden().fixedSize()
         if model.integrations.isEnabled(source) {
             switch source {
             case .localProjects:
@@ -39,3 +40,7 @@ struct SourcesTab: View {
         }
     }
 }
+
+/// The home folder reads as «~» in the local project and Codex paths, as Finder and the design show
+/// them; the full path stays in the help tooltip.
+func shown(_ path: String) -> String { (path as NSString).abbreviatingWithTildeInPath }

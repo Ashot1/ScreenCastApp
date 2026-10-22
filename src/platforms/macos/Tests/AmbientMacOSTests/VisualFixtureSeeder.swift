@@ -21,7 +21,21 @@ func seedVisualFixtureTemplates() async throws {
         to: seed.appending(path: "corrupt/memory.sqlite3"))
     let s = MemorySession(databaseURL: seed.appending(path: "cases/memory.sqlite3"))
     try await seedCases(s)
+    try await seedSourceSettings(s, seed: seed)
     try await s.close()
+}
+
+/// Saved local project and Codex settings point at the 26D fixtures (a throwaway git repository and
+/// a synthetic session file) when they exist; reads still need a ChatGPT session.
+private func seedSourceSettings(_ s: MemorySession, seed: URL) async throws {
+    let fixtures = seed.deletingLastPathComponent().deletingLastPathComponent()
+        .appending(path: "26d/fixtures", directoryHint: .isDirectory).standardizedFileURL
+    let repository = fixtures.appending(path: "ambient-mac").path
+    let session = fixtures.appending(path: "codex/sessions/2026-10-21.jsonl").path
+    let fm = FileManager.default
+    guard fm.fileExists(atPath: repository), fm.fileExists(atPath: session) else { return }
+    _ = try await s.saveLocalRoot(path: repository, expected: 0, exclusions: ["node_modules"])
+    _ = try await s.saveCodexSelection(id: 0, expected: 0, path: session)
 }
 
 private let october21: Int64 = 1_792_560_000  // 2026-10-21 00:00 UTC
@@ -98,6 +112,25 @@ private func seedCases(_ s: MemorySession) async throws {
             text: "Результат обновления не сохраняется, если окно настроек закрыто.",
             observedAtUTC: october21 + 52_560, completeness: .partial, kind: .sourceFact))
 
+    // A local branch observation (its namespace is not reserved), so a note shows its source
+    // history label and the help tab has a tagged toggle.
+    _ = try await s.ingestSource(
+        to: try await s.task(main.id),
+        key: MemorySourceKey(
+            namespace: "local-git-branch-v1", scope: "ambient-mac",
+            objectID: "refs/heads/fix/session-refresh"),
+        version: "4223b2e",
+        evidence: MemorySourceEvidence(
+            text: "Ветка fix/session-refresh: текущая, вершина 4223b2e.",
+            observedAtUTC: october21 + 52_920, completeness: .complete, kind: .sourceFact))
+    // A note moved here from another case leaves a line in the move log.
+    let moved = try await s.addNote(
+        to: try await s.task(storage.id),
+        text: "Ошибку видно только после перезапуска приложения.", at: october21 + 30_000)
+    try await s.moveEvidence(
+        moved, from: try await s.task(storage.id), to: try await s.task(main.id),
+        at: october21 + 31_000)
+
     // Links: two open cases and the completed one.
     try await s.setLink(
         from: try await s.task(main.id), to: try await s.task(review.id), related: true,
@@ -108,6 +141,10 @@ private func seedCases(_ s: MemorySession) async throws {
     try await s.setLink(
         from: try await s.task(main.id), to: try await s.task(done.id), related: true,
         at: october21 - 604_800)
+    // A link the user rejected.
+    try await s.setLink(
+        from: try await s.task(main.id), to: try await s.task(reply.id), related: false,
+        at: october21 - 3_600)
 
     // Short plans for other cases, so the list and the step page have variety.
     _ = try await s.addStep(
@@ -143,6 +180,6 @@ private func seedCases(_ s: MemorySession) async throws {
     let open = try await s.tasks().items
     #expect(open.count == 6)
     #expect(try await s.steps(taskID: main.id).items.count == 3)
-    #expect(try await s.evidence(taskID: main.id).items.count == 4)
-    #expect(try await s.links(taskID: main.id).items.count == 3)
+    #expect(try await s.evidence(taskID: main.id).items.count == 6)
+    #expect(try await s.links(taskID: main.id).items.count == 4)
 }

@@ -163,18 +163,22 @@ public struct AssistantView: View {
         }
         .dialogIcon(Image(systemName: "trash"))
     }
-    /// The case alert names the case and what goes with it (page 20); a note keeps its 25x text.
+    /// Each alert names what it deletes and what goes with it (page 20).
     private func deletionTitle(_ deletion: CaseDeletion) -> Text {
         switch deletion {
         case .task: Text("delete.taskTitle", bundle: .module)
-        case .note: Text("delete.title", bundle: .module)
+        case .note: Text("delete.noteTitle", bundle: .module)
         }
     }
     private func deletionMessage(_ deletion: CaseDeletion) -> Text {
         switch deletion {
         case .task:
-            Text("delete.taskMessage \(model.snapshot?.selectedTask?.text ?? "")", bundle: .module)
-        case .note: Text("delete.message", bundle: .module)
+            return Text(
+                "delete.taskMessage \(model.snapshot?.selectedTask?.text ?? "")", bundle: .module)
+        case .note(let id):
+            // The alert quotes the start of the note, as page 20 shows it.
+            let text = model.snapshot?.evidence.items.first { $0.id == id }?.text ?? ""
+            return Text("delete.noteMessage \(String(text.prefix(200)))", bundle: .module)
         }
     }
     /// A failed save keeps its draft visible: the fields also show while there are unsaved changes.

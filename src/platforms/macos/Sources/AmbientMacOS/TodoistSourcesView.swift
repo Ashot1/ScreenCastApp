@@ -34,7 +34,7 @@ struct TodoistMetadataView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("integration.history", bundle: .module).font(.caption).foregroundStyle(.secondary)
             Text(verbatim: metadata.account + " • " + metadata.content.objectID)
-            Text(LocalizedStringKey("todoist.kind.\(fields.kind)"), bundle: .module)
+            Text(LocalizedStringKey("todoist.kind." + fields.kind), bundle: .module)
             Text("todoist.projection", bundle: .module).font(.caption)
             TodoistFieldRow(key: "todoist.project", value: fields.projectID.map { .value($0) })
             TodoistFieldRow(key: "todoist.name", value: fields.name)
@@ -77,11 +77,11 @@ struct TodoistLossView: View {
     var body: some View {
         if let colon = reason.firstIndex(of: ":") {
             HStack {
-                Text(LocalizedStringKey("todoist.\(reason[..<colon])"), bundle: .module)
+                Text(LocalizedStringKey("todoist." + reason[..<colon]), bundle: .module)
                 Text(verbatim: String(reason[reason.index(after: colon)...]))
             }.font(.caption)
         } else {
-            Text(LocalizedStringKey("todoist.reason.\(reason)"), bundle: .module).font(.caption)
+            Text(LocalizedStringKey("todoist.reason." + reason), bundle: .module).font(.caption)
         }
     }
 }
@@ -90,7 +90,7 @@ struct TodoistCoverageView: View {
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text(LocalizedStringKey("todoist.category.\(coverage.kind)"), bundle: .module)
+                Text(LocalizedStringKey("todoist.category." + coverage.kind), bundle: .module)
                 Text(
                     LocalizedStringKey(
                         coverage.status == "partial"
