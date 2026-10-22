@@ -126,7 +126,7 @@ private struct EvidenceRow: View {
                     } label: {
                         Text("notes.moveAction", bundle: .module)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .ambientPrimary()
                     .disabled(disabled || !targets.contains { $0.id == targetID })
                     Button {
                         moving = false

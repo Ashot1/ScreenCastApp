@@ -4,7 +4,7 @@ import SwiftUI
 /// Design colors of ADR-023 that system semantic colors do not cover. Light values come from the
 /// design; dark values are system colors, so dark mode follows macOS (D74).
 enum Theme {
-    /// Accent of prominent buttons and switches: the design's ink in light mode, white in dark.
+    /// Fill of the primary button: the design's ink in light mode, white in dark.
     static let ink = Color(light: rgb(0x15171C), dark: .white)
     static let ready = Tone(fill: 0xE8F4EC, text: 0x17663A, dark: .systemGreen)
     static let stale = Tone(fill: 0xFCEEDB, text: 0x8A470C, dark: .systemOrange)

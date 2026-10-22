@@ -31,7 +31,7 @@ struct DraftEditor: View {
                             ? "lifecycle.confirmComplete"
                             : model.isEditingNote ? "notes.save" : "intent.save", bundle: .module)
                 }
-                .buttonStyle(.borderedProminent).disabled(
+                .ambientPrimary().disabled(
                     model.draft.isEmpty || !model.hasUnsavedChanges)
                 // Always available: on an editor page and in an edit mode it is also the way back.
                 Button {

@@ -53,19 +53,16 @@ public struct AssistantMenu: View {
             } icon: {
                 Image(systemName: model.statusSymbol)
             }
-            AssistantPauseButton(model: model)
-            Button {
-                Task { await model.refreshManualPause() }
-            } label: {
-                Label {
-                    Text("pause.read", bundle: .module)
-                } icon: {
-                    Image(systemName: "arrow.clockwise")
-                }
+            // A menu item has no native subtitle; the detail is its own disabled line.
+            if model.closing {
+                Text("status.closingDetail", bundle: .module)
             }
-            .disabled(model.busy || model.closing)
+            Divider()
+            AssistantPauseButton(model: model)
+            // As in the windows, reading is offered only while the saved pause is unknown.
+            if model.manualPause == nil { AssistantPauseReadButton(model: model) }
             if let failure = model.failure {
-                Label(failure.message, systemImage: "exclamationmark.triangle")
+                Label(failure.message, systemImage: "exclamationmark.circle")
             }
             Divider()
             Button {
@@ -74,7 +71,7 @@ public struct AssistantMenu: View {
                 Label {
                     Text("menu.openMemory", bundle: .module)
                 } icon: {
-                    Image(systemName: "macwindow")
+                    Image(systemName: "doc")
                 }
             }
             SettingsLink {
@@ -88,11 +85,7 @@ public struct AssistantMenu: View {
             Button {
                 NSApplication.shared.terminate(nil)
             } label: {
-                Label {
-                    Text("menu.quit", bundle: .module)
-                } icon: {
-                    Image(systemName: "power")
-                }
+                Text("menu.quit", bundle: .module)
             }
             .keyboardShortcut("q")
         }
@@ -108,12 +101,33 @@ struct AssistantPauseButton: View {
             Task { await model.toggleManualPause() }
         } label: {
             Label {
-                Text(
-                    model.manualPause == true ? "pause.remove" : "pause.enable", bundle: .module)
+                Text(pauseKey, bundle: .module)
             } icon: {
-                Image(systemName: model.manualPause == true ? "play.circle" : "pause.circle")
+                Image(systemName: model.manualPause == true ? "play" : "pause")
             }
         }
+        .help(Text(pauseKey, bundle: .module))
         .disabled(!model.canToggleManualPause)
+    }
+    private var pauseKey: LocalizedStringKey {
+        model.manualPause == true ? "pause.remove" : "pause.enable"
+    }
+}
+
+/// Reads the saved pause again; callers offer it only while the pause is unknown.
+struct AssistantPauseReadButton: View {
+    let model: AssistantModel
+    var body: some View {
+        Button {
+            Task { await model.refreshManualPause() }
+        } label: {
+            Label {
+                Text("pause.read", bundle: .module)
+            } icon: {
+                Image(systemName: "arrow.clockwise")
+            }
+        }
+        .help(Text("pause.read", bundle: .module))
+        .disabled(model.busy || model.closing)
     }
 }

@@ -118,7 +118,7 @@ struct StepActions: View {
                         Image(systemName: "doc.on.doc")
                     }
                 }
-                .buttonStyle(.borderedProminent)
+                .ambientPrimary()
             }
             if let reference = step.reference {
                 Button {

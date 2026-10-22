@@ -15,8 +15,14 @@ struct AmbientInsetGroupBoxStyle: GroupBoxStyle {
 
 extension View {
     /// Applies the design layer on a real root (the memory window, Settings, the edge panel);
-    /// separate hosting roots do not inherit environment styles.
+    /// separate hosting roots do not inherit environment styles. No root tint: glass buttons stay
+    /// untinted and system controls keep the system accent (ADR-024).
     public func ambientTheme() -> some View {
-        groupBoxStyle(AmbientInsetGroupBoxStyle()).tint(Theme.ink)
+        groupBoxStyle(AmbientInsetGroupBoxStyle())
+    }
+
+    /// The design's primary action: a black capsule with its own tint.
+    func ambientPrimary() -> some View {
+        buttonStyle(.borderedProminent).buttonBorderShape(.capsule).tint(Theme.ink)
     }
 }

@@ -66,7 +66,7 @@ struct AssistanceCardView: View {
                 } label: {
                     Text("assistance.send", bundle: .module)
                 }
-                .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                .ambientPrimary()
                 .disabled(chatGPT.busy || model.manualPause != false)
             }
             if chatGPT.assisting {
@@ -252,7 +252,7 @@ struct AssistanceCardView: View {
             Task { await chatGPT.copy(proposal, using: model) }
         } label: {
             Text("assistance.copy", bundle: .module)
-        }.buttonStyle(.borderedProminent)
+        }.ambientPrimary()
         if proposal.kind == .clarification { replyButton(proposal) }
         continueButton(proposal)
     }
@@ -368,7 +368,7 @@ struct AssistanceCardView: View {
             } label: {
                 Text("reply.send", bundle: .module)
             }
-            .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+            .ambientPrimary()
             .disabled(!chatGPT.canSendReply || model.manualPause != false)
             Text("reply.persistence", bundle: .module).font(.caption).foregroundStyle(.secondary)
         }

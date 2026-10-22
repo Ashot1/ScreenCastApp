@@ -16,7 +16,8 @@ public struct AssistantView: View {
         self.chatGPT = chatGPT
     }
     public var body: some View {
-        NavigationSplitView {
+        // The sidebar can never be hidden: the window has no toggle, menu item or drag to do it.
+        NavigationSplitView(columnVisibility: .constant(.all)) {
             CaseSidebar(model: model, chatGPT: chatGPT, section: $section)
                 .navigationSplitViewColumnWidth(244)
         } detail: {
@@ -39,11 +40,18 @@ public struct AssistantView: View {
                                     linkTarget: $linkTarget, deletion: $deletion, tab: $tab,
                                     source: $source,
                                     editingTask: $editingTask, editingStep: $editingStep)
-                                Text("memory.help", bundle: .module).font(.caption)
-                                    .foregroundStyle(.secondary)
                             }
                         }
                         .padding(.horizontal, 36).padding(.vertical, 32)
+                    }
+                    .safeAreaInset(edge: .bottom, alignment: .leading) {
+                        Label {
+                            Text("memory.help", bundle: .module)
+                        } icon: {
+                            Image(systemName: "lock")
+                        }
+                        .font(.caption).foregroundStyle(.secondary)
+                        .padding(.horizontal, 36).padding(.vertical, 16)
                     }
                 }
             }
@@ -56,9 +64,14 @@ public struct AssistantView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // The white sheet on the window glass (D85): radius 20, 8 pt from the window edges.
             .background(Color(nsColor: .textBackgroundColor))
+            .clipShape(.rect(cornerRadius: 20))
+            .padding([.top, .trailing, .bottom], 8)
+            .ignoresSafeArea(edges: .top)
         }
         .toolbar(removing: .title)
+        .containerBackground(.ultraThinMaterial, for: .window)
         .frame(minWidth: 740, minHeight: 640)
         .disabled(model.busy || model.closing)
         .task {
@@ -196,12 +209,7 @@ struct AssistantStatusView: View {
             Text("status.cloudUnavailable", bundle: .module)
             AssistantPauseButton(model: model).labelStyle(.titleOnly)
             if model.manualPause == nil {
-                Button {
-                    Task { await model.refreshManualPause() }
-                } label: {
-                    Text("pause.read", bundle: .module)
-                }
-                .disabled(model.busy || model.closing)
+                AssistantPauseReadButton(model: model).labelStyle(.titleOnly)
             }
             Text("pause.help", bundle: .module).font(.caption).foregroundStyle(.secondary)
         }
