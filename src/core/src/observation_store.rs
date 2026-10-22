@@ -29,19 +29,38 @@ const MAX_TASK_LIST: usize = 32 * 1024;
 const MAX_TASK_TITLE: usize = 200;
 const MAX_DETAILS: usize = 48 * 1024;
 const DETAIL_TASKS: i64 = 8;
+// Avalanche guards of one answer (ADR-025 «Проверки пунктов»).
+const MAX_NEW_TASKS: usize = 3;
+const MAX_EVIDENCE_ROWS: usize = 16;
+const MAX_ANCHOR: usize = 1024;
+const QUOTE_SCOPE: &str = "quote";
+// How far, in display units, a re-found anchor may move between frames of one display.
+const NEAR: f64 = 0.1;
 
 /// Process-local observation state. SQLite owns the log and the unsent set; this holds only the
-/// in-memory image ring, in-session deadlines and a derived significance cache.
+/// in-memory image ring with its word boxes, in-session deadlines, a derived significance cache
+/// and the highlight.
 #[derive(Default)]
 pub(super) struct ObservationState {
     ring: VecDeque<RingFrame>,
+    /// Word boxes of the frames in flight: their images left with the send (D34), the boxes stay
+    /// until the answer is settled so its anchor can be found.
+    sent: Vec<FrameShape>,
     settled_since: Option<u64>,
     backoff_until: Option<u64>,
     novelty: Option<Novelty>,
+    highlight: Option<Highlight>,
+    highlight_version: u64,
+}
+#[derive(Clone)]
+struct FrameShape {
+    frame: FrameId,
+    display_key: String,
+    lines: Vec<ObservedLine>,
 }
 #[derive(Clone)]
 struct RingFrame {
-    frame: FrameId,
+    shape: FrameShape,
     jpeg: Arc<[u8]>,
 }
 /// Significance of the unsent frames against the newest send. Rebuilt from SQLite whenever the
@@ -266,7 +285,7 @@ pub(super) fn reserve_send(
     r: &ObservationRequest,
     at_utc: i64,
 ) -> Result<(), StoreError> {
-    let first = r.frames.last().map_or(r.last_frame, |f| f.0);
+    let first = r.frames.last().map_or(r.last_frame, |f| f.id);
     c.execute(
         "UPDATE observation_frames SET sent_in=?1 WHERE sent_in IS NULL AND id<=?2",
         params![attempt.0, r.last_frame.0],
@@ -389,7 +408,8 @@ impl Store {
             serde_json::from_str(json).map_err(|_| StoreError::InvalidInput)?,
         )
     }
-    /// Stop and pause end the attempt in flight and drop the in-memory images; the log stays (D101).
+    /// Stop and pause end the attempt in flight and drop the in-memory images, word boxes and the
+    /// highlight; the log stays (D101).
     pub(super) fn stop_observation(&mut self) {
         if let Some(a) = &self.active_check
             && a.purpose == ModelPurpose::Observation
@@ -397,6 +417,47 @@ impl Store {
             a.cancelled.store(true, Ordering::Release);
         }
         self.observation.ring.clear();
+        self.observation.sent.clear();
+        self.set_highlight(None);
+    }
+    pub fn highlight(&self) -> HighlightState {
+        HighlightState {
+            version: self.observation.highlight_version,
+            highlight: self.observation.highlight.clone(),
+        }
+    }
+    fn set_highlight(&mut self, highlight: Option<Highlight>) {
+        if self.observation.highlight != highlight {
+            self.observation.highlight = highlight;
+            self.observation.highlight_version += 1;
+        }
+    }
+    /// The highlight belongs to a shown card: hiding, eviction, a stale-set cleanup, a manual
+    /// publication or a deleted task removes it with the card. Runs after committed writes, so it
+    /// cannot fail them: if the card cannot be read, the derived in-memory highlight is dropped.
+    pub(super) fn invalidate_stale_highlight(&mut self) {
+        let Some(h) = &self.observation.highlight else {
+            return;
+        };
+        let shown = self
+            .connection
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM assistant_proposals WHERE id=?1 AND visible=1)",
+                [h.proposal_id.0],
+                |r| r.get(0),
+            )
+            .unwrap_or(false);
+        if !shown {
+            self.set_highlight(None);
+        }
+    }
+    fn follow_highlight(&mut self, shape: &FrameShape) {
+        let next = self
+            .observation
+            .highlight
+            .as_ref()
+            .and_then(|h| follow(h, shape));
+        self.set_highlight(next);
     }
     /// A new session ends the backoff (D48).
     pub(super) fn reset_observation_backoff(&mut self) {
@@ -433,9 +494,14 @@ impl Store {
         }
         Ok(())
     }
-    /// After the send row commits, its images leave memory (D34) and the baseline moves.
+    /// After the send row commits, its images leave memory (D34) and the baseline moves. The word
+    /// boxes of the sent frames wait for the answer.
     pub(super) fn observation_sent(&mut self, r: &ObservationRequest) {
-        self.observation.ring.retain(|f| f.frame > r.last_frame);
+        let (sent, kept) = std::mem::take(&mut self.observation.ring)
+            .into_iter()
+            .partition::<Vec<_>, _>(|f| f.shape.frame <= r.last_frame);
+        self.observation.sent = sent.into_iter().map(|f| f.shape).collect();
+        self.observation.ring = kept.into();
         self.observation.novelty = None;
     }
     fn expire_observation(&mut self, now_utc: i64) -> Result<(), StoreError> {
@@ -478,7 +544,7 @@ impl Store {
                 },
                 frame: None,
                 next: Capture::Hold,
-                highlight_version: 0,
+                highlight_version: self.observation.highlight_version,
             });
         }
         let mut lost = 0;
@@ -519,15 +585,34 @@ impl Store {
                 )?;
                 Ok(())
             })?;
-            // The same text may have moved: the newest image replaces the ring copy.
-            if let Some(f) = self.observation.ring.iter_mut().find(|f| f.frame.0 == id) {
+            // The same text may have moved: the newest image and word boxes replace the kept copy.
+            let shape = FrameShape {
+                frame: FrameId(id),
+                display_key: frame.display_key,
+                lines: frame.lines,
+            };
+            self.follow_highlight(&shape);
+            if let Some(f) = self
+                .observation
+                .ring
+                .iter_mut()
+                .find(|f| f.shape.frame == shape.frame)
+            {
                 f.jpeg = jpeg;
+                f.shape = shape;
+            } else if let Some(f) = self
+                .observation
+                .sent
+                .iter_mut()
+                .find(|f| f.frame == shape.frame)
+            {
+                *f = shape;
             }
             return Ok(FrameOutcome {
                 disposition: FrameDisposition::Duplicate,
                 frame: None,
                 next,
-                highlight_version: 0,
+                highlight_version: self.observation.highlight_version,
             });
         }
         let mut ring = self.observation.ring.clone();
@@ -539,7 +624,14 @@ impl Store {
                 params![now.utc, frame.display_key, frame.bundle_id, app, title, text, hash.as_slice()],
             )?;
             let id = FrameId(c.last_insert_rowid());
-            ring.push_back(RingFrame { frame: id, jpeg });
+            ring.push_back(RingFrame {
+                shape: FrameShape {
+                    frame: id,
+                    display_key: frame.display_key,
+                    lines: frame.lines,
+                },
+                jpeg,
+            });
             while ring.len() > RING_FRAMES || ring.iter().map(|f| f.jpeg.len()).sum::<usize>() > RING_BYTES {
                 ring.pop_front();
                 evicted += 1;
@@ -554,6 +646,9 @@ impl Store {
             )?;
             Ok((id, pruned))
         })?;
+        if let Some(f) = ring.back() {
+            self.follow_highlight(&f.shape);
+        }
         self.observation.ring = ring;
         self.observation.settled_since = Some(now.monotonic_ms);
         if pruned {
@@ -565,7 +660,7 @@ impl Store {
             disposition: FrameDisposition::Recorded,
             frame: Some(id),
             next,
-            highlight_version: 0,
+            highlight_version: self.observation.highlight_version,
         })
     }
     /// The snapshot-free cadence call while input is idle; it also expires the day-old log.
@@ -641,7 +736,7 @@ impl Store {
                 let text: String = r.get(5)?;
                 let id = FrameId(r.get(0)?);
                 let app: String = r.get(3)?;
-                let image = self.observation.ring.iter().any(|f| f.frame == id);
+                let image = self.observation.ring.iter().any(|f| f.shape.frame == id);
                 let entry = json!({"frame_id": id, "at_utc": r.get::<_, i64>(1)?, "bundle_id": r.get::<_, String>(2)?, "app": app, "title": r.get::<_, String>(4)?, "text": text, "image": image});
                 // Metadata and escaping count too, so the whole context stays within its bound.
                 let size = entry.to_string().len() + 1;
@@ -654,11 +749,15 @@ impl Store {
                 if apps.len() < MAX_APPS && !apps.contains(&app) {
                     apps.push(app);
                 }
-                frames.push((id, text));
+                frames.push(SentFrame {
+                    id,
+                    at_utc: r.get(1)?,
+                    text,
+                });
                 oldest = id.0;
             }
         }
-        let last_frame = frames.first().map(|f| f.0).ok_or(StoreError::NotFound)?;
+        let last_frame = frames.first().map(|f| f.id).ok_or(StoreError::NotFound)?;
         // Older unsent frames beyond the text bound are dropped from this send and counted.
         let (older_frames, older_bytes): (i64, i64) = tx.query_row(
             "SELECT count(*),coalesce(sum(length(CAST(text AS BLOB))),0) FROM observation_frames WHERE sent_in IS NULL AND id<?1",
@@ -669,9 +768,9 @@ impl Store {
             .observation
             .ring
             .iter()
-            .filter(|f| frames.iter().any(|(id, _)| *id == f.frame))
+            .filter(|f| frames.iter().any(|s| s.id == f.shape.frame))
             .map(|f| ObservationImage {
-                frame: f.frame,
+                frame: f.shape.frame,
                 jpeg: f.jpeg.clone(),
             })
             .collect();
@@ -679,7 +778,7 @@ impl Store {
             .observation
             .ring
             .iter()
-            .filter(|f| f.frame <= last_frame)
+            .filter(|f| f.shape.frame <= last_frame)
             .count();
         let dropped = Losses {
             frames: pending.frames + older_frames as u64,
@@ -714,8 +813,8 @@ impl Store {
             pending,
         })
     }
-    /// Accounts the attempt, then discards a late answer under the store lock or hands a current
-    /// one to the apply step. The apply step of 27B writes nothing.
+    /// Accounts the attempt, then discards a late answer under the store lock or applies a current
+    /// one in the same transaction, and anchors its highlight after the commit.
     pub fn finish_observation(
         &mut self,
         id: AttemptId,
@@ -729,6 +828,7 @@ impl Store {
             .filter(|a| a.attempt == Some(id) && a.purpose == ModelPurpose::Observation)
             .ok_or(StoreError::InvalidInput)?;
         let epoch = active.epoch;
+        let request = active.observation.clone().ok_or(StoreError::InvalidInput)?;
         // Pause, stop, cancel or a session change after dispatch make the answer late.
         let current = !active.cancelled.load(Ordering::Acquire)
             && self.require_observation(epoch).is_ok()
@@ -741,8 +841,18 @@ impl Store {
             }
         }
         let same_session = epoch == self.model_session.epoch;
-        let result = match self.finish_check(id, result) {
-            Ok(result) => result,
+        let finished = self.finish_attempt(id, result, |c, result| {
+            // The commit may have waited for the write lock: only a still confirmed result applies.
+            match &answer {
+                Some(answer) if result.outcome == CheckOutcome::Confirmed => {
+                    apply_answer(c, id, &request, answer, now.utc).map(Some)
+                }
+                _ => Ok(None),
+            }
+        });
+        let sent = std::mem::take(&mut self.observation.sent);
+        let (result, applied) = match finished {
+            Ok(finished) => finished,
             Err(error) => {
                 if same_session {
                     self.observation.backoff_until =
@@ -751,8 +861,9 @@ impl Store {
                 return Err(error);
             }
         };
-        let applied = result.outcome == CheckOutcome::Confirmed && current;
-        let (added_cards, rejected_items) = (0u32, 0u32);
+        if let Some(applied) = &applied {
+            self.anchor_highlight(&applied.anchors, &sent);
+        }
         if retried(result.outcome) {
             self.observation.novelty = None;
         }
@@ -771,11 +882,42 @@ impl Store {
         }
         Ok(ObservationFinish {
             result,
-            applied,
-            added_cards,
-            rejected_items,
-            highlight_version: 0,
+            applied: applied.is_some(),
+            added_cards: applied.as_ref().map_or(0, |a| a.added_cards),
+            rejected_items: applied.as_ref().map_or(0, |a| a.rejected_items),
+            highlight_version: self.observation.highlight_version,
         })
+    }
+    /// The newest card whose anchor occurs exactly once in its frame gets the highlight. The anchor
+    /// is bound to the cited frame, so a late answer cannot point to a new place; a frame recorded
+    /// during the request (the ring holds only those) then moves or removes it like any newer frame.
+    fn anchor_highlight(
+        &mut self,
+        anchors: &[(ProposalId, ObservationAnchor)],
+        sent: &[FrameShape],
+    ) {
+        for (proposal, a) in anchors.iter().rev() {
+            let Some(shape) = sent.iter().find(|f| f.frame == a.frame) else {
+                continue;
+            };
+            let [rect] = occurrences(&shape.lines, &a.anchor)[..] else {
+                continue;
+            };
+            let h = Highlight {
+                proposal_id: *proposal,
+                frame_id: shape.frame,
+                display_key: shape.display_key.clone(),
+                anchor: line(&a.anchor),
+                rect,
+                needs_recheck: false,
+            };
+            let h = match self.observation.ring.back() {
+                Some(newest) => follow(&h, &newest.shape),
+                None => Some(h),
+            };
+            self.set_highlight(h);
+            return;
+        }
     }
     pub fn observation_journal(&mut self, now_utc: i64) -> Result<ObservationJournal, StoreError> {
         self.expire_observation(now_utc)?;
@@ -924,4 +1066,357 @@ fn task_details(c: &Connection, allowed: &[TaskVersion]) -> Result<(Vec<Value>, 
         details.push(detail);
     }
     Ok((details, dropped))
+}
+
+/// The box of every occurrence of `anchor` within one line, overlapping ones included: the union of
+/// the boxes of the words the occurrence touches. Lines are matched as their words joined by one
+/// space, the same text the shell recognized.
+fn occurrences(lines: &[ObservedLine], anchor: &str) -> Vec<NormalizedRect> {
+    let anchor = line(anchor);
+    let mut found = Vec::new();
+    if anchor.is_empty() {
+        return found;
+    }
+    for l in lines {
+        let mut text = String::new();
+        let mut spans = Vec::with_capacity(l.words.len());
+        for w in &l.words {
+            if !text.is_empty() {
+                text.push(' ');
+            }
+            spans.push((text.len(), text.len() + w.text.len(), w.rect));
+            text.push_str(&w.text);
+        }
+        let mut from = 0;
+        while let Some(i) = text[from..].find(&anchor) {
+            let (start, end) = (from + i, from + i + anchor.len());
+            found.extend(
+                spans
+                    .iter()
+                    .filter(|(a, b, _)| *a < end && start < *b)
+                    .map(|(_, _, r)| *r)
+                    .reduce(union),
+            );
+            from = start + text[start..].chars().next().map_or(1, char::len_utf8);
+        }
+    }
+    found
+}
+fn union(a: NormalizedRect, b: NormalizedRect) -> NormalizedRect {
+    let (x, y) = (a.x.min(b.x), a.y.min(b.y));
+    NormalizedRect {
+        x,
+        y,
+        width: (a.x + a.width).max(b.x + b.width) - x,
+        height: (a.y + a.height).max(b.y + b.height) - y,
+    }
+}
+fn center(r: NormalizedRect) -> (f64, f64) {
+    (r.x + r.width / 2.0, r.y + r.height / 2.0)
+}
+/// The highlight after a newer frame: on its display the single occurrence near the old place, else
+/// none; another display leaves the place unverified until its own display is seen again.
+fn follow(h: &Highlight, shape: &FrameShape) -> Option<Highlight> {
+    if h.display_key != shape.display_key {
+        return Some(Highlight {
+            needs_recheck: true,
+            ..h.clone()
+        });
+    }
+    let (x, y) = center(h.rect);
+    let near: Vec<NormalizedRect> = occurrences(&shape.lines, &h.anchor)
+        .into_iter()
+        .filter(|r| {
+            let (cx, cy) = center(*r);
+            (cx - x).hypot(cy - y) <= NEAR
+        })
+        .collect();
+    let [rect] = near[..] else {
+        return None;
+    };
+    Some(Highlight {
+        frame_id: shape.frame,
+        rect,
+        needs_recheck: false,
+        ..h.clone()
+    })
+}
+
+/// What one applied answer wrote, carried out of the commit transaction.
+pub(super) struct Applied {
+    added_cards: u32,
+    rejected_items: u32,
+    anchors: Vec<(ProposalId, ObservationAnchor)>,
+}
+/// Runs `f` inside a savepoint of the open transaction: an item-level refusal rolls back only that
+/// item's writes and is reported as `None`; storage errors still abort the whole transaction.
+fn item_savepoint<T>(
+    c: &Connection,
+    f: impl FnOnce() -> Result<T, StoreError>,
+) -> Result<Option<T>, StoreError> {
+    c.execute_batch("SAVEPOINT observed_item")?;
+    match f() {
+        Ok(value) => {
+            c.execute_batch("RELEASE observed_item")?;
+            Ok(Some(value))
+        }
+        Err(error) => {
+            c.execute_batch("ROLLBACK TO observed_item; RELEASE observed_item")?;
+            match error {
+                StoreError::InvalidInput
+                | StoreError::TextTooLong
+                | StoreError::ResourceLimit
+                | StoreError::NotFound
+                | StoreError::Deleted
+                | StoreError::StaleRevision
+                | StoreError::TaskCompleted => Ok(None),
+                other => Err(other),
+            }
+        }
+    }
+}
+fn screen_key(quote: &str) -> SourceKey {
+    SourceKey {
+        namespace: SCREEN_NAMESPACE.into(),
+        scope: QUOTE_SCOPE.into(),
+        object_id: codex_hex(&crate::plugin_package::sha256(line(quote).as_bytes())),
+    }
+}
+/// The checks that need no memory: quotes are exact substrings of their frame of this send, and
+/// the card and its anchor are well formed.
+fn check_item(r: &ObservationRequest, item: &ObservationItem) -> Result<(), StoreError> {
+    if item.quotes.is_empty() {
+        return Err(StoreError::InvalidInput);
+    }
+    let in_send = |frame: FrameId| r.frames.iter().find(|f| f.id == frame);
+    for q in &item.quotes {
+        text_field(&q.text)?;
+        let frame = in_send(q.frame).ok_or(StoreError::InvalidInput)?;
+        if q.text.trim().is_empty() || !frame.text.contains(&q.text) {
+            return Err(StoreError::InvalidInput);
+        }
+    }
+    if let ObservationTarget::New(title) = &item.task {
+        text_field(title)?;
+        if title.trim().is_empty() {
+            return Err(StoreError::InvalidInput);
+        }
+    }
+    if let Some(p) = &item.proposal {
+        text_field(&p.message)?;
+        if p.message.trim().is_empty()
+            || p.rationale.trim().is_empty()
+            || p.rationale.len() > 8192
+            || p.quotes.iter().any(|i| *i as usize >= item.quotes.len())
+        {
+            return Err(StoreError::InvalidInput);
+        }
+        if let Some(a) = &p.highlight
+            && (in_send(a.frame).is_none()
+                || line(&a.anchor).is_empty()
+                || a.anchor.len() > MAX_ANCHOR)
+        {
+            return Err(StoreError::InvalidInput);
+        }
+    }
+    Ok(())
+}
+/// The per-send counts of new tasks and written evidence rows.
+#[derive(Clone, Copy, Default)]
+struct Spent {
+    tasks: usize,
+    rows: usize,
+}
+/// One revision fence per task, checked once before any write: the listed tasks the answer names
+/// that are still at their listed revision, open and not «Не актуально». The answer's own writes
+/// follow in the same write transaction, so nothing else changes these tasks meanwhile.
+fn fenced(
+    c: &Connection,
+    r: &ObservationRequest,
+    answer: &ObservationAnswer,
+) -> Result<BTreeSet<i64>, StoreError> {
+    let mut fresh = BTreeSet::new();
+    for item in &answer.items {
+        let own = match item.task {
+            ObservationTarget::Existing(t) => Some(t),
+            ObservationTarget::New(_) => None,
+        };
+        for task in own.into_iter().chain(item.related.iter().copied()) {
+            let Some(listed) = r.allowed.iter().find(|t| t.task_id == task) else {
+                continue;
+            };
+            match plan::open_fence(c, task, listed.revision) {
+                Ok(t) if !t.initiative_suppressed => {
+                    fresh.insert(task.0);
+                }
+                Ok(_)
+                | Err(
+                    StoreError::StaleRevision
+                    | StoreError::Deleted
+                    | StoreError::NotFound
+                    | StoreError::TaskCompleted,
+                ) => {}
+                Err(e) => return Err(e),
+            }
+        }
+    }
+    Ok(fresh)
+}
+/// Writes one item's task, evidence and links and returns the counts spent with them; any refusal
+/// rejects the whole item.
+fn apply_item(
+    c: &Connection,
+    r: &ObservationRequest,
+    item: &ObservationItem,
+    fresh: &BTreeSet<i64>,
+    mut spent: Spent,
+    at_utc: i64,
+) -> Result<(TaskId, Spent), StoreError> {
+    check_item(r, item)?;
+    let allowed = |task: TaskId| {
+        if fresh.contains(&task.0) {
+            Ok(())
+        } else {
+            Err(StoreError::InvalidInput)
+        }
+    };
+    let mut related = Vec::new();
+    for task in &item.related {
+        if item.task == ObservationTarget::Existing(*task) || related.contains(task) {
+            return Err(StoreError::InvalidInput);
+        }
+        allowed(*task)?;
+        related.push(*task);
+    }
+    let mut owner = match &item.task {
+        ObservationTarget::Existing(task) => {
+            allowed(*task)?;
+            TaskVersion {
+                task_id: *task,
+                revision: read_task(c, *task)?.revision,
+            }
+        }
+        ObservationTarget::New(title) => {
+            if spent.tasks >= MAX_NEW_TASKS {
+                return Err(StoreError::ResourceLimit);
+            }
+            spent.tasks += 1;
+            let t = insert_task(c, title)?;
+            TaskVersion {
+                task_id: t.id,
+                revision: t.revision,
+            }
+        }
+    };
+    let mut grounded = false;
+    for q in &item.quotes {
+        let key = screen_key(&q.text);
+        // A quote already stored verbatim is not rewritten, so seeing it again keeps the task's
+        // revision and its cards fresh.
+        let stored: Option<String> = c
+            .query_row(
+                "SELECT e.text FROM source_bindings b JOIN evidence e ON e.id=b.evidence_id WHERE b.task_id=?1 AND b.digest=?2 AND b.namespace IS NOT NULL",
+                params![owner.task_id.0, key.digest()?.as_slice()],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if stored.as_deref() == Some(q.text.as_str()) {
+            grounded = true;
+            continue;
+        }
+        if spent.rows >= MAX_EVIDENCE_ROWS {
+            return Err(StoreError::ResourceLimit);
+        }
+        let at = r.frames.iter().find(|f| f.id == q.frame).map(|f| f.at_utc);
+        let evidence = SourceEvidence {
+            text: q.text.clone(),
+            observed_at_utc: at,
+            completeness: Completeness::Partial,
+            kind: AssertionKind::Assumption,
+        };
+        match write_source(c, owner, &key, None, &evidence, None)? {
+            IngestOutcome::Applied(_) => {
+                spent.rows += 1;
+                owner.revision = read_task(c, owner.task_id)?.revision;
+                grounded = true;
+            }
+            // The user's own version stays and still grounds the item.
+            IngestOutcome::UserProtected => grounded = true,
+            // Forgotten after a deletion (D41): this quote cannot bring the content back.
+            IngestOutcome::Forgotten => {}
+        }
+    }
+    if !grounded {
+        return Err(StoreError::Deleted);
+    }
+    for other in related {
+        add_link(c, owner.task_id, other, at_utc)?;
+    }
+    Ok((owner.task_id, spent))
+}
+/// Inserts an accepted link when the pair has no decision yet; a user's rejection (D42) or any
+/// earlier decision stays as it is.
+fn add_link(c: &Connection, a: TaskId, b: TaskId, at_utc: i64) -> Result<bool, StoreError> {
+    let (left, right) = if a.0 < b.0 { (a, b) } else { (b, a) };
+    let decided: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM decisions WHERE task_id=?1 AND other_task_id=?2)",
+        params![left.0, right.0],
+        |r| r.get(0),
+    )?;
+    if decided {
+        return Ok(false);
+    }
+    reserve(c, "decisions", 1)?;
+    c.execute(
+        "INSERT INTO decisions(task_id,other_task_id,accepted,action_at_utc) VALUES(?1,?2,1,?3)",
+        params![left.0, right.0, at_utc],
+    )?;
+    bump(c, left)?;
+    bump(c, right)?;
+    Ok(true)
+}
+/// Applies a current answer inside the transaction that settles its send. The set of writes is
+/// closed: tasks, assumption evidence, links and cards in Ambient's own memory. Items are applied
+/// first; cards follow once every evidence write of the send is done, so their workspace basis is
+/// the tasks' final revision.
+fn apply_answer(
+    c: &Connection,
+    attempt: AttemptId,
+    r: &ObservationRequest,
+    answer: &ObservationAnswer,
+    at_utc: i64,
+) -> Result<Applied, StoreError> {
+    let fresh = fenced(c, r, answer)?;
+    let mut spent = Spent::default();
+    let mut applied = Applied {
+        added_cards: 0,
+        rejected_items: 0,
+        anchors: Vec::new(),
+    };
+    let mut cards = Vec::new();
+    for item in &answer.items {
+        match item_savepoint(c, || apply_item(c, r, item, &fresh, spent, at_utc))? {
+            Some((task, left)) => {
+                spent = left;
+                cards.extend(item.proposal.as_ref().map(|p| (task, p)));
+            }
+            None => applied.rejected_items += 1,
+        }
+    }
+    for (task, p) in cards {
+        match item_savepoint(c, || {
+            proposals::insert_observed(c, task, &p.message, &p.rationale)
+        })? {
+            Some(id) => {
+                applied.added_cards += 1;
+                applied.anchors.extend(p.highlight.clone().map(|a| (id, a)));
+            }
+            None => applied.rejected_items += 1,
+        }
+    }
+    c.execute(
+        "UPDATE observation_sends SET added_cards=?1,rejected_items=?2 WHERE attempt_id=?3",
+        params![applied.added_cards, applied.rejected_items, attempt.0],
+    )?;
+    Ok(applied)
 }

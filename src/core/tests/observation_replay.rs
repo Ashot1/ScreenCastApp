@@ -31,8 +31,10 @@ struct Run {
     db: Database,
     store: Store,
     labels: HashMap<String, FrameId>,
+    tasks: HashMap<String, TaskId>,
     admission: Option<CheckAdmission>,
     dispatch: Option<CheckDispatch>,
+    highlight_version: u64,
 }
 
 fn time(t: i64) -> ObservationTime {
@@ -87,6 +89,37 @@ fn disposition(name: &str) -> FrameDisposition {
         other => panic!("unknown disposition {other}"),
     }
 }
+/// Word boxes follow the episode geometry: word `i` of `n` on line `row` starts at
+/// `0.02 + dx + i * w` with `w = 0.9 / max(n, 10)`, is `0.9 * w` wide, 0.03 high, at `0.9 - 0.04 * row`.
+fn word_rect(row: usize, index: usize, count: usize, dx: f64) -> NormalizedRect {
+    let width = 0.9 / count.max(10) as f64;
+    NormalizedRect {
+        x: 0.02 + dx + width * index as f64,
+        y: 0.9 - 0.04 * row as f64,
+        width: width * 0.9,
+        height: 0.03,
+    }
+}
+fn close(a: NormalizedRect, b: NormalizedRect) -> bool {
+    [a.x - b.x, a.y - b.y, a.width - b.width, a.height - b.height]
+        .iter()
+        .all(|d| d.abs() < 1e-9)
+}
+fn expected_rect(v: &Value) -> NormalizedRect {
+    let n = |k: &str| v[k].as_u64().unwrap_or_default() as usize;
+    let dx = v["dx"].as_f64().unwrap_or_default();
+    let (first, last) = (
+        word_rect(n("line"), n("first"), n("count"), dx),
+        word_rect(n("line"), n("last"), n("count"), dx),
+    );
+    if n("first") == n("last") {
+        return first;
+    }
+    NormalizedRect {
+        width: last.x + last.width - first.x,
+        ..first
+    }
+}
 fn frame_text(step: &Value) -> String {
     if let Some(repeat) = step.get("repeat") {
         let line = text(repeat, "line");
@@ -105,6 +138,156 @@ impl Run {
             .iter()
             .find(|(_, f)| f.get() == id)
             .map_or_else(|| format!("#{id}"), |(l, _)| l.clone())
+    }
+    fn task(&self, step: &Value, key: &str) -> Result<Task, Box<dyn std::error::Error>> {
+        let label = step[key].as_str().ok_or("task label")?;
+        Ok(self
+            .store
+            .task(*self.tasks.get(label).ok_or("known task")?)?)
+    }
+    fn frame_id(&self, label: &Value) -> Result<FrameId, StoreError> {
+        match label.as_str().and_then(|l| self.labels.get(l)) {
+            Some(id) => Ok(*id),
+            // A frame that does not exist in this episode.
+            None => FrameId::from_raw(1_000_000),
+        }
+    }
+    fn answer(&self, v: &Value) -> Result<ObservationAnswer, Box<dyn std::error::Error>> {
+        let mut items = Vec::new();
+        for i in v["items"].as_array().into_iter().flatten() {
+            let task = if let Some(label) = i["task"]["existing"].as_str() {
+                ObservationTarget::Existing(*self.tasks.get(label).ok_or("existing task")?)
+            } else {
+                ObservationTarget::New(text(&i["task"], "new"))
+            };
+            let related = i["related"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|l| {
+                    l.as_str()
+                        .and_then(|l| self.tasks.get(l).copied())
+                        .ok_or("related task")
+                })
+                .collect::<Result<_, _>>()?;
+            let quotes = i["quotes"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|q| {
+                    Ok(ObservationQuote {
+                        frame: self.frame_id(&q["frame"])?,
+                        text: text(q, "text"),
+                    })
+                })
+                .collect::<Result<_, StoreError>>()?;
+            let p = &i["proposal"];
+            let proposal = if p.is_object() {
+                let h = &p["highlight"];
+                Some(ObservationProposal {
+                    message: text(p, "message"),
+                    rationale: text(p, "rationale"),
+                    quotes: p["quotes"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .filter_map(|n| n.as_u64().map(|n| n as u32))
+                        .collect(),
+                    highlight: if h.is_object() {
+                        Some(ObservationAnchor {
+                            frame: self.frame_id(&h["frame"])?,
+                            anchor: text(h, "anchor"),
+                        })
+                    } else {
+                        None
+                    },
+                })
+            } else {
+                None
+            };
+            items.push(ObservationItem {
+                task,
+                related,
+                quotes,
+                proposal,
+            });
+        }
+        Ok(ObservationAnswer { items })
+    }
+    fn card(&self, message: &str) -> Result<Proposal, Box<dyn std::error::Error>> {
+        Ok(self
+            .store
+            .proposal_feed()?
+            .proposals
+            .into_iter()
+            .find(|p| p.message == message)
+            .ok_or("card")?)
+    }
+    fn version(&mut self, version: u64, expect: &Value, at: &str) {
+        assert_eq!(version, self.store.highlight().version, "{at}");
+        if let Some(changed) = expect.get("highlight_changed") {
+            assert_eq!(
+                &Value::Bool(version != self.highlight_version),
+                changed,
+                "{at}"
+            );
+        }
+        self.highlight_version = version;
+    }
+    fn memory(&self, expect: &Value, at: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let s = &self.store;
+        if let Some(want) = expect.get("tasks") {
+            let titles: Vec<Value> = s
+                .tasks(0, 50)?
+                .items
+                .into_iter()
+                .map(|t| Value::String(t.text))
+                .collect();
+            assert_eq!(&Value::Array(titles), want, "{at} tasks");
+        }
+        for (label, want) in expect["evidence"].as_object().into_iter().flatten() {
+            let id = *self.tasks.get(label).ok_or("evidence task")?;
+            let mut texts = Vec::new();
+            for e in s.evidence(id, 0, 50)?.items {
+                // Screen evidence is always an assumption from the reserved namespace.
+                if let Origin::External { key, .. } = &e.origin {
+                    assert_eq!(key.namespace, SCREEN_NAMESPACE, "{at}");
+                    assert_eq!(e.kind, AssertionKind::Assumption, "{at}");
+                }
+                texts.push(Value::String(e.text));
+            }
+            assert_eq!(&Value::Array(texts), want, "{at} evidence of {label}");
+        }
+        if let Some(want) = expect.get("cards") {
+            let cards: Vec<Value> = s
+                .proposal_feed()?
+                .proposals
+                .into_iter()
+                .map(|p| {
+                    assert!(p.citations.is_empty() && p.step_id.is_none(), "{at}");
+                    serde_json::json!({"message": p.message, "visible": p.visible, "stale": p.stale})
+                })
+                .collect();
+            assert_eq!(&Value::Array(cards), want, "{at} cards");
+        }
+        for (label, want) in expect["links"].as_object().into_iter().flatten() {
+            let id = *self.tasks.get(label).ok_or("link task")?;
+            let links: Vec<Value> = s
+                .links(id, 0, 50)?
+                .items
+                .into_iter()
+                .map(|l| {
+                    let other = self
+                        .tasks
+                        .iter()
+                        .find(|(_, t)| **t == l.other_task_id)
+                        .map_or_else(String::new, |(n, _)| n.clone());
+                    serde_json::json!([other, l.related])
+                })
+                .collect();
+            assert_eq!(&Value::Array(links), want, "{at} links of {label}");
+        }
+        Ok(())
     }
     fn step(&mut self, step: &Value, at: &str) -> Result<(), Box<dyn std::error::Error>> {
         let now = time(step["t"].as_i64().unwrap_or_default());
@@ -145,9 +328,26 @@ impl Run {
                     idle_seconds: step["idle"].as_u64().unwrap_or_default() as u32,
                     lines: body
                         .lines()
-                        .map(|l| ObservedLine {
-                            text: l.to_owned(),
-                            words: Vec::new(),
+                        .enumerate()
+                        .map(|(row, l)| {
+                            let words: Vec<&str> = if step["words"] == true {
+                                l.split_whitespace().collect()
+                            } else {
+                                Vec::new()
+                            };
+                            let row = row + step["row0"].as_u64().unwrap_or_default() as usize;
+                            let dx = step["dx"].as_f64().unwrap_or_default();
+                            ObservedLine {
+                                text: l.to_owned(),
+                                words: words
+                                    .iter()
+                                    .enumerate()
+                                    .map(|(i, w)| ObservedWord {
+                                        text: (*w).to_owned(),
+                                        rect: word_rect(row, i, words.len(), dx),
+                                    })
+                                    .collect(),
+                            }
                         })
                         .collect(),
                     image: if step["image"] == true {
@@ -163,7 +363,7 @@ impl Run {
                     "{at}"
                 );
                 assert_eq!(out.next, expected_next(&expect["next"]), "{at}");
-                assert_eq!(out.highlight_version, 0, "{at}");
+                self.version(out.highlight_version, expect, at);
                 if let (Some(label), Some(id)) = (step["label"].as_str(), out.frame) {
                     self.labels.insert(label.to_owned(), id);
                 }
@@ -239,9 +439,11 @@ impl Run {
                 if step["outcome"] != "confirmed" {
                     result.usage = None;
                 }
-                let answer = step["answer"]
-                    .is_object()
-                    .then(|| ObservationAnswer { items: Vec::new() });
+                let answer = if step["answer"].is_object() {
+                    Some(self.answer(&step["answer"])?)
+                } else {
+                    None
+                };
                 let finish = self
                     .store
                     .finish_observation(dispatch.id(), result, answer, now)?;
@@ -252,7 +454,13 @@ impl Run {
                     "{at}"
                 );
                 assert_eq!(finish.applied, expect["applied"] == true, "{at}");
-                assert_eq!((finish.added_cards, finish.rejected_items), (0, 0), "{at}");
+                let count = |k: &str| expect[k].as_u64().unwrap_or_default() as u32;
+                assert_eq!(
+                    (finish.added_cards, finish.rejected_items),
+                    (count("added_cards"), count("rejected_items")),
+                    "{at}"
+                );
+                self.version(finish.highlight_version, expect, at);
             }
             "journal" => {
                 let j = self.store.observation_journal(now.utc)?;
@@ -278,6 +486,14 @@ impl Run {
                     if let Some(o) = last["outcome"].as_str() {
                         assert_eq!(send.outcome, outcome(o) as u32, "{at}");
                     }
+                    for (key, actual) in [
+                        ("added_cards", send.added_cards),
+                        ("rejected_items", send.rejected_items),
+                    ] {
+                        if let Some(v) = last.get(key) {
+                            assert_eq!(Some(u64::from(actual)), v.as_u64(), "{at} {key}");
+                        }
+                    }
                     if let Some(range) = last["frames"].as_array() {
                         let got = [
                             self.label(send.first_frame.get()),
@@ -292,11 +508,96 @@ impl Run {
                 }
             }
             "delete_log" => self.store.delete_observation_log()?,
+            "task" => {
+                let t = self.store.create_task(&text(step, "title"))?;
+                self.tasks.insert(text(step, "label"), t.id);
+            }
+            "name_task" => {
+                let title = text(step, "title");
+                let t = self
+                    .store
+                    .tasks(0, 50)?
+                    .items
+                    .into_iter()
+                    .find(|t| t.text == title)
+                    .ok_or("titled task")?;
+                self.tasks.insert(text(step, "label"), t.id);
+            }
+            "edit_task" => {
+                let t = self.task(step, "task")?;
+                self.store
+                    .edit_task(t.id, t.revision, &text(step, "title"))?;
+            }
+            "suppress" => {
+                let t = self.task(step, "task")?;
+                self.store
+                    .set_initiative_suppressed(t.id, t.revision, true)?;
+            }
+            "delete_task" => {
+                let t = self.task(step, "task")?;
+                let others: Vec<TaskVersion> = self
+                    .store
+                    .deletion_impact(t.id, None, 0, 50)?
+                    .items
+                    .into_iter()
+                    .map(|o| TaskVersion {
+                        task_id: o.id,
+                        revision: o.revision,
+                    })
+                    .collect();
+                self.store.delete_task(t.id, t.revision, &others)?;
+            }
+            "link" => {
+                let (a, b) = (self.task(step, "a")?, self.task(step, "b")?);
+                self.store.set_link(
+                    a.id,
+                    a.revision,
+                    b.id,
+                    b.revision,
+                    step["related"] == true,
+                    now.utc,
+                )?;
+            }
+            "hide" => {
+                let card = self.card(&text(step, "message"))?;
+                self.store.set_proposal_visibility(card.target(), false)?;
+                let version = self.store.highlight().version;
+                self.version(version, expect, at);
+            }
+            "copy" => {
+                let card = self.card(&text(step, "message"))?;
+                assert_eq!(
+                    self.store.copy_proposal(card.target())?,
+                    card.message,
+                    "{at}"
+                );
+            }
+            "memory" => self.memory(expect, at)?,
+            "highlight" => {
+                let state = self.store.highlight();
+                self.version(state.version, expect, at);
+                let h = state.highlight;
+                assert_eq!(h.is_some(), expect["present"] == true, "{at}: {h:?}");
+                if let Some(h) = h {
+                    if let Some(label) = expect["frame"].as_str() {
+                        assert_eq!(self.label(h.frame_id.get()), label, "{at}");
+                    }
+                    if let Some(r) = expect.get("rect") {
+                        assert!(close(h.rect, expected_rect(r)), "{at}: {:?}", h.rect);
+                    }
+                    assert_eq!(h.needs_recheck, expect["needs_recheck"] == true, "{at}");
+                    if let Some(m) = expect["card"].as_str() {
+                        assert_eq!(self.card(m)?.id, h.proposal_id, "{at}");
+                    }
+                }
+            }
             "restart" => {
                 let path = self.db.0.clone();
                 self.store = Store::open(&path)?;
                 self.admission = None;
                 self.dispatch = None;
+                // The highlight is process memory; a new process starts at version 0.
+                self.highlight_version = 0;
             }
             other => panic!("{at}: unknown op {other}"),
         }
@@ -329,7 +630,7 @@ fn episodes() -> std::io::Result<Vec<PathBuf>> {
 #[test]
 fn observation_episodes_replay_with_recorded_metadata() -> Result<(), Box<dyn std::error::Error>> {
     let paths = episodes()?;
-    assert_eq!(paths.len(), 3, "episodes 2, 3 and 6 of ADR-025");
+    assert_eq!(paths.len(), 7, "episodes 1-7 of ADR-025");
     for path in paths {
         let episode: Value = serde_json::from_str(&std::fs::read_to_string(&path)?)?;
         let name = path
@@ -347,8 +648,10 @@ fn observation_episodes_replay_with_recorded_metadata() -> Result<(), Box<dyn st
             db,
             store,
             labels: HashMap::new(),
+            tasks: HashMap::new(),
             admission: None,
             dispatch: None,
+            highlight_version: 0,
         };
         let mut last = i64::MIN;
         for (i, step) in episode["steps"]

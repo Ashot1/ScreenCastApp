@@ -1,0 +1,257 @@
+{
+ "format": 1,
+ "source": "synthetic: hand-written for ADR-025 ticket 27C; no screen was captured and no model was called (answers are hand-written)",
+ "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
+ "schema_version": 17,
+ "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
+ "geometry": {
+  "displays": [
+   {
+    "key": "display-A",
+    "pixels": [
+     2560,
+     1600
+    ],
+    "scale": 2
+   },
+   {
+    "key": "display-B",
+    "pixels": [
+     1920,
+     1080
+    ],
+    "scale": 1
+   }
+  ],
+  "rects": "Vision normalized, origin bottom-left. Frames with \"words\": true get one box per whitespace word: word i of n on line r (r counted from \"row0\") starts at x = 0.02 + dx + i * w with w = 0.9 / max(n, 10), is 0.9 * w wide and 0.03 high, at y = 0.9 - 0.04 * r. A moved window is a change of dx or row0."
+ },
+ "name": "typo",
+ "adr_episode": 1,
+ "summary": "a typo becomes a new task with a verbatim screen assumption, a card without structured citations and a highlight on the word; a moved window with the same text moves the highlight; the corrected text removes it; the card survives a restart (workspace validation at open)",
+ "steps": [
+  {
+   "t": 0,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 0,
+   "op": "session",
+   "epoch": 1,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 0,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Re: Quarterly report",
+   "idle": 0,
+   "text": "Dear team,\nteh report is ready for review\nBest, Sam",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F1"
+  },
+  {
+   "t": 11,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 11,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F1"
+    ]
+   }
+  },
+  {
+   "t": 12,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": [
+     {
+      "task": {
+       "new": "Quarterly report"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F1",
+        "text": "teh report is ready for review"
+       }
+      ],
+      "proposal": {
+       "message": "Typo: “teh” should be “the”.",
+       "rationale": "Seen in Mail: the reply to the team has a typo.",
+       "quotes": [
+        0
+       ],
+       "highlight": {
+        "frame": "F1",
+        "anchor": "teh"
+       }
+      }
+     }
+    ]
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true,
+    "added_cards": 1,
+    "rejected_items": 0,
+    "highlight_changed": true
+   }
+  },
+  {
+   "t": 12,
+   "op": "name_task",
+   "title": "Quarterly report",
+   "label": "Q"
+  },
+  {
+   "t": 12,
+   "op": "memory",
+   "expect": {
+    "tasks": [
+     "Quarterly report"
+    ],
+    "evidence": {
+     "Q": [
+      "teh report is ready for review"
+     ]
+    },
+    "cards": [
+     {
+      "message": "Typo: “teh” should be “the”.",
+      "visible": true,
+      "stale": false
+     }
+    ]
+   }
+  },
+  {
+   "t": 12,
+   "op": "highlight",
+   "expect": {
+    "present": true,
+    "frame": "F1",
+    "card": "Typo: “teh” should be “the”.",
+    "needs_recheck": false,
+    "rect": {
+     "line": 1,
+     "first": 0,
+     "last": 0,
+     "count": 6,
+     "dx": 0
+    }
+   }
+  },
+  {
+   "t": 12,
+   "op": "journal",
+   "expect": {
+    "last": {
+     "added_cards": 1,
+     "rejected_items": 0
+    }
+   }
+  },
+  {
+   "t": 20,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Re: Quarterly report",
+   "idle": 0,
+   "text": "Dear team,\nteh report is ready for review\nBest, Sam",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "duplicate",
+    "next": 5,
+    "highlight_changed": true,
+    "note": "the same text in a moved window"
+   },
+   "dx": 0.04
+  },
+  {
+   "t": 20,
+   "op": "highlight",
+   "expect": {
+    "present": true,
+    "frame": "F1",
+    "rect": {
+     "line": 1,
+     "first": 0,
+     "last": 0,
+     "count": 6,
+     "dx": 0.04
+    }
+   }
+  },
+  {
+   "t": 25,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Re: Quarterly report",
+   "idle": 0,
+   "text": "Dear team,\nthe report is ready for review\nBest, Sam",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5,
+    "highlight_changed": true,
+    "note": "the corrected text removes the highlight"
+   },
+   "dx": 0.04,
+   "label": "F2"
+  },
+  {
+   "t": 25,
+   "op": "highlight",
+   "expect": {
+    "present": false
+   }
+  },
+  {
+   "t": 26,
+   "op": "copy",
+   "message": "Typo: “teh” should be “the”."
+  },
+  {
+   "t": 30,
+   "op": "restart"
+  },
+  {
+   "t": 30,
+   "op": "memory",
+   "expect": {
+    "tasks": [
+     "Quarterly report"
+    ],
+    "cards": [
+     {
+      "message": "Typo: “teh” should be “the”.",
+      "visible": true,
+      "stale": false
+     }
+    ]
+   }
+  }
+ ]
+}

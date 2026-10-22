@@ -1,0 +1,481 @@
+{
+ "format": 1,
+ "source": "synthetic: hand-written for ADR-025 ticket 27C; no screen was captured and no model was called (answers are hand-written)",
+ "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
+ "schema_version": 17,
+ "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
+ "geometry": {
+  "displays": [
+   {
+    "key": "display-A",
+    "pixels": [
+     2560,
+     1600
+    ],
+    "scale": 2
+   },
+   {
+    "key": "display-B",
+    "pixels": [
+     1920,
+     1080
+    ],
+    "scale": 1
+   }
+  ],
+  "rects": "Vision normalized, origin bottom-left. Frames with \"words\": true get one box per whitespace word: word i of n on line r (r counted from \"row0\") starts at x = 0.02 + dx + i * w with w = 0.9 / max(n, 10), is 0.9 * w wide and 0.03 high, at y = 0.9 - 0.04 * r. A moved window is a change of dx or row0."
+ },
+ "name": "suppression",
+ "adr_episode": 5,
+ "summary": "a deleted task is not revived by its quotes (D41); «Не актуально» blocks items and hides cards; a repeated card is dropped; a link the user rejected is not overwritten (D42)",
+ "steps": [
+  {
+   "t": 0,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 0,
+   "op": "session",
+   "epoch": 1,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 0,
+   "op": "task",
+   "label": "N",
+   "title": "Old newsletter"
+  },
+  {
+   "t": 0,
+   "op": "task",
+   "label": "D",
+   "title": "Vendor contract"
+  },
+  {
+   "t": 0,
+   "op": "task",
+   "label": "A",
+   "title": "Launch"
+  },
+  {
+   "t": 0,
+   "op": "task",
+   "label": "B",
+   "title": "Press kit"
+  },
+  {
+   "t": 0,
+   "op": "suppress",
+   "task": "N",
+   "note": "«Не актуально»"
+  },
+  {
+   "t": 0,
+   "op": "link",
+   "a": "A",
+   "b": "B",
+   "related": false,
+   "note": "the user rejected this link (D42)"
+  },
+  {
+   "t": 0,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Vendor contract renewal due\nNewsletter issue 12\nLaunch press kit draft",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F1"
+  },
+  {
+   "t": 11,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 11,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F1"
+    ]
+   }
+  },
+  {
+   "t": 12,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": [
+     {
+      "task": {
+       "existing": "N"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F1",
+        "text": "Newsletter issue 12"
+       }
+      ],
+      "proposal": {
+       "message": "Read issue 12",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     },
+     {
+      "task": {
+       "existing": "D"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F1",
+        "text": "Vendor contract renewal due"
+       }
+      ],
+      "proposal": {
+       "message": "Renew the vendor contract",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     },
+     {
+      "task": {
+       "existing": "A"
+      },
+      "related": [
+       "B"
+      ],
+      "quotes": [
+       {
+        "frame": "F1",
+        "text": "Launch press kit draft"
+       }
+      ],
+      "proposal": {
+       "message": "Send the press kit",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     }
+    ]
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true,
+    "added_cards": 2,
+    "rejected_items": 1
+   }
+  },
+  {
+   "t": 12,
+   "op": "memory",
+   "expect": {
+    "evidence": {
+     "N": [],
+     "D": [
+      "Vendor contract renewal due"
+     ],
+     "A": [
+      "Launch press kit draft"
+     ]
+    },
+    "cards": [
+     {
+      "message": "Renew the vendor contract",
+      "visible": true,
+      "stale": false
+     },
+     {
+      "message": "Send the press kit",
+      "visible": true,
+      "stale": false
+     }
+    ],
+    "links": {
+     "A": [
+      [
+       "B",
+       false
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "t": 13,
+   "op": "delete_task",
+   "task": "D"
+  },
+  {
+   "t": 13,
+   "op": "memory",
+   "expect": {
+    "cards": [
+     {
+      "message": "Send the press kit",
+      "visible": true,
+      "stale": false
+     }
+    ]
+   }
+  },
+  {
+   "t": 20,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox 2",
+   "idle": 0,
+   "text": "Vendor contract renewal due\nNewsletter issue 12\nLaunch press kit draft",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F2"
+  },
+  {
+   "t": 31,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 31,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F2"
+    ]
+   }
+  },
+  {
+   "t": 32,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": [
+     {
+      "task": {
+       "new": "Vendor contract"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F2",
+        "text": "Vendor contract renewal due"
+       }
+      ],
+      "proposal": {
+       "message": "Renew the vendor contract",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     },
+     {
+      "task": {
+       "existing": "A"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F2",
+        "text": "Launch press kit draft"
+       }
+      ],
+      "proposal": {
+       "message": "Send the press kit",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     },
+     {
+      "task": {
+       "existing": "A"
+      },
+      "related": [
+       "B"
+      ],
+      "quotes": [
+       {
+        "frame": "F2",
+        "text": "Launch press kit draft"
+       }
+      ],
+      "proposal": null
+     }
+    ]
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true,
+    "added_cards": 0,
+    "rejected_items": 2
+   }
+  },
+  {
+   "t": 32,
+   "op": "memory",
+   "expect": {
+    "tasks": [
+     "Old newsletter",
+     "Launch",
+     "Press kit"
+    ],
+    "evidence": {
+     "A": [
+      "Launch press kit draft"
+     ]
+    },
+    "cards": [
+     {
+      "message": "Send the press kit",
+      "visible": true,
+      "stale": false
+     }
+    ],
+    "links": {
+     "A": [
+      [
+       "B",
+       false
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "t": 33,
+   "op": "suppress",
+   "task": "A",
+   "note": "«Не актуально» hides its cards"
+  },
+  {
+   "t": 33,
+   "op": "memory",
+   "expect": {
+    "cards": [
+     {
+      "message": "Send the press kit",
+      "visible": false,
+      "stale": true
+     }
+    ]
+   }
+  },
+  {
+   "t": 40,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox 3",
+   "idle": 0,
+   "text": "Launch press kit final",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F3"
+  },
+  {
+   "t": 51,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 51,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F3"
+    ]
+   }
+  },
+  {
+   "t": 52,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": [
+     {
+      "task": {
+       "existing": "A"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F3",
+        "text": "Launch press kit final"
+       }
+      ],
+      "proposal": {
+       "message": "Publish the press kit",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     }
+    ]
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true,
+    "added_cards": 0,
+    "rejected_items": 1
+   }
+  },
+  {
+   "t": 52,
+   "op": "memory",
+   "expect": {
+    "cards": [
+     {
+      "message": "Send the press kit",
+      "visible": false,
+      "stale": true
+     }
+    ],
+    "evidence": {
+     "A": [
+      "Launch press kit draft"
+     ]
+    }
+   }
+  }
+ ]
+}

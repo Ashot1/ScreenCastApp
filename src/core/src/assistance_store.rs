@@ -325,6 +325,8 @@ impl Store {
         let (s, answer, grounds) = validated?;
         self.require_assistance()?;
         let version = proposals::publish(&mut self.connection, &s, &answer, &grounds, tools)?;
+        // Publication replaces the task's card set outside `change`, possibly the highlighted card.
+        self.invalidate_stale_highlight();
         Ok(Some(version))
     }
 }

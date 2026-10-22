@@ -171,8 +171,19 @@ impl Store {
     pub fn finish_check(
         &mut self,
         id: AttemptId,
-        mut result: ModelCheckResult,
+        result: ModelCheckResult,
     ) -> Result<ModelCheckResult, StoreError> {
+        self.finish_attempt(id, result, |_, _| Ok(()))
+            .map(|(result, _)| result)
+    }
+    /// Completes the attempt row; `apply` writes in the same transaction with the final result, so
+    /// an observation answer and its send journal commit together with the accounting.
+    pub(super) fn finish_attempt<T>(
+        &mut self,
+        id: AttemptId,
+        mut result: ModelCheckResult,
+        apply: impl FnOnce(&Connection, &ModelCheckResult) -> Result<T, StoreError>,
+    ) -> Result<(ModelCheckResult, T), StoreError> {
         if result.outcome == CheckOutcome::Pending {
             return Err(StoreError::InvalidInput);
         }
@@ -205,7 +216,7 @@ impl Store {
             self.high_capability = None;
             self.prepared = None;
         }
-        let commit=self.change(|c| {
+        let commit = self.change(|c| {
    // BEGIN may wait for another writer; observe cancellation again after acquiring the write transaction.
    if cancelled.load(Ordering::Acquire) {result.outcome=CheckOutcome::Cancelled;}
    let changed=c.execute("UPDATE connection_checks SET stage=2,outcome=?1,actual_model=?2,actual_effort=?3,actual_tier=?4,input_tokens=?5,output_tokens=?6,total_tokens=?7 WHERE id=?8 AND stage=1",params![result.outcome as u32,result.actual.model as u32,result.actual.effort as u32,result.actual.tier as u32,result.usage.map(|v|v.input() as i64),result.usage.map(|v|v.output() as i64),result.usage.map(|v|v.total() as i64),id.0])?;
@@ -213,17 +224,21 @@ impl Store {
    if let Some(request) = &observation {
        observation::settle_send(c, id, &result, request)?;
    }
+   let applied=apply(c,&result)?;
    // Validate checked aggregates before committing; overflow leaves the durable unknown intact.
-   summary(c)?; Ok(())
+   summary(c)?; Ok(applied)
   });
-        if let Err(error) = commit {
-            if purpose != ModelPurpose::Observation && epoch == self.model_session.epoch {
-                self.cancel_all_reads();
-                self.high_capability = None;
-                self.prepared = None;
+        let applied = match commit {
+            Ok(applied) => applied,
+            Err(error) => {
+                if purpose != ModelPurpose::Observation && epoch == self.model_session.epoch {
+                    self.cancel_all_reads();
+                    self.high_capability = None;
+                    self.prepared = None;
+                }
+                return Err(error);
             }
-            return Err(error);
-        }
+        };
         // An observation result stays as committed, so the caller and the send journal agree.
         if purpose != ModelPurpose::Observation && cancelled.load(Ordering::Acquire) {
             result.outcome = CheckOutcome::Cancelled;
@@ -240,7 +255,7 @@ impl Store {
         {
             self.high_capability = Some((epoch, cancelled));
         }
-        Ok(result)
+        Ok((result, applied))
     }
     pub fn check_summary(&self) -> Result<CheckSummary, StoreError> {
         summary(&self.connection)

@@ -336,6 +336,82 @@ fn clear(c: &Connection, task: TaskId) -> Result<(), StoreError> {
     )?;
     Ok(())
 }
+/// Deletes the oldest hidden card of `task` (or of any task), and its workspace when that was the
+/// workspace's last card; false when none is hidden.
+fn evict_hidden(c: &Connection, task: Option<TaskId>) -> Result<bool, StoreError> {
+    let oldest: Option<(i64, i64)> = c
+        .query_row(
+            "SELECT id,task_id FROM assistant_proposals WHERE visible=0 AND (?1 IS NULL OR task_id=?1) ORDER BY id LIMIT 1",
+            [task.map(|t| t.0)],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .optional()?;
+    let Some((id, owner)) = oldest else {
+        return Ok(false);
+    };
+    c.execute("DELETE FROM assistant_proposals WHERE id=?1", [id])?;
+    let left: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM assistant_proposals WHERE task_id=?1)",
+        [owner],
+        |r| r.get(0),
+    )?;
+    if left {
+        bump_workspace(c, TaskId(owner))?;
+    } else {
+        clear(c, TaskId(owner))?;
+    }
+    Ok(true)
+}
+/// Adds one observed card next to the task's existing ones (`publish` replaces the whole set).
+/// Freshness is per workspace: a basis older than the task's current revision clears the stale
+/// set and starts a new workspace, so stale cards never return. Observed cards cite nothing
+/// structurally and have no step; their grounds are the task's screen evidence. The caller has
+/// fenced the task (open, not «Не актуально»). Rejections are errors, so the caller's savepoint
+/// also undoes the stale cleanup.
+pub(super) fn insert_observed(
+    c: &Connection,
+    task: TaskId,
+    message: &str,
+    rationale: &str,
+) -> Result<ProposalId, StoreError> {
+    let revision = read_task(c, task)?.revision;
+    if workspace(c, task)?.is_some_and(|w| w.task.revision != revision) {
+        clear(c, task)?;
+    }
+    let repeated: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM assistant_proposals WHERE task_id=?1 AND message=?2)",
+        params![task.0, message],
+        |r| r.get(0),
+    )?;
+    if repeated {
+        return Err(StoreError::InvalidInput);
+    }
+    let cards: i64 = c.query_row(
+        "SELECT count(*) FROM assistant_proposals WHERE task_id=?1",
+        [task.0],
+        |r| r.get(0),
+    )?;
+    // The oldest hidden card makes room; a full visible set rejects the new card.
+    if cards as usize >= MAX_PROPOSALS_PER_TASK && !evict_hidden(c, Some(task))? {
+        return Err(StoreError::ResourceLimit);
+    }
+    let all: i64 = c.query_row("SELECT count(*) FROM assistant_proposals", [], |r| r.get(0))?;
+    if all as usize >= MAX_PROPOSALS && !evict_hidden(c, None)? {
+        return Err(StoreError::ResourceLimit);
+    }
+    c.execute(
+        "INSERT INTO assistant_workspaces VALUES(?1,?2,'[]','[]') ON CONFLICT(task_id) DO NOTHING",
+        params![task.0, revision as i64],
+    )?;
+    c.execute(
+        "INSERT INTO assistant_proposals(task_id,content_revision,kind,message,rationale,citations,step_id,visible) VALUES(?1,1,?2,?3,?4,'[]',NULL,1)",
+        params![task.0, AssistanceKind::Suggestion as u32, message, rationale],
+    )?;
+    let id = ProposalId(c.last_insert_rowid());
+    bump_workspace(c, task)?;
+    byte_room(c, 0)?;
+    Ok(id)
+}
 /// Erasure joins the original mutation's write transaction, including uncited selected evidence.
 pub(super) fn clear_revoked(c: &Connection) -> Result<(), StoreError> {
     let mut q = c.prepare("SELECT task_id FROM assistant_workspaces ORDER BY task_id LIMIT 129")?;

@@ -1,6 +1,6 @@
 {
  "format": 1,
- "source": "synthetic: hand-written for ADR-025 ticket 27B; no screen was captured",
+ "source": "synthetic: hand-written for ADR-025 tickets 27B and 27C; no screen was captured",
  "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
  "schema_version": 17,
  "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
@@ -23,11 +23,11 @@
     "scale": 1
    }
   ],
-  "rects": "Vision normalized, origin bottom-left; word rects are not needed before 27C and are omitted"
+  "rects": "Vision normalized, origin bottom-left. Frames with \"words\": true get one box per whitespace word: word i of n on line r (r counted from \"row0\") starts at x = 0.02 + dx + i * w with w = 0.9 / max(n, 10), is 0.9 * w wide and 0.03 high, at y = 0.9 - 0.04 * r. A moved window is a change of dx or row0."
  },
  "name": "lifecycle",
  "adr_episode": 6,
- "summary": "pause and stop clear the ring; a late answer after stop or a session change is discarded; restart resumes without a manual check (D103); the log outlives stop for 24 hours (D101); an observation failure keeps manual assistance (card parts belong to 27C)",
+ "summary": "pause and stop clear the ring and the highlight; a late answer after stop or a session change is discarded and adds no card; restart resumes without a manual check (D103); the log outlives stop for 24 hours (D101); an observation failure keeps manual assistance; a shown card is still copied after stop",
  "steps": [
   {
    "t": 0,
@@ -66,7 +66,8 @@
     "disposition": "recorded",
     "next": 5
    },
-   "label": "L1"
+   "label": "L1",
+   "words": true
   },
   {
    "t": 5,
@@ -119,11 +120,51 @@
    "op": "finish",
    "outcome": "confirmed",
    "answer": {
-    "items": []
+    "items": [
+     {
+      "task": {
+       "new": "Lifecycle planning"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "L1",
+        "text": "Lifecycle notes L1:"
+       }
+      ],
+      "proposal": {
+       "message": "Plan the lifecycle review",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": {
+        "frame": "L1",
+        "anchor": "amber-l1"
+       }
+      }
+     }
+    ]
    },
    "expect": {
     "outcome": "confirmed",
-    "applied": true
+    "applied": true,
+    "added_cards": 1,
+    "highlight_changed": false
+   },
+   "note": "the pause cleared the ring, so the anchor of L1 cannot be found: a card without a highlight"
+  },
+  {
+   "t": 13,
+   "op": "name_task",
+   "title": "Lifecycle planning",
+   "label": "P"
+  },
+  {
+   "t": 13,
+   "op": "highlight",
+   "expect": {
+    "present": false
    }
   },
   {
@@ -169,13 +210,51 @@
    "op": "finish",
    "outcome": "confirmed",
    "answer": {
-    "items": []
+    "items": [
+     {
+      "task": {
+       "new": "Late task"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "L2",
+        "text": "Lifecycle notes L2:"
+       }
+      ],
+      "proposal": {
+       "message": "Too late",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     }
+    ]
    },
    "expect": {
     "outcome": "cancelled",
-    "applied": false
+    "applied": false,
+    "added_cards": 0
    },
    "note": "a late answer after stop is discarded"
+  },
+  {
+   "t": 40,
+   "op": "memory",
+   "expect": {
+    "tasks": [
+     "Lifecycle planning"
+    ],
+    "cards": [
+     {
+      "message": "Plan the lifecycle review",
+      "visible": true,
+      "stale": false
+     }
+    ]
+   }
   },
   {
    "t": 41,
@@ -317,7 +396,8 @@
     "disposition": "recorded",
     "next": 5
    },
-   "label": "L4"
+   "label": "L4",
+   "words": true
   },
   {
    "t": 422,
@@ -341,12 +421,72 @@
    "op": "finish",
    "outcome": "confirmed",
    "answer": {
-    "items": []
+    "items": [
+     {
+      "task": {
+       "existing": "P"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "L4",
+        "text": "Lifecycle notes L4:"
+       }
+      ],
+      "proposal": {
+       "message": "Review the L4 notes",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": {
+        "frame": "L4",
+        "anchor": "amber-l4"
+       }
+      }
+     }
+    ]
    },
    "expect": {
     "outcome": "confirmed",
-    "applied": true
+    "applied": true,
+    "added_cards": 1,
+    "highlight_changed": true
    }
+  },
+  {
+   "t": 423,
+   "op": "highlight",
+   "expect": {
+    "present": true,
+    "frame": "L4",
+    "card": "Review the L4 notes",
+    "rect": {
+     "line": 1,
+     "first": 0,
+     "last": 0,
+     "count": 12,
+     "dx": 0
+    }
+   }
+  },
+  {
+   "t": 430,
+   "op": "pause",
+   "paused": true
+  },
+  {
+   "t": 430,
+   "op": "highlight",
+   "expect": {
+    "present": false,
+    "highlight_changed": true
+   }
+  },
+  {
+   "t": 431,
+   "op": "pause",
+   "paused": false
   },
   {
    "t": 500,
@@ -390,7 +530,28 @@
    "op": "finish",
    "outcome": "confirmed",
    "answer": {
-    "items": []
+    "items": [
+     {
+      "task": {
+       "existing": "P"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "L5",
+        "text": "Lifecycle notes L5:"
+       }
+      ],
+      "proposal": {
+       "message": "Too late again",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": null
+      }
+     }
+    ]
    },
    "expect": {
     "outcome": "cancelled",
@@ -404,6 +565,26 @@
    "started": false,
    "per_hour_limit": 20,
    "credit_acknowledged": false
+  },
+  {
+   "t": 600,
+   "op": "copy",
+   "message": "Review the L4 notes",
+   "note": "card actions need only a valid session and no pause"
+  },
+  {
+   "t": 600,
+   "op": "memory",
+   "expect": {
+    "cards": [
+     {
+      "message": "Review the L4 notes",
+      "visible": true,
+      "stale": false
+     }
+    ]
+   },
+   "note": "the L4 evidence made the old workspace stale; its card left with it"
   },
   {
    "t": 601,

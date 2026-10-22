@@ -114,6 +114,7 @@ impl Store {
         let result = operation(&tx)?;
         proposals::clear_revoked(&tx)?;
         tx.commit()?;
+        self.invalidate_stale_highlight();
         self.invalidate_stale_assistance();
         self.invalidate_stale_source();
         self.invalidate_stale_codex();
@@ -146,21 +147,7 @@ impl Store {
         Ok(())
     }
     pub fn create_task(&mut self, text: &str) -> Result<Task, StoreError> {
-        text_field(text)?;
-        self.change(|c| {
-            reserve(c, "tasks", 1)?;
-            let live: i64 = c.query_row(
-                "SELECT count(*) FROM tasks WHERE text IS NOT NULL",
-                [],
-                |r| r.get(0),
-            )?;
-            if live >= MAX_LIVE_TASKS {
-                return Err(StoreError::ResourceLimit);
-            }
-            byte_room(c, text.len() as i64)?;
-            c.execute("INSERT INTO tasks(revision,text) VALUES(1,?1)", [text])?;
-            read_task(c, TaskId(c.last_insert_rowid()))
-        })
+        self.change(|c| insert_task(c, text))
     }
     pub fn task(&self, id: TaskId) -> Result<Task, StoreError> {
         read_task(&self.connection, id)
@@ -534,6 +521,21 @@ fn pause(c: &Connection) -> Result<bool, StoreError> {
     }
     Ok(paused == 1)
 }
+fn insert_task(c: &Connection, text: &str) -> Result<Task, StoreError> {
+    text_field(text)?;
+    reserve(c, "tasks", 1)?;
+    let live: i64 = c.query_row(
+        "SELECT count(*) FROM tasks WHERE text IS NOT NULL",
+        [],
+        |r| r.get(0),
+    )?;
+    if live >= MAX_LIVE_TASKS {
+        return Err(StoreError::ResourceLimit);
+    }
+    byte_room(c, text.len() as i64)?;
+    c.execute("INSERT INTO tasks(revision,text) VALUES(1,?1)", [text])?;
+    read_task(c, TaskId(c.last_insert_rowid()))
+}
 fn read_task(c: &Connection, id: TaskId) -> Result<Task, StoreError> {
     if id.0 <= 0 {
         return Err(StoreError::InvalidInput);
@@ -667,10 +669,12 @@ fn owned_evidence(c: &Connection, id: EvidenceId, task: TaskId) -> Result<Eviden
         Ok(e)
     }
 }
-/// Namespaces written only by their own typed paths (Codex, integrations, plugin results).
+/// Namespaces written only by their own typed paths (Codex, integrations, plugin results, screen
+/// quotes of the observation answer).
 fn reserved_namespace(namespace: &str) -> bool {
     namespace == CODEX_NAMESPACE
         || namespace == PLUGIN_NAMESPACE
+        || namespace == SCREEN_NAMESPACE
         || IntegrationKind::from_namespace(namespace).is_some()
 }
 fn reserve(c: &Connection, table: &str, count: i64) -> Result<(), StoreError> {

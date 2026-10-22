@@ -6,7 +6,7 @@ Spec: [ADR-025](../../../decisions/0025-background-observation.md). Decisions: [
 
 **Blocked by:** приёмка 27C (общие мост и ядро, D102)
 
-**Status:** blocked
+**Status:** ready — 27C принята; исполнитель запускается оркестратором (D102)
 
 - [ ] HTTP-тест тела с изображением через `ambient_model_test_dispatch`.
 - [ ] Предел размера тела запроса; заголовок документирует владение буферами.

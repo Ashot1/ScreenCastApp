@@ -1,4 +1,4 @@
-use crate::{CheckAdmission, ModelCheckResult, StoreError, TaskId, TaskVersion};
+use crate::{CheckAdmission, ModelCheckResult, ProposalId, StoreError, TaskId, TaskVersion};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -11,6 +11,9 @@ pub const MAX_REQUEST_FRAMES: usize = 64 * 1024;
 /// The whole serialized context; frames, the task list and task details are bounded below it.
 pub const MAX_OBSERVATION_CONTEXT: usize = 256 * 1024;
 pub const DEFAULT_PER_HOUR_LIMIT: u32 = 20;
+/// Source namespace of verbatim screen quotes. Only the observation answer writes it; the public
+/// source paths reject it.
+pub const SCREEN_NAMESPACE: &str = "screen";
 
 /// Both clocks at one instant: wall time is persisted history (frames, attempt rows, the rolling
 /// hour), monotonic time drives in-session deadlines (settling, backoff).
@@ -31,7 +34,7 @@ pub struct ObservationPolicy {
 }
 
 /// Vision rectangle normalized to the display, origin bottom-left.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
 pub struct NormalizedRect {
     pub x: f64,
     pub y: f64,
@@ -126,8 +129,8 @@ pub struct ObservationImage {
 pub struct ObservationRequest {
     pub(crate) context: String,
     pub(crate) images: Vec<ObservationImage>,
-    /// Frames of this send with their exact text, for quote checks (27C).
-    pub(crate) frames: Vec<(FrameId, String)>,
+    /// Frames of this send with their exact text, newest first, for quote checks.
+    pub(crate) frames: Vec<SentFrame>,
     /// Open tasks the answer may write to, each with its revision fence.
     pub(crate) allowed: Vec<TaskVersion>,
     pub(crate) last_frame: FrameId,
@@ -136,6 +139,12 @@ pub struct ObservationRequest {
     pub(crate) dropped: Losses,
     /// The part of `dropped` carried over from earlier pruning, cuts and evictions.
     pub(crate) pending: Losses,
+}
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct SentFrame {
+    pub id: FrameId,
+    pub at_utc: i64,
+    pub text: String,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Losses {
@@ -196,6 +205,25 @@ pub struct ObservationFinish {
     pub added_cards: u32,
     pub rejected_items: u32,
     pub highlight_version: u64,
+}
+
+/// The place of one card on the screen, in memory only. It is anchored in a frame of the ring and
+/// follows newer frames of the same display; another display needs a recheck.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct Highlight {
+    pub proposal_id: ProposalId,
+    pub frame_id: FrameId,
+    pub display_key: String,
+    pub anchor: String,
+    pub rect: NormalizedRect,
+    pub needs_recheck: bool,
+}
+/// Every change, including removal, raises `version`; the shell reads this only when the version
+/// in a frame or finish result changed.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct HighlightState {
+    pub version: u64,
+    pub highlight: Option<Highlight>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]

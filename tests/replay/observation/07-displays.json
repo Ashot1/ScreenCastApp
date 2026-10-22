@@ -1,0 +1,248 @@
+{
+ "format": 1,
+ "source": "synthetic: hand-written for ADR-025 ticket 27C; no screen was captured and no model was called (answers are hand-written)",
+ "consent": "synthetic text only, no personal data, no real screenshots (images are 8 placeholder bytes)",
+ "schema_version": 17,
+ "time_basis": "t = seconds from episode start; utc = 1798761600 + t; monotonic_ms = 1000 * t + 7000000 (system uptime survives an app restart)",
+ "geometry": {
+  "displays": [
+   {
+    "key": "display-A",
+    "pixels": [
+     2560,
+     1600
+    ],
+    "scale": 2
+   },
+   {
+    "key": "display-B",
+    "pixels": [
+     1920,
+     1080
+    ],
+    "scale": 1
+   }
+  ],
+  "rects": "Vision normalized, origin bottom-left. Frames with \"words\": true get one box per whitespace word: word i of n on line r (r counted from \"row0\") starts at x = 0.02 + dx + i * w with w = 0.9 / max(n, 10), is 0.9 * w wide and 0.03 high, at y = 0.9 - 0.04 * r. A moved window is a change of dx or row0."
+ },
+ "name": "displays",
+ "adr_episode": 7,
+ "summary": "a frame of another display marks the highlight for a recheck; the next frame of the original display re-finds it near the old place or removes it",
+ "steps": [
+  {
+   "t": 0,
+   "op": "policy",
+   "started": true,
+   "per_hour_limit": 20,
+   "credit_acknowledged": true
+  },
+  {
+   "t": 0,
+   "op": "session",
+   "epoch": 1,
+   "valid": true,
+   "reported": true
+  },
+  {
+   "t": 0,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Dear team,\nteh report is ready\nBest, Sam",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5
+   },
+   "label": "F1"
+  },
+  {
+   "t": 11,
+   "op": "begin",
+   "expect": "ready"
+  },
+  {
+   "t": 11,
+   "op": "dispatch",
+   "expect": {
+    "frames": [
+     "F1"
+    ]
+   }
+  },
+  {
+   "t": 12,
+   "op": "finish",
+   "outcome": "confirmed",
+   "answer": {
+    "items": [
+     {
+      "task": {
+       "new": "Report"
+      },
+      "related": [],
+      "quotes": [
+       {
+        "frame": "F1",
+        "text": "teh report is ready"
+       }
+      ],
+      "proposal": {
+       "message": "Typo: “teh” should be “the”.",
+       "rationale": "Seen on screen",
+       "quotes": [
+        0
+       ],
+       "highlight": {
+        "frame": "F1",
+        "anchor": "teh"
+       }
+      }
+     }
+    ]
+   },
+   "expect": {
+    "outcome": "confirmed",
+    "applied": true,
+    "added_cards": 1,
+    "rejected_items": 0,
+    "highlight_changed": true
+   }
+  },
+  {
+   "t": 12,
+   "op": "highlight",
+   "expect": {
+    "present": true,
+    "frame": "F1",
+    "needs_recheck": false,
+    "rect": {
+     "line": 1,
+     "first": 0,
+     "last": 0,
+     "count": 4,
+     "dx": 0
+    }
+   }
+  },
+  {
+   "t": 20,
+   "op": "frame",
+   "display": "display-B",
+   "app": "Terminal",
+   "bundle": "com.apple.Terminal",
+   "title": "zsh",
+   "idle": 0,
+   "text": "cargo test passed",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5,
+    "highlight_changed": true,
+    "note": "the front window moved to another display"
+   },
+   "label": "G1"
+  },
+  {
+   "t": 20,
+   "op": "highlight",
+   "expect": {
+    "present": true,
+    "frame": "F1",
+    "needs_recheck": true,
+    "rect": {
+     "line": 1,
+     "first": 0,
+     "last": 0,
+     "count": 4,
+     "dx": 0
+    }
+   }
+  },
+  {
+   "t": 21,
+   "op": "frame",
+   "display": "display-B",
+   "app": "Terminal",
+   "bundle": "com.apple.Terminal",
+   "title": "zsh",
+   "idle": 0,
+   "text": "cargo test passed again",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "recorded",
+    "next": 5,
+    "highlight_changed": false
+   },
+   "label": "G2"
+  },
+  {
+   "t": 22,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Dear team,\nteh report is ready\nBest, Sam",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "duplicate",
+    "next": 5,
+    "highlight_changed": true,
+    "note": "display-A again: the anchor is re-found near its old place"
+   },
+   "dx": 0.03
+  },
+  {
+   "t": 22,
+   "op": "highlight",
+   "expect": {
+    "present": true,
+    "frame": "F1",
+    "needs_recheck": false,
+    "rect": {
+     "line": 1,
+     "first": 0,
+     "last": 0,
+     "count": 4,
+     "dx": 0.03
+    }
+   }
+  },
+  {
+   "t": 23,
+   "op": "frame",
+   "display": "display-A",
+   "app": "Mail",
+   "bundle": "com.apple.mail",
+   "title": "Inbox",
+   "idle": 0,
+   "text": "Dear team,\nteh report is ready\nBest, Sam",
+   "image": true,
+   "words": true,
+   "expect": {
+    "disposition": "duplicate",
+    "next": 5,
+    "highlight_changed": true,
+    "note": "the same text far from the old place is not re-found"
+   },
+   "dx": 0.03,
+   "row0": 5
+  },
+  {
+   "t": 23,
+   "op": "highlight",
+   "expect": {
+    "present": false
+   }
+  }
+ ]
+}
