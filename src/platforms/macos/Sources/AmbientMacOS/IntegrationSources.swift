@@ -301,87 +301,109 @@ extension MemorySession {
         guard enabled <= 1 else { throw ModelCheckFailure.native }
         return enabled == 1
     }
-    func setIntegrationEnabled(_ kind: BuiltInIntegration, enabled: Bool) throws {
-        let h = try sourceMemoryHandle()
-        try IntegrationBridge.check(
-            ambient_integration_v1_set_enabled(h, kind.abi, enabled ? 1 : 0))
+    func setIntegrationEnabled(_ kind: BuiltInIntegration, enabled: Bool) async throws {
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            try IntegrationBridge.check(
+                ambient_integration_v1_set_enabled(h, kind.abi, enabled ? 1 : 0))
+
+        }
     }
     func setIntegrationScopeExcluded(_ kind: IntegrationKind, scope: String, excluded: Bool)
-        throws
+        async throws
     {
-        let h = try sourceMemoryHandle()
-        try LocalSourceBridge.withText(scope) {
-            try IntegrationBridge.check(
-                ambient_integration_v1_scope_excluded(h, kind.abi, $0, excluded ? 1 : 0))
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            try LocalSourceBridge.withText(scope) {
+                try IntegrationBridge.check(
+                    ambient_integration_v1_scope_excluded(h, kind.abi, $0, excluded ? 1 : 0))
+            }
+
         }
     }
     func saveGitHubProfile(
         id: UInt64, expected: UInt64, name: String, repositories: [GitHubRepository]
-    ) throws -> IntegrationProfile {
-        let h = try sourceMemoryHandle()
-        guard repositories.count <= 32 else { throw IntegrationFailure.invalid }
-        var raw: [AmbientGitHubRepository] = []
-        var out = AmbientIntegrationProfileRef()
-        // Borrowed texts stay valid only inside their closures, so the array is built by nesting.
-        func append(_ index: Int) throws {
-            if index == repositories.count {
-                try raw.withUnsafeBufferPointer { r in
-                    try LocalSourceBridge.withText(name) { name in
-                        try IntegrationBridge.check(
-                            ambient_integration_v1_github_profile_save(
-                                h, id, expected, name, r.baseAddress, UInt32(r.count), &out))
+    ) async throws -> IntegrationProfile {
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            guard repositories.count <= 32 else { throw IntegrationFailure.invalid }
+            var raw: [AmbientGitHubRepository] = []
+            var out = AmbientIntegrationProfileRef()
+            // Borrowed texts stay valid only inside their closures, so the array is built by nesting.
+            func append(_ index: Int) throws {
+                if index == repositories.count {
+                    try raw.withUnsafeBufferPointer { r in
+                        try LocalSourceBridge.withText(name) { name in
+                            try IntegrationBridge.check(
+                                ambient_integration_v1_github_profile_save(
+                                    h, id, expected, name, r.baseAddress, UInt32(r.count), &out))
+                        }
+                    }
+                    return
+                }
+                try LocalSourceBridge.withText(repositories[index].owner) { owner in
+                    try LocalSourceBridge.withText(repositories[index].repository) { repo in
+                        raw.append(AmbientGitHubRepository(owner: owner, repository: repo))
+                        defer { raw.removeLast() }
+                        try append(index + 1)
                     }
                 }
-                return
             }
-            try LocalSourceBridge.withText(repositories[index].owner) { owner in
-                try LocalSourceBridge.withText(repositories[index].repository) { repo in
-                    raw.append(AmbientGitHubRepository(owner: owner, repository: repo))
-                    defer { raw.removeLast() }
-                    try append(index + 1)
+            try append(0)
+            return try integrationProfile(out.id, kind: .github)
+
+        }
+    }
+    func saveJiraProfile(id: UInt64, expected: UInt64, name: String, cloudID: String) async throws
+        -> IntegrationProfile
+    {
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            var out = AmbientIntegrationProfileRef()
+            try LocalSourceBridge.withText(name) { name in
+                try LocalSourceBridge.withText(cloudID) { cloud in
+                    try IntegrationBridge.check(
+                        ambient_integration_v1_jira_profile_save(h, id, expected, name, cloud, &out)
+                    )
                 }
             }
+            return try integrationProfile(out.id, kind: .jira)
+
         }
-        try append(0)
-        return try integrationProfile(out.id, kind: .github)
-    }
-    func saveJiraProfile(id: UInt64, expected: UInt64, name: String, cloudID: String) throws
-        -> IntegrationProfile
-    {
-        let h = try sourceMemoryHandle()
-        var out = AmbientIntegrationProfileRef()
-        try LocalSourceBridge.withText(name) { name in
-            try LocalSourceBridge.withText(cloudID) { cloud in
-                try IntegrationBridge.check(
-                    ambient_integration_v1_jira_profile_save(h, id, expected, name, cloud, &out))
-            }
-        }
-        return try integrationProfile(out.id, kind: .jira)
     }
     /// Core keeps the account it wrote during a read; native never passes one.
-    func saveTodoistProfile(id: UInt64, expected: UInt64, name: String) throws
+    func saveTodoistProfile(id: UInt64, expected: UInt64, name: String) async throws
         -> IntegrationProfile
     {
-        let h = try sourceMemoryHandle()
-        var out = AmbientIntegrationProfileRef()
-        try LocalSourceBridge.withText(name) { name in
-            try IntegrationBridge.check(
-                ambient_integration_v1_todoist_profile_save(h, id, expected, name, &out))
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            var out = AmbientIntegrationProfileRef()
+            try LocalSourceBridge.withText(name) { name in
+                try IntegrationBridge.check(
+                    ambient_integration_v1_todoist_profile_save(h, id, expected, name, &out))
+            }
+            return try integrationProfile(out.id, kind: .todoist)
+
         }
-        return try integrationProfile(out.id, kind: .todoist)
     }
-    func beginIntegrationCredentialReplacement(_ p: IntegrationProfile) throws
+    func beginIntegrationCredentialReplacement(_ p: IntegrationProfile) async throws
         -> IntegrationProfile
     {
-        var out = AmbientIntegrationProfileRef()
-        try IntegrationBridge.check(
-            ambient_integration_v1_credential_begin(
-                sourceMemoryHandle(), p.id, p.settingsRevision, &out))
-        return try integrationProfile(out.id, kind: p.kind)
+        return try await withObservationMutation {
+            var out = AmbientIntegrationProfileRef()
+            try IntegrationBridge.check(
+                ambient_integration_v1_credential_begin(
+                    sourceMemoryHandle(), p.id, p.settingsRevision, &out))
+            return try integrationProfile(out.id, kind: p.kind)
+
+        }
     }
-    func finishIntegrationProfileDeletion(_ p: IntegrationProfile) throws {
-        try IntegrationBridge.check(
-            ambient_integration_v1_profile_delete_finish(sourceMemoryHandle(), p.native))
+    func finishIntegrationProfileDeletion(_ p: IntegrationProfile) async throws {
+        return try await withObservationMutation {
+            try IntegrationBridge.check(
+                ambient_integration_v1_profile_delete_finish(sourceMemoryHandle(), p.native))
+
+        }
     }
     func beginIntegrationRead(
         _ task: MemoryTask, profile: IntegrationProfile, target: String, expiresAt: Int64
@@ -402,21 +424,26 @@ extension MemorySession {
         guard try sourceMemoryHandle() == op.memory else { throw ModelCheckFailure.closed }
         return try IntegrationBridge.preview(op, indices: indices)
     }
-    func bindIntegrationObjects(_ op: IntegrationOperation, indices: [Int]) throws -> [UInt64] {
-        guard try sourceMemoryHandle() == op.memory, indices.allSatisfy({ (0..<512).contains($0) })
-        else { throw IntegrationFailure.invalid }
-        let ids = indices.map(UInt32.init)
-        var out = AmbientIntegrationBatch()
-        try ids.withUnsafeBufferPointer { ids in
-            try IntegrationBridge.check(
-                ambient_integration_v1_bind(
-                    op.memory, op.id, ids.baseAddress, UInt32(ids.count),
-                    Int64(Date().timeIntervalSince1970), &out))
-        }
-        guard out.task_id > 0, out.task_revision > 0, out.count == ids.count, out.reserved == 0
-        else { throw ModelCheckFailure.native }
-        return withUnsafeBytes(of: out.evidence_ids) {
-            Array($0.bindMemory(to: UInt64.self).prefix(Int(out.count)))
+    func bindIntegrationObjects(_ op: IntegrationOperation, indices: [Int]) async throws -> [UInt64]
+    {
+        return try await withObservationMutation {
+            guard try sourceMemoryHandle() == op.memory,
+                indices.allSatisfy({ (0..<512).contains($0) })
+            else { throw IntegrationFailure.invalid }
+            let ids = indices.map(UInt32.init)
+            var out = AmbientIntegrationBatch()
+            try ids.withUnsafeBufferPointer { ids in
+                try IntegrationBridge.check(
+                    ambient_integration_v1_bind(
+                        op.memory, op.id, ids.baseAddress, UInt32(ids.count),
+                        Int64(Date().timeIntervalSince1970), &out))
+            }
+            guard out.task_id > 0, out.task_revision > 0, out.count == ids.count, out.reserved == 0
+            else { throw ModelCheckFailure.native }
+            return withUnsafeBytes(of: out.evidence_ids) {
+                Array($0.bindMemory(to: UInt64.self).prefix(Int(out.count)))
+            }
+
         }
     }
     func integrationSavedMetadata<Metadata>(

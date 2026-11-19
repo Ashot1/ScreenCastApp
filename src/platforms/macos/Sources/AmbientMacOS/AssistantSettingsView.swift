@@ -3,6 +3,7 @@ import SwiftUI
 public struct AssistantSettingsView: View {
     private let model: AssistantModel
     private let chatGPT: ChatGPTModel
+    private let observation: ObservationSession
     @State private var section = SettingsSection.general
     // Owned here, not by the General section: a section switch must not reset a permission
     // check or hide a launch-at-login failure.
@@ -10,21 +11,27 @@ public struct AssistantSettingsView: View {
     @State private var loginItem = LoginItemModel()
     @Environment(\.openWindow) private var openWindow
 
-    public init(model: AssistantModel, chatGPT: ChatGPTModel) {
+    public init(model: AssistantModel, chatGPT: ChatGPTModel, observation: ObservationSession) {
         self.model = model
         self.chatGPT = chatGPT
+        self.observation = observation
     }
 
     public var body: some View {
         NavigationSplitView {
-            List(SettingsSection.allCases, selection: $section) { item in
-                Label {
-                    item.title
-                } icon: {
-                    Image(systemName: item.systemImage)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("settings.title", bundle: .module)
+                    .font(.system(size: 26, weight: .semibold))
+                    .padding(.horizontal, 24).padding(.top, 36).padding(.bottom, 14)
+                List(SettingsSection.allCases, selection: $section) { item in
+                    Label {
+                        item.title
+                    } icon: {
+                        Image(systemName: item.systemImage)
+                    }
                 }
+                .listStyle(.sidebar)
             }
-            .listStyle(.sidebar)
             .safeAreaBar(edge: .bottom) {
                 GlassEffectContainer {
                     // Settings has no root lock like the memory window, so the capsule gets it here.
@@ -33,12 +40,15 @@ public struct AssistantSettingsView: View {
                 .padding(10)
             }
             .navigationSplitViewColumnWidth(244)
+            // Keep section navigation available in the accepted fixed-size window.
+            .toolbar(removing: .sidebarToggle)
         } detail: {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
-                    section.title.font(.system(size: 22, weight: .semibold))
+            VStack(alignment: .leading, spacing: 0) {
+                section.title.font(.system(size: 26, weight: .semibold))
+                    .padding(.horizontal, 28).padding(.top, 32)
+                Group {
                     switch section {
-                    case .general: general
+                    case .general: Form { general }
                     case .chatGPT: ChatGPTSettingsView(chatGPT: chatGPT)
                     case .usage: ConnectionCheckView(model: model, chatGPT: chatGPT)
                     case .integrations: IntegrationSwitchesView(model: model, chatGPT: chatGPT)
@@ -47,15 +57,22 @@ public struct AssistantSettingsView: View {
                     case .todoist:
                         TodoistSettingsView(source: model.todoistSources, chatGPT: chatGPT)
                     case .plugins: PluginsSettingsView(plugins: chatGPT.plugins, chatGPT: chatGPT)
+                    case .observation: ObservationSettingsView(model: model, session: observation)
                     }
                 }
-                .padding(.horizontal, 36).padding(.vertical, 30)
+                .formStyle(.grouped)
+                .scrollContentBackground(.hidden)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(nsColor: .textBackgroundColor))
+            .background(
+                Color(nsColor: .textBackgroundColor),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            )
+            .padding(8)
+            .ignoresSafeArea(.container, edges: .top)
         }
-        // The window has a fixed size, so a collapsed sidebar would leave no way to switch sections.
-        .toolbar(removing: .sidebarToggle)
+        .toolbar(removing: .title)
+        .containerBackground(.ultraThinMaterial, for: .window)
         .frame(width: 940, height: 800)
         // Stays on the root: reload also invalidates the reply, so it must not rerun per section.
         .task {
@@ -65,8 +82,10 @@ public struct AssistantSettingsView: View {
     }
 
     @ViewBuilder private var general: some View {
-        Text("settings.cloud", bundle: .module).font(.headline)
-        Text("settings.description", bundle: .module)
+        Section {
+            Text("settings.cloud", bundle: .module).font(.headline)
+            Text("settings.description", bundle: .module).foregroundStyle(.secondary)
+        }
         AssistantStatusView(model: model)
         if let failure = model.failure {
             Callout(
@@ -77,19 +96,25 @@ public struct AssistantSettingsView: View {
         LocalPermissionsView(permissions: $permissions)
         LoginItemView(model: loginItem)
         VoiceSettingsView(voice: chatGPT.voice)
-        Text("reply.temporary", bundle: .module).font(.caption).foregroundStyle(.secondary)
-        Button {
-            openWindow(id: "memory")
-        } label: {
-            Text("memory.manage", bundle: .module)
+        Section {
+            DisclosureGroup {
+                Text("reply.temporary", bundle: .module).foregroundStyle(.secondary)
+            } label: {
+                Text("settings.details", bundle: .module)
+            }
+            Button {
+                openWindow(id: "memory")
+            } label: {
+                Text("memory.manage", bundle: .module)
+            }
+            .buttonStyle(.bordered).buttonBorderShape(.capsule)
         }
-        .buttonStyle(.bordered).buttonBorderShape(.capsule)
     }
 }
 
-/// The eight Settings sections in sidebar order (ADR-023).
+/// Settings sections retain their accepted order; observation is the ninth section (ADR-025).
 enum SettingsSection: CaseIterable, Identifiable {
-    case general, chatGPT, usage, integrations, github, jira, todoist, plugins
+    case general, chatGPT, usage, integrations, github, jira, todoist, plugins, observation
     var id: Self { self }
     var title: Text {
         switch self {
@@ -101,6 +126,7 @@ enum SettingsSection: CaseIterable, Identifiable {
         case .jira: Text("integrations.jira", bundle: .module)
         case .todoist: Text("integrations.todoist", bundle: .module)
         case .plugins: Text("plugins.title", bundle: .module)
+        case .observation: Text("observation.title", bundle: .module)
         }
     }
     var systemImage: String {
@@ -113,6 +139,7 @@ enum SettingsSection: CaseIterable, Identifiable {
         case .jira: "checklist"
         case .todoist: "checkmark.circle"
         case .plugins: "puzzlepiece.extension"
+        case .observation: "eye"
         }
     }
 }

@@ -8,9 +8,13 @@ enum ModelProfile: UInt32, CaseIterable, Sendable {
 }
 enum ModelPurpose: UInt32, Sendable {
     case connectivity = 1
-    case assistance
-    var key: String {
-        self == .connectivity ? "check.purpose.connectivity" : "check.purpose.assistance"
+    case assistance, observation
+    var key: String? {
+        switch self {
+        case .connectivity: "check.purpose.connectivity"
+        case .assistance: "check.purpose.assistance"
+        case .observation: nil
+        }
     }
 }
 enum ModelEffort: UInt32, Sendable {

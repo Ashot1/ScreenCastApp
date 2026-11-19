@@ -6,7 +6,12 @@ import Foundation
 enum ChatGPTState: Equatable, Sendable {
     case unavailable, signedOut, saved, expired, pending, unknown, working, cancelling
 }
-actor ChatGPTCoordinator {
+private enum ModelRequest {
+    case check(ModelProfile)
+    case assistance(UInt64)
+    case observation(ObservationTime)
+}
+actor ChatGPTCoordinator: ObservationDispatching {
     private nonisolated let queue = DispatchSerialQueue(label: "dev.ambient.auth.credentials")
     nonisolated var unownedExecutor: UnownedSerialExecutor { queue.asUnownedSerialExecutor() }
     private let store: any ChatGPTCredentialStore
@@ -17,6 +22,7 @@ actor ChatGPTCoordinator {
     private let modelBridge: any ModelCheckProtocol
     let plugins: PluginSecretOwner
     private var modelHandle: UInt64?
+    private var observationInFlight = false
     private var reportedCreditSetting = false
     private var connectionEpoch = UInt64.random(in: 1...UInt64.max)
     private var modelSessionPublished = false
@@ -68,6 +74,9 @@ actor ChatGPTCoordinator {
     }
     private func readState() throws -> ChatGPTState {
         if busy { return cancelling ? .cancelling : .working }
+        return try savedState()
+    }
+    private func savedState() throws -> ChatGPTState {
         guard !closed else { throw ChatGPTFailure.closed }
         guard let e = try store.load() else { return .signedOut }
         try e.validate()
@@ -228,11 +237,20 @@ actor ChatGPTCoordinator {
         guard !busy || !reported else { throw ModelCheckFailure.busy }
         if reported { guard try readState() == .saved else { throw ModelCheckFailure.session } }
         reportedCreditSetting = reported
-        if !reported { await cancel() }
+        if !reported, !observationInFlight { await cancel() }
         if modelSessionPublished {
+            let effectiveReport = try await effectiveCreditReport()
             try await memory.setModelSession(
-                epoch: connectionEpoch, valid: try readState() == .saved, reported: reported)
+                epoch: connectionEpoch, valid: try savedState() == .saved, reported: effectiveReport
+            )
         }
+    }
+    private func effectiveCreditReport(_ reported: Bool? = nil) async throws -> Bool {
+        if let reported { return reported }
+        if reportedCreditSetting { return true }
+        return try await memory.observationJournal(
+            at: Int64(Date().timeIntervalSince1970)
+        ).policy.creditAcknowledged
     }
     private func currentEnvelope() async throws -> ChatGPTEnvelope {
         do {
@@ -250,10 +268,12 @@ actor ChatGPTCoordinator {
             throw error
         }
     }
-    private func publishSession() async throws -> ChatGPTEnvelope {
+    private func publishSession(reported: Bool? = nil) async throws -> ChatGPTEnvelope {
         let envelope = try await currentEnvelope()
+        // Both acknowledgements belong to this one session fact; observation's survives UI refreshes.
+        let effectiveReport = try await effectiveCreditReport(reported)
         try await memory.setModelSession(
-            epoch: connectionEpoch, valid: true, reported: reportedCreditSetting)
+            epoch: connectionEpoch, valid: true, reported: effectiveReport)
         modelSessionPublished = true
         return envelope
     }
@@ -473,37 +493,88 @@ actor ChatGPTCoordinator {
         return text
     }
     func runCheck(profile: ModelProfile = .low) async throws -> ModelCheckAttempt {
-        try await runModel(profile: profile, request: nil).attempt
+        guard let result = try await runModel(.check(profile)) else {
+            throw ModelCheckFailure.native
+        }
+        return result.attempt
     }
     func runAssistance(_ request: UInt64) async throws -> ModelOperationResult {
-        let result = try await runModel(profile: .high, request: request)
+        guard let result = try await runModel(.assistance(request)) else {
+            throw ModelCheckFailure.native
+        }
         guard result.publishedTaskID != nil else { throw ModelCheckFailure.result }
         return result
     }
-    private func runModel(profile: ModelProfile, request: UInt64?) async throws
-        -> ModelOperationResult
+    func prepareObservation(at: ObservationTime) async throws -> Bool {
+        guard !closed else { throw ModelCheckFailure.closed }
+        if busy { return true }  // The current operation already owns session publication.
+        busy = true
+        generation += 1
+        let revision = generation
+        defer { finishBusy() }
+        let policy = try await memory.observationJournal(at: at.utc).policy
+        try fenceGeneration(revision)
+        guard policy.started, policy.creditAcknowledged else { return false }
+        _ = try await publishSession(reported: policy.creditAcknowledged)
+        try fenceGeneration(revision)
+        return true
+    }
+    func runObservation(at: ObservationTime) async throws -> ModelOperationResult? {
+        // A cancelled caller may reach this actor before it ever owned an operation to cancel.
+        try Task.checkCancellation()
+        guard !busy else { return nil }
+        return try await runModel(.observation(at))
+    }
+    func cancelObservation() async {
+        if observationInFlight { await cancel() }
+    }
+    private func runModel(_ request: ModelRequest) async throws
+        -> ModelOperationResult?
     {
         guard !closed else { throw ModelCheckFailure.closed }
         guard !busy, handle == nil, modelHandle == nil else { throw ModelCheckFailure.busy }
-        guard reportedCreditSetting else { throw ModelCheckFailure.report }
+        if case .observation = request {
+        } else {
+            guard reportedCreditSetting else { throw ModelCheckFailure.report }
+        }
         busy = true
         cancelling = false
         expired = false
         generation += 1
         let revision = generation
+        if case .observation = request { observationInFlight = true }
+        defer {
+            observationInFlight = false
+            finishBusy()
+        }
         var result: ModelOperationResult?
         var failure: Error?
         do {
-            let accepted = try await publishSession()
+            let reported: Bool
+            if case .observation(let time) = request {
+                let policy = try await memory.observationJournal(at: time.utc).policy
+                try fenceGeneration(revision)
+                guard policy.started, policy.creditAcknowledged else { return nil }
+                reported = policy.creditAcknowledged
+            } else {
+                reported = reportedCreditSetting
+            }
+            let accepted = try await publishSession(reported: reported)
             try fenceGeneration(revision)
             let operation: UInt64
-            if let request {
+            switch request {
+            case .assistance(let id):
                 operation = try await memory.beginAssistance(
-                    request, at: Int64(Date().timeIntervalSince1970))
-            } else {
+                    id, at: Int64(Date().timeIntervalSince1970))
+            case .check(let profile):
                 operation = try await memory.beginCheck(
                     userReported: reportedCreditSetting, profile: profile,
                     at: Int64(Date().timeIntervalSince1970))
+            case .observation(let time):
+                guard case .ready(let id) = try await memory.beginObservation(at: time) else {
+                    return nil
+                }
+                operation = id
             }
             modelHandle = operation
             try fenceGeneration(revision)
@@ -515,7 +586,12 @@ actor ChatGPTCoordinator {
             else { throw ModelCheckFailure.session }
             try fenceGeneration(revision)
             // Keys of enabled plugins go to assistance only; a connectivity check never calls tools.
-            let keys = request == nil ? [] : try await plugins.dispatchKeys()
+            let keys: [PluginDispatchKey]
+            if case .assistance = request {
+                keys = try await plugins.dispatchKeys()
+            } else {
+                keys = []
+            }
             let root = try await memory.pluginServersRoot()
             try fenceGeneration(revision)
             result = try await modelBridge.dispatch(
@@ -528,9 +604,9 @@ actor ChatGPTCoordinator {
                 self.modelHandle = nil
             } catch { if failure == nil { failure = error } }
         }
+        if case .assistance = request { await memory.observationDidMutate() }
         // A logout can interleave with close; retain the generation fence through actual cleanup.
         if failure == nil { do { try fenceGeneration(revision) } catch { failure = error } }
-        finishBusy()
         if let failure { throw failure }
         guard let result else { throw ModelCheckFailure.native }
         return result

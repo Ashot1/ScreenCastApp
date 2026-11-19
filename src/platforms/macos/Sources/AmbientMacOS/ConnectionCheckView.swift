@@ -4,13 +4,19 @@ struct ConnectionCheckView: View {
     let model: AssistantModel
     let chatGPT: ChatGPTModel
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("check.title", bundle: .module).font(.headline)
-                Text("check.help", bundle: .module)
-                if let url = URL(string: "https://chatgpt.com") {
-                    Link(destination: url) { Text("check.limits", bundle: .module) }
+        Form {
+            Section {
+                Text("check.summary", bundle: .module)
+                DisclosureGroup {
+                    Text("check.help", bundle: .module).foregroundStyle(.secondary)
+                    if let url = URL(string: "https://chatgpt.com") {
+                        Link(destination: url) { Text("check.limits", bundle: .module) }
+                    }
+                } label: {
+                    Text("settings.details", bundle: .module)
                 }
+            }
+            Section {
                 Toggle(
                     isOn: Binding(
                         get: { chatGPT.creditReported },
@@ -30,6 +36,10 @@ struct ConnectionCheckView: View {
                 } label: {
                     Text("check.profile", bundle: .module)
                 }.disabled(chatGPT.busy)
+            } header: {
+                Text("check.before", bundle: .module)
+            }
+            Section {
                 if chatGPT.checking {
                     Text(
                         chatGPT.state == .cancelling ? "check.cancelling" : "check.working",
@@ -62,7 +72,11 @@ struct ConnectionCheckView: View {
                                 failure == .storage ? "check.error.recording" : failure.key),
                             bundle: .module))
                 }
-                if let summary = chatGPT.checkSummary {
+            } header: {
+                Text("check.title", bundle: .module)
+            }
+            if let summary = chatGPT.checkSummary {
+                Section {
                     LabeledContent {
                         Text(summary.attempts, format: .number)
                     } label: {
@@ -88,13 +102,18 @@ struct ConnectionCheckView: View {
                     } label: {
                         Text("check.unknown", bundle: .module)
                     }
+                } header: {
+                    Text("check.journal", bundle: .module)
+                }
+                Section {
                     if let latest = summary.latest {
-                        Text("check.last", bundle: .module).font(.headline)
                         Text(LocalizedStringKey(latest.outcome.key), bundle: .module)
                         Text(
                             Date(timeIntervalSince1970: TimeInterval(latest.atUTC)),
                             format: .dateTime)
-                        Text(LocalizedStringKey(latest.purpose.key), bundle: .module)
+                        if let key = latest.purpose.key {
+                            Text(LocalizedStringKey(key), bundle: .module)
+                        }
                         Text("check.requested", bundle: .module)
                         Text(verbatim: "gpt-6-luna · \(latest.profile.effort) · priority")
                         Text("check.actual", bundle: .module)
@@ -125,9 +144,13 @@ struct ConnectionCheckView: View {
                     } else {
                         Text("check.noHistory", bundle: .module)
                     }
+                } header: {
+                    Text("check.last", bundle: .module)
                 }
-                Text("check.historyHelp", bundle: .module).font(.caption)
-            }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Section {
+                Text("check.historyHelp", bundle: .module).foregroundStyle(.secondary)
+            }
         }
     }
     private func field(_ value: ModelCheckField, expected: String) -> Text {

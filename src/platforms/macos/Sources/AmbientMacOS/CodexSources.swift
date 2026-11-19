@@ -143,20 +143,29 @@ extension MemorySession {
         }
         return selections
     }
-    func saveCodexSelection(id: UInt64, expected: UInt64, path: String) throws -> CodexSelection {
-        let handle = try sourceMemoryHandle()
-        var savedID: UInt64 = 0
-        var revision: UInt64 = 0
-        try LocalSourceBridge.withText(path) {
-            try CodexBridge.check(
-                ambient_codex_v1_settings_save(handle, id, expected, $0, &savedID, &revision))
+    func saveCodexSelection(id: UInt64, expected: UInt64, path: String) async throws
+        -> CodexSelection
+    {
+        return try await withObservationMutation {
+            let handle = try sourceMemoryHandle()
+            var savedID: UInt64 = 0
+            var revision: UInt64 = 0
+            try LocalSourceBridge.withText(path) {
+                try CodexBridge.check(
+                    ambient_codex_v1_settings_save(handle, id, expected, $0, &savedID, &revision))
+            }
+            return CodexSelection(id: savedID, revision: revision, path: path)
+
         }
-        return CodexSelection(id: savedID, revision: revision, path: path)
     }
-    func deleteCodexSelection(_ selection: CodexSelection) throws {
-        try CodexBridge.check(
-            ambient_codex_v1_settings_delete(sourceMemoryHandle(), selection.id, selection.revision)
-        )
+    func deleteCodexSelection(_ selection: CodexSelection) async throws {
+        return try await withObservationMutation {
+            try CodexBridge.check(
+                ambient_codex_v1_settings_delete(
+                    sourceMemoryHandle(), selection.id, selection.revision)
+            )
+
+        }
     }
     func beginCodexRead(
         _ task: MemoryTask, selection: CodexSelection, cursor: UInt64, expiresAt: Int64
@@ -173,15 +182,18 @@ extension MemorySession {
         guard try sourceMemoryHandle() == op.memory else { throw ModelCheckFailure.closed }
         return try CodexBridge.preview(op, index: index)
     }
-    func bindCodexEvent(_ op: CodexOperation, index: Int) throws -> UInt64 {
-        guard try sourceMemoryHandle() == op.memory, (0..<128).contains(index) else {
-            throw ModelCheckFailure.invalid
+    func bindCodexEvent(_ op: CodexOperation, index: Int) async throws -> UInt64 {
+        return try await withObservationMutation {
+            guard try sourceMemoryHandle() == op.memory, (0..<128).contains(index) else {
+                throw ModelCheckFailure.invalid
+            }
+            var id: UInt64 = 0
+            try CodexBridge.check(
+                ambient_codex_v1_bind(
+                    op.memory, op.id, UInt32(index), Int64(Date().timeIntervalSince1970), &id))
+            return id
+
         }
-        var id: UInt64 = 0
-        try CodexBridge.check(
-            ambient_codex_v1_bind(
-                op.memory, op.id, UInt32(index), Int64(Date().timeIntervalSince1970), &id))
-        return id
     }
     func codexMetadata(taskID: UInt64, after: UInt64 = 0) throws -> [CodexSavedMetadata] {
         let handle = try sourceMemoryHandle()

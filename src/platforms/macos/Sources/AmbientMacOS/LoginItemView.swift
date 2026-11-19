@@ -6,9 +6,8 @@ struct LoginItemView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        GroupBox {
+        Section {
             VStack(alignment: .leading, spacing: 10) {
-                Text("loginItem.help", bundle: .module)
                 Text(LocalizedStringKey(model.statusKey), bundle: .module)
                 if let failureKey = model.failureKey {
                     Callout(
@@ -47,13 +46,16 @@ struct LoginItemView: View {
                 } label: {
                     Text("loginItem.refresh", bundle: .module)
                 }
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
+            }
+            .onAppear { model.refresh() }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { model.refresh() }
+            }
+        } header: {
             Text("loginItem.title", bundle: .module)
+        } footer: {
+            Text("loginItem.help", bundle: .module)
         }
-        .onAppear { model.refresh() }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { model.refresh() }
-        }
+
     }
 }

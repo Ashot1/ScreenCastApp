@@ -10,7 +10,7 @@ extension AssistantModel {
         case .unknown: "status.pauseUnknown"
         }
     }
-    /// The state behind `statusKey`: drawn as the ring in windows and as a symbol in the menu bar.
+    /// The saved pause/closing state drawn in windows.
     var statusKind: StatusRing.Kind {
         if closing { return .closing }
         switch manualPause {
@@ -19,7 +19,13 @@ extension AssistantModel {
         case nil: return .unknown
         }
     }
-    /// The menu bar's monochrome symbol for `statusKind` (D75: no colored ring there).
+    func menuStatusKey(_ observation: ObservationDisplay) -> String {
+        statusKind == .assistance ? observation.state.key : statusKey
+    }
+    func menuStatusSymbol(_ observation: ObservationDisplay) -> String {
+        statusKind == .assistance ? observation.state.symbol : statusSymbol
+    }
+    /// The menu bar's monochrome symbol for pause/closing (D75: no colored ring there).
     var statusSymbol: String {
         switch statusKind {
         case .assistance: "circle"
@@ -32,11 +38,15 @@ extension AssistantModel {
 
 public struct AssistantMenuBarLabel: View {
     private let model: AssistantModel
-    public init(model: AssistantModel) { self.model = model }
+    private let observation: ObservationDisplay
+    public init(model: AssistantModel, observation: ObservationSession) {
+        self.model = model
+        self.observation = observation.display
+    }
     public var body: some View {
         // ADR-023 R4: a `Label` here shows only the symbol; the HStack keeps the «Ambient» title.
         HStack {
-            Image(systemName: model.statusSymbol)
+            Image(systemName: model.menuStatusSymbol(observation))
             Text("app.name", bundle: .module)
         }
     }
@@ -44,14 +54,18 @@ public struct AssistantMenuBarLabel: View {
 
 public struct AssistantMenu: View {
     private let model: AssistantModel
+    private let observation: ObservationDisplay
     @Environment(\.openWindow) private var openWindow
-    public init(model: AssistantModel) { self.model = model }
+    public init(model: AssistantModel, observation: ObservationSession) {
+        self.model = model
+        self.observation = observation.display
+    }
     public var body: some View {
         Group {
             Label {
-                Text(LocalizedStringKey(model.statusKey), bundle: .module)
+                Text(LocalizedStringKey(model.menuStatusKey(observation)), bundle: .module)
             } icon: {
-                Image(systemName: model.statusSymbol)
+                Image(systemName: model.menuStatusSymbol(observation))
             }
             // A menu item has no native subtitle; the detail is its own disabled line.
             if model.closing {

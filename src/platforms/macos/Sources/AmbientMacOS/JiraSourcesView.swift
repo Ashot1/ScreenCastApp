@@ -143,10 +143,18 @@ struct JiraSettingsView: View {
     @State private var pendingSite = ""
     @State private var pendingExcluded = false
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("jira.help", bundle: .module)
-                Text("jira.siteHelp", bundle: .module).font(.caption)
+        Form {
+            Section {
+                DisclosureGroup {
+                    Text("jira.help", bundle: .module)
+                    Text("jira.siteHelp", bundle: .module)
+                } label: {
+                    Text("settings.details", bundle: .module)
+                }
+            } header: {
+                Text("jira.title", bundle: .module)
+            }
+            Section {
                 ForEach(source.profiles) { p in
                     Button {
                         Task { await source.use(p) }
@@ -159,6 +167,8 @@ struct JiraSettingsView: View {
                 } label: {
                     Text("integration.newProfile", bundle: .module)
                 }
+            }
+            Section {
                 TextField(text: $source.draft.name) { Text("integration.name", bundle: .module) }
                 TextField(text: $source.draft.cloudID) { Text("jira.cloudID", bundle: .module) }
                     .disabled(
@@ -177,11 +187,17 @@ struct JiraSettingsView: View {
                 }.disabled(
                     source.draft.cloudID.isEmpty || source.exclusions.contains(source.draft.cloudID)
                 )
-                if source.profile != nil {
+            }
+            if source.profile != nil {
+                Section {
                     TextField(text: $source.draft.email) { Text("jira.email", bundle: .module) }
                     SecureField(text: $source.draft.token) { Text("jira.token", bundle: .module) }
-                    Text("jira.secretHelp", bundle: .module).font(.caption)
-                    Text("jira.replaceHelp", bundle: .module).font(.caption)
+                    DisclosureGroup {
+                        Text("jira.secretHelp", bundle: .module).font(.caption)
+                        Text("jira.replaceHelp", bundle: .module).font(.caption)
+                    } label: {
+                        Text("settings.details", bundle: .module)
+                    }
                     Button {
                         Task { await source.replaceSecret(chatGPT: chatGPT) }
                     } label: {
@@ -199,8 +215,9 @@ struct JiraSettingsView: View {
                         Text("jira.delete", bundle: .module)
                     }
                 }
-                if !source.exclusions.isEmpty {
-                    Text("jira.exclusions", bundle: .module)
+            }
+            if !source.exclusions.isEmpty {
+                Section {
                     ForEach(source.exclusions, id: \.self) { site in
                         HStack {
                             Text(verbatim: site)
@@ -213,50 +230,50 @@ struct JiraSettingsView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("jira.exclusions", bundle: .module)
                 }
-                if let failure = source.failureKey {
-                    Callout(
-                        tone: Theme.error, systemImage: "exclamationmark.circle",
-                        message: Text(LocalizedStringKey(failure), bundle: .module))
-                }
-            }.disabled(source.changingCredential)
-        } label: {
-            Text("jira.title", bundle: .module)
-        }
-        .task { await source.loadProfiles() }
-        .confirmationDialog(Text("jira.delete", bundle: .module), isPresented: $confirmDelete) {
-            Button(role: .destructive) {
-                Task { await source.deleteProfile(chatGPT: chatGPT) }
-            } label: {
-                Text("jira.delete", bundle: .module)
             }
-            Button(role: .cancel) {
-            } label: {
-                Text("auth.dismiss", bundle: .module)
+            if let failure = source.failureKey {
+                Callout(
+                    tone: Theme.error, systemImage: "exclamationmark.circle",
+                    message: Text(LocalizedStringKey(failure), bundle: .module))
             }
-        } message: {
-            Text("jira.deleteHelp", bundle: .module)
-        }
-        .confirmationDialog(Text(verbatim: pendingSite), isPresented: $confirmSite) {
-            Button {
-                Task {
-                    await source.setScopeExcluded(
-                        pendingSite, excluded: pendingExcluded, chatGPT: chatGPT)
+        }.disabled(source.changingCredential)
+            .task { await source.loadProfiles() }
+            .confirmationDialog(Text("jira.delete", bundle: .module), isPresented: $confirmDelete) {
+                Button(role: .destructive) {
+                    Task { await source.deleteProfile(chatGPT: chatGPT) }
+                } label: {
+                    Text("jira.delete", bundle: .module)
                 }
-            } label: {
+                Button(role: .cancel) {
+                } label: {
+                    Text("auth.dismiss", bundle: .module)
+                }
+            } message: {
+                Text("jira.deleteHelp", bundle: .module)
+            }
+            .confirmationDialog(Text(verbatim: pendingSite), isPresented: $confirmSite) {
+                Button {
+                    Task {
+                        await source.setScopeExcluded(
+                            pendingSite, excluded: pendingExcluded, chatGPT: chatGPT)
+                    }
+                } label: {
+                    Text(
+                        LocalizedStringKey(pendingExcluded ? "jira.exclude" : "jira.allow"),
+                        bundle: .module)
+                }
+                Button(role: .cancel) {
+                } label: {
+                    Text("auth.dismiss", bundle: .module)
+                }
+            } message: {
                 Text(
-                    LocalizedStringKey(pendingExcluded ? "jira.exclude" : "jira.allow"),
+                    LocalizedStringKey(pendingExcluded ? "jira.excludeHelp" : "jira.allowHelp"),
                     bundle: .module)
             }
-            Button(role: .cancel) {
-            } label: {
-                Text("auth.dismiss", bundle: .module)
-            }
-        } message: {
-            Text(
-                LocalizedStringKey(pendingExcluded ? "jira.excludeHelp" : "jira.allowHelp"),
-                bundle: .module)
-        }
     }
 }
 extension JiraAdapter: IntegrationPresentation {

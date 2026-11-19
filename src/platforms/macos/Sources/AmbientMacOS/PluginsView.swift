@@ -7,10 +7,56 @@ struct PluginsSettingsView: View {
     @State private var expanded: UInt64?
     @State private var removing: PluginRecord?
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("plugins.help", bundle: .module)
-                Text("plugins.dataNotice", bundle: .module).font(.caption)
+        Form {
+            Section {
+                Text("plugins.summary", bundle: .module)
+                DisclosureGroup {
+                    Text("plugins.help", bundle: .module)
+                    Text("plugins.readOnlyWarning", bundle: .module)
+                } label: {
+                    Text("settings.details", bundle: .module)
+                }
+                Callout(
+                    tone: Theme.stale, systemImage: "exclamationmark.triangle",
+                    message: Text("plugins.riskSummary", bundle: .module)
+                ) {
+                    DisclosureGroup {
+                        Text("plugins.dataNotice", bundle: .module)
+                    } label: {
+                        Text("settings.details", bundle: .module)
+                    }
+                }
+            }
+            Section {
+                HStack {
+                    Button {
+                        Task { await plugins.addGoogle() }
+                    } label: {
+                        Text("plugins.addGoogle", bundle: .module)
+                    }
+                    Button {
+                        Task { await plugins.chooseFolder() }
+                    } label: {
+                        Text("plugins.addFolder", bundle: .module)
+                    }
+                    Menu {
+                        ForEach(plugins.codexFolders, id: \.self) { url in
+                            Button {
+                                Task { await plugins.open(url) }
+                            } label: {
+                                let name = url.pathComponents.suffix(3).joined(separator: " / ")
+                                Text(verbatim: name)
+                            }
+                        }
+                    } label: {
+                        Text("plugins.addCodex", bundle: .module)
+                    }
+                }.disabled(plugins.working)
+            }.controlSize(.small)
+            Section {
+                if plugins.plugins.isEmpty {
+                    Text("plugins.noInstalled", bundle: .module).foregroundStyle(.secondary)
+                }
                 ForEach(plugins.plugins) { p in
                     DisclosureGroup(
                         isExpanded: Binding(
@@ -40,39 +86,17 @@ struct PluginsSettingsView: View {
                         }.disabled(plugins.working || p.tools.isEmpty && !p.enabled)
                     }
                 }
-                HStack {
-                    Button {
-                        Task { await plugins.addGoogle() }
-                    } label: {
-                        Text("plugins.addGoogle", bundle: .module)
-                    }
-                    Button {
-                        Task { await plugins.chooseFolder() }
-                    } label: {
-                        Text("plugins.addFolder", bundle: .module)
-                    }
-                    Menu {
-                        ForEach(plugins.codexFolders, id: \.self) { url in
-                            Button {
-                                Task { await plugins.open(url) }
-                            } label: {
-                                let name = url.pathComponents.suffix(3).joined(separator: " / ")
-                                Text(verbatim: name)
-                            }
-                        }
-                    } label: {
-                        Text("plugins.addCodex", bundle: .module)
-                    }
-                }.disabled(plugins.working)
+            } header: {
+                Text("plugins.installed", bundle: .module)
+            }
+            Section {
                 if let failure = plugins.failureKey {
                     Callout(
                         tone: Theme.error, systemImage: "exclamationmark.circle",
                         message: Text(LocalizedStringKey(failure), bundle: .module))
                 }
                 PluginCallLogView(calls: plugins.calls)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
-            Text("plugins.title", bundle: .module)
+            }
         }
         .task { await plugins.load() }
         .sheet(
@@ -181,128 +205,159 @@ private struct PluginReviewView: View {
     let plugins: PluginsModel
     var body: some View {
         if let d = plugins.draft {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    let title =
-                        d.review.version.isEmpty
-                        ? d.review.name : "\(d.review.name) \(d.review.version)"
-                    Text(verbatim: title).font(.title3.bold())
-                    Text("plugins.reviewHelp", bundle: .module)
-                    ForEach(d.review.warnings, id: \.self) {
-                        Text(verbatim: $0).font(.caption).foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: "shippingbox").font(.title2)
+                    VStack(alignment: .leading, spacing: 6) {
+                        let title =
+                            d.review.version.isEmpty
+                            ? d.review.name : "\(d.review.name) \(d.review.version)"
+                        Text(verbatim: title).font(.title3.bold())
+                        Text("plugins.reviewHelp", bundle: .module).font(.caption)
                     }
-                    Text("plugins.skills", bundle: .module).font(.headline)
-                    if d.review.skills.isEmpty { Text("plugins.noSkills", bundle: .module) }
-                    ForEach(d.review.skills, id: \.name) { skill in
-                        DisclosureGroup {
-                            Text(verbatim: skill.text).font(.caption.monospaced())
-                                .textSelection(.enabled)
-                        } label: {
-                            let label =
-                                skill.description.isEmpty
-                                ? skill.name : "\(skill.name): \(skill.description)"
-                            Text(verbatim: label)
-                        }
-                    }
-                    Text("plugins.servers", bundle: .module).font(.headline)
-                    ForEach(d.review.servers, id: \.key) { s in
-                        PluginServerHeader(key: s.key, kind: s.kind, downloads: s.downloads)
-                        if d.plugin == nil && s.needsKey && !s.kind.startsProcess {
-                            SecureField(
-                                text: Binding(
-                                    get: { plugins.draft?.tokens[s.key, default: ""] ?? "" },
-                                    set: { plugins.draft?.tokens[s.key] = $0 })
-                            ) {
-                                Text("plugins.token", bundle: .module)
-                            }
-                        }
-                        if d.plugin == nil {
-                            ForEach(s.kind.envNames, id: \.self) { name in
-                                SecureField(
-                                    text: Binding(
-                                        get: { plugins.draft?.values[s.key]?[name] ?? "" },
-                                        set: {
-                                            plugins.draft?.values[s.key, default: [:]][name] = $0
-                                        })
-                                ) { Text(verbatim: name) }
-                            }
-                        } else if let id = s.kind.managedID, let p = d.plugin,
-                            let server = p.servers.first(where: { $0.key == s.key })
-                        {
-                            PluginManagedControls(
-                                plugin: p, server: server, id: id, plugins: plugins,
-                                chatGPT: nil
-                            ) {
-                                await plugins.runDraft(server: s.key)
-                            }
-                        } else if s.kind.isLocal {
-                            PluginRunButton(
-                                running: plugins.running?.server == s.key, plugins: plugins
-                            ) {
-                                await plugins.runDraft(server: s.key)
-                            }
-                        }
-                        PluginDiscoveryStatus(found: d.discoveries[s.key])
-                        ForEach(d.discoveries[s.key]?.tools ?? []) { t in
-                            Toggle(
-                                isOn: Binding(
-                                    get: {
-                                        let id = "\(s.key)/\(t.name)"
-                                        return plugins.draft?.selected.contains(id) == true
-                                    },
-                                    set: { on in
-                                        if on {
-                                            plugins.draft?.selected.insert("\(s.key)/\(t.name)")
-                                        } else {
-                                            plugins.draft?.selected.remove("\(s.key)/\(t.name)")
-                                        }
-                                    })
-                            ) {
-                                VStack(alignment: .leading) {
-                                    Text(verbatim: t.name)
-                                    if let description = t.description {
-                                        Text(verbatim: description).font(.caption)
-                                    }
-                                    let mark =
-                                        t.readOnly
-                                        ? "plugins.declaredReadOnly" : "plugins.notReadOnly"
-                                    Text(LocalizedStringKey(mark), bundle: .module)
-                                        .font(.caption).foregroundStyle(.secondary)
-                                }
-                            }.disabled(!t.approvable)
-                        }
-                    }
-                    if d.review.servers.contains(where: { !$0.kind.startsProcess }) {
-                        Text("plugins.readOnlyWarning", bundle: .module).font(.callout)
-                    }
-                    Text("plugins.dataNotice", bundle: .module).font(.caption)
-                    if let failure = plugins.failureKey {
-                        Callout(
-                            tone: Theme.error, systemImage: "exclamationmark.circle",
-                            message: Text(LocalizedStringKey(failure), bundle: .module))
-                    }
-                    HStack {
-                        Button(role: .cancel) {
-                            plugins.draft = nil
-                        } label: {
-                            Text("plugins.close", bundle: .module)
-                        }
-                        if d.plugin == nil {
-                            Button {
-                                Task { await plugins.installDraft() }
-                            } label: {
-                                Text("plugins.install", bundle: .module)
-                            }
-                        } else {
-                            Button {
-                                Task { await plugins.enableDraft() }
-                            } label: {
-                                Text("plugins.enable", bundle: .module)
-                            }.disabled(d.selected.isEmpty)
-                        }
-                    }.disabled(plugins.working)
+                    Spacer(minLength: 0)
                 }.padding(20)
+                ScrollView {
+                    HStack(alignment: .top, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(d.review.warnings, id: \.self) {
+                                Text(verbatim: $0).font(.caption).foregroundStyle(.orange)
+                            }
+                            Text("plugins.skills", bundle: .module).font(.headline)
+                            if d.review.skills.isEmpty { Text("plugins.noSkills", bundle: .module) }
+                            ForEach(d.review.skills, id: \.name) { skill in
+                                DisclosureGroup {
+                                    Text(verbatim: skill.text).font(.caption.monospaced())
+                                        .textSelection(.enabled)
+                                } label: {
+                                    let label =
+                                        skill.description.isEmpty
+                                        ? skill.name : "\(skill.name): \(skill.description)"
+                                    Text(verbatim: label)
+                                }
+                            }
+                            Text("plugins.servers", bundle: .module).font(.headline)
+                            ForEach(d.review.servers, id: \.key) { s in
+                                PluginServerHeader(key: s.key, kind: s.kind, downloads: s.downloads)
+                                    .padding(12).ambientInset()
+                            }
+                            if d.review.servers.contains(where: { !$0.kind.startsProcess }) {
+                                Text("plugins.readOnlyWarning", bundle: .module).font(.callout)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("plugins.access", bundle: .module).font(.headline)
+                            ForEach(d.review.servers, id: \.key) { s in
+                                Text(verbatim: s.key).font(.headline)
+                                if d.plugin == nil && s.needsKey && !s.kind.startsProcess {
+                                    SecureField(
+                                        text: Binding(
+                                            get: {
+                                                plugins.draft?.tokens[s.key, default: ""] ?? ""
+                                            },
+                                            set: { plugins.draft?.tokens[s.key] = $0 })
+                                    ) {
+                                        Text("plugins.token", bundle: .module)
+                                    }
+                                }
+                                if d.plugin == nil {
+                                    ForEach(s.kind.envNames, id: \.self) { name in
+                                        SecureField(
+                                            text: Binding(
+                                                get: { plugins.draft?.values[s.key]?[name] ?? "" },
+                                                set: {
+                                                    plugins.draft?.values[s.key, default: [:]][
+                                                        name] = $0
+                                                })
+                                        ) { Text(verbatim: name) }
+                                    }
+                                } else if let id = s.kind.managedID, let p = d.plugin,
+                                    let server = p.servers.first(where: { $0.key == s.key })
+                                {
+                                    PluginManagedControls(
+                                        plugin: p, server: server, id: id, plugins: plugins,
+                                        chatGPT: nil
+                                    ) {
+                                        await plugins.runDraft(server: s.key)
+                                    }
+                                } else if s.kind.isLocal {
+                                    PluginRunButton(
+                                        running: plugins.running?.server == s.key, plugins: plugins
+                                    ) {
+                                        await plugins.runDraft(server: s.key)
+                                    }
+                                }
+                                PluginDiscoveryStatus(found: d.discoveries[s.key])
+                                Text("plugins.tools", bundle: .module).font(.headline)
+                                ForEach(d.discoveries[s.key]?.tools ?? []) { t in
+                                    Toggle(
+                                        isOn: Binding(
+                                            get: {
+                                                let id = "\(s.key)/\(t.name)"
+                                                return plugins.draft?.selected.contains(id) == true
+                                            },
+                                            set: { on in
+                                                if on {
+                                                    plugins.draft?.selected.insert(
+                                                        "\(s.key)/\(t.name)")
+                                                } else {
+                                                    plugins.draft?.selected.remove(
+                                                        "\(s.key)/\(t.name)")
+                                                }
+                                            })
+                                    ) {
+                                        VStack(alignment: .leading) {
+                                            Text(verbatim: t.name)
+                                            if let description = t.description {
+                                                Text(verbatim: description).font(.caption)
+                                            }
+                                            let mark =
+                                                t.readOnly
+                                                ? "plugins.declaredReadOnly" : "plugins.notReadOnly"
+                                            Text(LocalizedStringKey(mark), bundle: .module)
+                                                .font(.caption).foregroundStyle(.secondary)
+                                        }
+                                    }.disabled(!t.approvable)
+                                }
+                            }
+                            DisclosureGroup {
+                                Text("plugins.dataNotice", bundle: .module).font(.caption)
+                            } label: {
+                                Text("settings.details", bundle: .module)
+                            }
+                            if let failure = plugins.failureKey {
+                                Callout(
+                                    tone: Theme.error, systemImage: "exclamationmark.circle",
+                                    message: Text(LocalizedStringKey(failure), bundle: .module))
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }.padding(.horizontal, 20).padding(.bottom, 20)
+                }
+                Divider()
+                HStack {
+                    Spacer()
+                    Button(role: .cancel) {
+                        plugins.draft = nil
+                    } label: {
+                        Text("plugins.close", bundle: .module)
+                    }
+                    if d.plugin == nil {
+                        Button {
+                            Task { await plugins.installDraft() }
+                        } label: {
+                            Text("plugins.install", bundle: .module)
+                        }.ambientPrimary()
+                    } else {
+                        Button {
+                            Task { await plugins.enableDraft() }
+                        } label: {
+                            Text("plugins.enable", bundle: .module)
+                        }.ambientPrimary().disabled(d.selected.isEmpty)
+                    }
+                }.disabled(plugins.working)
+                    .padding(16)
             }
+            .background(Color(nsColor: .textBackgroundColor))
             .frame(width: 892, height: 756)
         }
     }
@@ -322,8 +377,11 @@ private struct PluginCallLogView: View {
                         .font(.caption)
                     Text(verbatim: call.arguments).font(.caption.monospaced())
                         .textSelection(.enabled)
-                    Text(LocalizedStringKey("plugins.outcome.\(call.outcome)"), bundle: .module)
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text(
+                        LocalizedStringKey("plugins.outcome." + String(call.outcome)),
+                        bundle: .module
+                    )
+                    .font(.caption).foregroundStyle(.secondary)
                 }
             }
         } label: {
@@ -392,13 +450,17 @@ private struct PluginServerHeader: View {
                     if downloads {
                         Text("plugins.local.downloads", bundle: .module).foregroundStyle(.orange)
                     }
-                    Text("plugins.local.readOnlyClaim", bundle: .module)
-                    Text("plugins.local.whenRuns", bundle: .module)
-                    Text("plugins.local.arguments", bundle: .module)
-                    if !env.isEmpty { Text("plugins.local.secrets", bundle: .module) }
-                    Text("plugins.local.orphans", bundle: .module)
-                    Text("plugins.local.path", bundle: .module)
-                    Text("plugins.local.packageFiles", bundle: .module)
+                    DisclosureGroup {
+                        Text("plugins.local.readOnlyClaim", bundle: .module)
+                        Text("plugins.local.whenRuns", bundle: .module)
+                        Text("plugins.local.arguments", bundle: .module)
+                        if !env.isEmpty { Text("plugins.local.secrets", bundle: .module) }
+                        Text("plugins.local.orphans", bundle: .module)
+                        Text("plugins.local.path", bundle: .module)
+                        Text("plugins.local.packageFiles", bundle: .module)
+                    } label: {
+                        Text("settings.details", bundle: .module)
+                    }
                 }.font(.caption)
             }
         case .managed:
@@ -407,17 +469,21 @@ private struct PluginServerHeader: View {
                 Text("plugins.google.title", bundle: .module).font(.caption)
                 Group {
                     Text("plugins.local.warning", bundle: .module).foregroundStyle(.orange)
-                    Text("plugins.google.downloads", bundle: .module)
-                    Text("plugins.google.protection", bundle: .module)
-                    Text("plugins.google.network", bundle: .module)
-                    Text("plugins.google.scopes", bundle: .module)
-                    Text("plugins.google.data", bundle: .module)
-                    Text("plugins.google.injection", bundle: .module)
-                    Text("plugins.google.testingMode", bundle: .module)
-                    Text("plugins.local.whenRuns", bundle: .module)
-                    Text("plugins.local.arguments", bundle: .module)
-                    Text("plugins.local.orphans", bundle: .module)
-                    Text("plugins.google.updates", bundle: .module)
+                    DisclosureGroup {
+                        Text("plugins.google.downloads", bundle: .module)
+                        Text("plugins.google.protection", bundle: .module)
+                        Text("plugins.google.network", bundle: .module)
+                        Text("plugins.google.scopes", bundle: .module)
+                        Text("plugins.google.data", bundle: .module)
+                        Text("plugins.google.injection", bundle: .module)
+                        Text("plugins.google.testingMode", bundle: .module)
+                        Text("plugins.local.whenRuns", bundle: .module)
+                        Text("plugins.local.arguments", bundle: .module)
+                        Text("plugins.local.orphans", bundle: .module)
+                        Text("plugins.google.updates", bundle: .module)
+                    } label: {
+                        Text("plugins.important", bundle: .module)
+                    }
                 }.font(.caption)
             }
         }
@@ -465,8 +531,8 @@ private struct PluginManagedControls: View {
                     }
                 }
             } else if let status {
-                let key = LocalizedStringKey("plugins.google.status.\(status.rawValue)")
-                Text(key, bundle: .module)
+                let key = "plugins.google.status." + status.rawValue
+                Text(LocalizedStringKey(key), bundle: .module)
                 switch status {
                 case .uvMissing:
                     Text(verbatim: Self.uvCommand).font(.caption.monospaced())
@@ -493,7 +559,7 @@ private struct PluginManagedControls: View {
                 Callout(
                     tone: Theme.error, systemImage: "exclamationmark.circle",
                     message: Text(
-                        LocalizedStringKey("plugins.google.result.\(result.status.rawValue)"),
+                        LocalizedStringKey("plugins.google.result." + result.status.rawValue),
                         bundle: .module))
                 if let tail = result.stderrTail {
                     Text("plugins.stderr", bundle: .module).font(.caption)
@@ -586,10 +652,10 @@ private struct PluginDiscoveryStatus: View {
     let found: Discovery?
     var body: some View {
         if let found, found.status != .ok {
-            let key = LocalizedStringKey("plugins.discovery.\(found.status.rawValue)")
+            let key = "plugins.discovery." + found.status.rawValue
             Callout(
                 tone: Theme.error, systemImage: "exclamationmark.circle",
-                message: Text(key, bundle: .module))
+                message: Text(LocalizedStringKey(key), bundle: .module))
             if let stderr = found.stderr {
                 Text("plugins.stderr", bundle: .module).font(.caption)
                 Text(verbatim: stderr).font(.caption2.monospaced()).textSelection(.enabled)

@@ -130,33 +130,61 @@ struct GitHubSettingsView: View {
     let chatGPT: ChatGPTModel
     @State private var confirmDelete = false
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("github.help", bundle: .module)
-                Text("github.allowlistHelp", bundle: .module).font(.caption)
+        Form {
+            Section {
+                DisclosureGroup {
+                    Text("github.help", bundle: .module)
+                    Text("github.allowlistHelp", bundle: .module)
+                } label: {
+                    Text("settings.details", bundle: .module)
+                }
+            } header: {
+                Text("github.title", bundle: .module)
+            }
+            Section {
                 ForEach(source.profiles) { p in
-                    Button(p.name) { Task { await source.use(p) } }
+                    Button {
+                        Task { await source.use(p) }
+                    } label: {
+                        HStack {
+                            Text(verbatim: p.name)
+                            Spacer()
+                            if source.profile?.id == p.id { Image(systemName: "checkmark") }
+                        }
+                    }
                 }
                 Button {
                     Task { await source.use(nil) }
                 } label: {
                     Text("integration.newProfile", bundle: .module)
                 }
+            }
+            Section {
                 TextField(text: $source.draft.name) { Text("integration.name", bundle: .module) }
-                Text("github.repositories", bundle: .module)
-                TextEditor(text: $source.draft.repositories).frame(minHeight: 70)
+                LabeledContent {
+                    TextEditor(text: $source.draft.repositories).frame(height: 90)
+                        .accessibilityLabel(Text("github.repositories", bundle: .module))
+                } label: {
+                    Text("github.repositories", bundle: .module)
+                }
                 Text("github.settingsHelp", bundle: .module).font(.caption)
                 Button {
                     Task { await source.saveProfile(chatGPT: chatGPT) }
                 } label: {
                     Text("integration.saveProfile", bundle: .module)
                 }
-                if source.profile != nil {
+            }
+            if source.profile != nil {
+                Section {
                     SecureField(text: $source.draft.token) {
                         Text("github.token", bundle: .module)
                     }
-                    Text("github.tokenHelp", bundle: .module).font(.caption)
-                    Text("github.replaceHelp", bundle: .module).font(.caption)
+                    DisclosureGroup {
+                        Text("github.tokenHelp", bundle: .module).font(.caption)
+                        Text("github.replaceHelp", bundle: .module).font(.caption)
+                    } label: {
+                        Text("settings.details", bundle: .module)
+                    }
                     Button {
                         Task { await source.replaceSecret(chatGPT: chatGPT) }
                     } label: {
@@ -174,17 +202,16 @@ struct GitHubSettingsView: View {
                         Text("github.delete", bundle: .module)
                     }
                 }
-                if let failure = source.failureKey {
-                    Callout(
-                        tone: Theme.error, systemImage: "exclamationmark.circle",
-                        message: Text(LocalizedStringKey(failure), bundle: .module))
-                }
-            }.disabled(source.changingCredential)
-        } label: {
-            Text("github.title", bundle: .module)
-        }
-        .task { await source.loadProfiles() }
-        .confirmationDialog(Text("github.delete", bundle: .module), isPresented: $confirmDelete) {
+            }
+            if let failure = source.failureKey {
+                Callout(
+                    tone: Theme.error, systemImage: "exclamationmark.circle",
+                    message: Text(LocalizedStringKey(failure), bundle: .module))
+            }
+        }.disabled(source.changingCredential)
+            .task { await source.loadProfiles() }
+            .confirmationDialog(Text("github.delete", bundle: .module), isPresented: $confirmDelete)
+        {
             Button(role: .destructive) {
                 Task { await source.deleteProfile(chatGPT: chatGPT) }
             } label: {

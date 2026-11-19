@@ -155,7 +155,7 @@ actor ModelCheckBridge: ModelCheckProtocol {
             r.expected_model == 1, let profile = ModelProfile(rawValue: r.expected_effort),
             r.expected_tier == 1,
             let purpose = ModelPurpose(rawValue: r.purpose),
-            purpose != .assistance || profile == .high,
+            purpose == .connectivity || profile == .high,
             let outcome = ModelCheckOutcome(rawValue: r.outcome),
             (r.stage == 1 && outcome == .pending) || (r.stage == 2 && outcome != .pending),
             let model = ModelCheckField(rawValue: r.actual_model),
@@ -185,9 +185,10 @@ actor ModelCheckBridge: ModelCheckProtocol {
         // Folded totals make the attempt count unbounded; live rows stay bounded in Core.
         guard r.attempts <= UInt64(Int64.max), r.unknown <= r.attempts, !sum.overflow,
             sum.partialValue == r.total_tokens,
-            r.has_latest <= 1, r.reserved == 0, (r.attempts == 0) == (r.has_latest == 0)
+            r.has_latest <= 1, r.reserved == 0, r.attempts > 0 || r.has_latest == 0
         else { throw ModelCheckFailure.native }
         let latest = r.has_latest == 1 ? try decode(r.latest) : nil
+        guard latest?.purpose != .observation else { throw ModelCheckFailure.native }
         return ModelCheckSummary(
             attempts: r.attempts, input: r.input_tokens, output: r.output_tokens,
             total: r.total_tokens, unknown: r.unknown, latest: latest)

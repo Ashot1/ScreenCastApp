@@ -59,6 +59,28 @@ import Observation
         self.voice = voice ?? .production()
         plugins = PluginsModel(memory: coordinator.memory, secrets: coordinator.plugins)
     }
+    public func makeObservationSession(model: AssistantModel) -> ObservationSession {
+        let overlay = HighlightOverlay()
+        return ObservationSession(
+            memory: coordinator.memory, dispatcher: coordinator, source: ScreenFrameSource(),
+            draw: { value in
+                if let value {
+                    overlay.show(normalizedRect: value.rect.cgRect, displayKey: value.displayKey)
+                } else {
+                    overlay.hide()
+                }
+            },
+            changed: { [weak self, weak model] in
+                guard let self, let model else { return }
+                await self.observationDidChange(model)
+            })
+    }
+    func observationDidChange(_ model: AssistantModel) async {
+        guard !model.closing else { return }
+        await model.reload()
+        guard !model.closing else { return }
+        await refreshCurrentResult()
+    }
     var busy: Bool { state == .working || state == .cancelling }
     var replyProposal: Proposal? {
         guard let replyParent else { return nil }

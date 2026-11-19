@@ -203,17 +203,24 @@ extension MemorySession {
         }
         return roots
     }
-    func saveLocalRoot(path: String, expected: UInt64, exclusions: [String]) throws
+    func saveLocalRoot(path: String, expected: UInt64, exclusions: [String]) async throws
         -> LocalRootSettings
     {
-        try LocalSourceBridge.save(
-            memory: sourceMemoryHandle(), path: path, expected: expected, exclusions: exclusions)
+        return try await withObservationMutation {
+            try LocalSourceBridge.save(
+                memory: sourceMemoryHandle(), path: path, expected: expected, exclusions: exclusions
+            )
+
+        }
     }
-    func deleteLocalRoot(_ root: LocalRootSettings) throws {
-        let handle = try sourceMemoryHandle()
-        try LocalSourceBridge.withText(root.path) {
-            try LocalSourceBridge.check(
-                ambient_source_v1_settings_delete(handle, $0, root.revision))
+    func deleteLocalRoot(_ root: LocalRootSettings) async throws {
+        return try await withObservationMutation {
+            let handle = try sourceMemoryHandle()
+            try LocalSourceBridge.withText(root.path) {
+                try LocalSourceBridge.check(
+                    ambient_source_v1_settings_delete(handle, $0, root.revision))
+            }
+
         }
     }
     func beginLocalRead(_ task: MemoryTask, root: LocalRootSettings, expiresAt: Int64) throws
@@ -236,14 +243,17 @@ extension MemorySession {
         guard try sourceMemoryHandle() == op.memory else { throw ModelCheckFailure.closed }
         return try LocalSourceBridge.preview(op, index: index)
     }
-    func bindLocalBranch(_ op: LocalSourceOperation, index: Int) throws -> UInt64 {
-        guard try sourceMemoryHandle() == op.memory, (0..<256).contains(index) else {
-            throw ModelCheckFailure.invalid
+    func bindLocalBranch(_ op: LocalSourceOperation, index: Int) async throws -> UInt64 {
+        return try await withObservationMutation {
+            guard try sourceMemoryHandle() == op.memory, (0..<256).contains(index) else {
+                throw ModelCheckFailure.invalid
+            }
+            var id: UInt64 = 0
+            try LocalSourceBridge.check(
+                ambient_source_v1_bind(
+                    op.memory, op.id, UInt32(index), Int64(Date().timeIntervalSince1970), &id))
+            return id
+
         }
-        var id: UInt64 = 0
-        try LocalSourceBridge.check(
-            ambient_source_v1_bind(
-                op.memory, op.id, UInt32(index), Int64(Date().timeIntervalSince1970), &id))
-        return id
     }
 }

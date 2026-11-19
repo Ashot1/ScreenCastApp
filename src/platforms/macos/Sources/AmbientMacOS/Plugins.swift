@@ -426,9 +426,12 @@ extension MemorySession {
         }
         return revision
     }
-    func setPluginEnabled(_ id: UInt64, enabled: Bool) throws {
-        let h = try sourceMemoryHandle()
-        try IntegrationBridge.check(ambient_plugin_v2_set_enabled(h, id, enabled ? 1 : 0))
+    func setPluginEnabled(_ id: UInt64, enabled: Bool) async throws {
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            try IntegrationBridge.check(ambient_plugin_v2_set_enabled(h, id, enabled ? 1 : 0))
+
+        }
     }
     /// Core first: the new generation is the one native writes into the Keychain envelope.
     func revokePluginCredential(_ p: PluginRecord, server: String) throws -> UInt64 {
@@ -440,15 +443,22 @@ extension MemorySession {
         }
         return revision
     }
-    func beginPluginRemoval(_ p: PluginRecord) throws -> UInt64 {
-        let h = try sourceMemoryHandle()
-        var revision: UInt64 = 0
-        try IntegrationBridge.check(ambient_plugin_v2_begin_removal(h, p.id, p.revision, &revision))
-        return revision
+    func beginPluginRemoval(_ p: PluginRecord) async throws -> UInt64 {
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            var revision: UInt64 = 0
+            try IntegrationBridge.check(
+                ambient_plugin_v2_begin_removal(h, p.id, p.revision, &revision))
+            return revision
+
+        }
     }
-    func finishPluginRemoval(_ id: UInt64, revision: UInt64) throws {
-        let h = try sourceMemoryHandle()
-        try IntegrationBridge.check(ambient_plugin_v2_finish_removal(h, id, revision))
+    func finishPluginRemoval(_ id: UInt64, revision: UInt64) async throws {
+        return try await withObservationMutation {
+            let h = try sourceMemoryHandle()
+            try IntegrationBridge.check(ambient_plugin_v2_finish_removal(h, id, revision))
+
+        }
     }
 }
 

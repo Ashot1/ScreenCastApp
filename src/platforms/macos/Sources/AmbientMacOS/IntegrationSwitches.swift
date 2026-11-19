@@ -49,9 +49,16 @@ struct IntegrationSwitchesView: View {
     let model: AssistantModel
     let chatGPT: ChatGPTModel
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("integrations.help", bundle: .module)
+        Form {
+            Section {
+                Text("integrations.summary", bundle: .module)
+                DisclosureGroup {
+                    Text("integrations.help", bundle: .module).foregroundStyle(.secondary)
+                } label: {
+                    Text("settings.details", bundle: .module)
+                }
+            }
+            Section {
                 ForEach(BuiltInIntegration.allCases, id: \.self) { kind in
                     Toggle(
                         isOn: Binding(
@@ -63,17 +70,33 @@ struct IntegrationSwitchesView: View {
                                 }
                             })
                     ) {
-                        Text(LocalizedStringKey(kind.titleKey), bundle: .module)
-                    }.disabled(model.integrations.changing)
+                        let icon =
+                            switch kind {
+                            case .localProjects: "folder"
+                            case .codex: "terminal"
+                            case .github: "chevron.left.forwardslash.chevron.right"
+                            case .jira: "checklist"
+                            case .todoist: "checkmark.circle"
+                            }
+                        Label {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(LocalizedStringKey(kind.titleKey), bundle: .module)
+                                Text(
+                                    LocalizedStringKey(kind.titleKey + ".description"),
+                                    bundle: .module
+                                ).font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: {
+                            Image(systemName: icon)
+                        }
+                    }.toggleStyle(.switch).disabled(model.integrations.changing)
                 }
                 if let failure = model.integrations.failureKey {
                     Callout(
                         tone: Theme.error, systemImage: "exclamationmark.circle",
                         message: Text(LocalizedStringKey(failure), bundle: .module))
                 }
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
-            Text("integrations.title", bundle: .module)
+            }
         }
         .task { await model.integrations.load() }
     }

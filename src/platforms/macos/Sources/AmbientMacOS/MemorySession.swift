@@ -6,6 +6,32 @@ public actor MemorySession {
     private let databaseURL: URL?
     private var handle: UInt64 = 0
     private var closed = false
+    private weak var observationSession: ObservationSession?
+    private var observationRevision: UInt64 = 0
+    // Snapshot of the last successfully published ABI fact, not another credential owner.
+    private var observationSessionValid = false
+    private var observationSessionEpoch: UInt64 = 0
+
+    func observeChanges(_ session: ObservationSession) async {
+        observationSession = session
+        await observationDidMutate()
+    }
+    func observationDidMutate() async {
+        observationRevision += 1
+        await observationSession?.memoryChanged(
+            revision: observationRevision, epoch: observationSessionEpoch,
+            sessionValid: observationSessionValid)
+    }
+    func withObservationMutation<T: Sendable>(_ body: () throws -> T) async throws -> T {
+        let result: T
+        do { result = try body() } catch {
+            // A write may have committed before returned projection validation failed.
+            await observationDidMutate()
+            throw error
+        }
+        await observationDidMutate()
+        return result
+    }
     public init(databaseURL: URL? = nil) { self.databaseURL = databaseURL }
     deinit {
         // Explicit close reports errors; this releases the last owner's handle if it disappears.
@@ -80,60 +106,90 @@ public actor MemorySession {
                 ambient_v3_tasks(handle, after, 50, p, r, 50, b, 262_144)
             }, decode: decodeTask)
     }
-    public func createTask(_ text: String) throws -> MemoryTask {
-        try openIfNeeded()
-        var id: UInt64 = 0
-        try withText(text) { try check(ambient_v3_create_task(handle, $0, &id)) }
-        return try task(id)
+    public func createTask(_ text: String) async throws -> MemoryTask {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var id: UInt64 = 0
+            try withText(text) { try check(ambient_v3_create_task(handle, $0, &id)) }
+            return try task(id)
+
+        }
     }
-    public func editTask(_ task: MemoryTask, text: String) throws -> MemoryTask {
-        try openIfNeeded()
-        try withText(text) { try check(ambient_v3_edit_task(handle, task.id, task.revision, $0)) }
-        return try self.task(task.id)
+    public func editTask(_ task: MemoryTask, text: String) async throws -> MemoryTask {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try withText(text) {
+                try check(ambient_v3_edit_task(handle, task.id, task.revision, $0))
+            }
+            return try self.task(task.id)
+
+        }
     }
-    public func deleteTask(_ task: MemoryTask) throws {
-        try openIfNeeded()
-        let others = try deletionVersions(task: task, evidenceID: 0)
-        try others.withUnsafeBufferPointer {
+    public func deleteTask(_ task: MemoryTask) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            let others = try deletionVersions(task: task, evidenceID: 0)
+            try others.withUnsafeBufferPointer {
+                try check(
+                    ambient_v3_delete_task(
+                        handle, task.id, task.revision, $0.baseAddress, UInt32($0.count)))
+            }
+
+        }
+    }
+    public func addNote(to task: MemoryTask, text: String, at: Int64) async throws -> UInt64 {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var id: UInt64 = 0
+            try withText(text) {
+                try check(ambient_v3_add_note(handle, task.id, task.revision, $0, at, &id))
+            }
+            guard validID(id) else { throw MemoryFailure.native }
+            return id
+
+        }
+    }
+    public func editEvidence(_ id: UInt64, from task: MemoryTask, text: String, at: Int64)
+        async throws
+    {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try withText(text) {
+                try check(ambient_v3_edit_evidence(handle, id, task.id, task.revision, $0, at))
+            }
+
+        }
+    }
+    public func deleteEvidence(_ id: UInt64, from task: MemoryTask) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            let others = try deletionVersions(task: task, evidenceID: id)
+            try others.withUnsafeBufferPointer {
+                try check(
+                    ambient_v3_delete_evidence(
+                        handle, id, task.id, task.revision, $0.baseAddress, UInt32($0.count)))
+            }
+
+        }
+    }
+    public func moveEvidence(_ id: UInt64, from: MemoryTask, to: MemoryTask, at: Int64) async throws
+    {
+        return try await withObservationMutation {
+            try openIfNeeded()
             try check(
-                ambient_v3_delete_task(
-                    handle, task.id, task.revision, $0.baseAddress, UInt32($0.count)))
+                ambient_v3_move_evidence(handle, id, from.id, from.revision, to.id, to.revision, at)
+            )
+
         }
     }
-    public func addNote(to task: MemoryTask, text: String, at: Int64) throws -> UInt64 {
-        try openIfNeeded()
-        var id: UInt64 = 0
-        try withText(text) {
-            try check(ambient_v3_add_note(handle, task.id, task.revision, $0, at, &id))
-        }
-        guard validID(id) else { throw MemoryFailure.native }
-        return id
-    }
-    public func editEvidence(_ id: UInt64, from task: MemoryTask, text: String, at: Int64) throws {
-        try openIfNeeded()
-        try withText(text) {
-            try check(ambient_v3_edit_evidence(handle, id, task.id, task.revision, $0, at))
-        }
-    }
-    public func deleteEvidence(_ id: UInt64, from task: MemoryTask) throws {
-        try openIfNeeded()
-        let others = try deletionVersions(task: task, evidenceID: id)
-        try others.withUnsafeBufferPointer {
+    public func setLink(from: MemoryTask, to: MemoryTask, related: Bool, at: Int64) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
             try check(
-                ambient_v3_delete_evidence(
-                    handle, id, task.id, task.revision, $0.baseAddress, UInt32($0.count)))
+                ambient_v3_set_link(
+                    handle, from.id, from.revision, to.id, to.revision, related ? 1 : 0, at))
+
         }
-    }
-    public func moveEvidence(_ id: UInt64, from: MemoryTask, to: MemoryTask, at: Int64) throws {
-        try openIfNeeded()
-        try check(
-            ambient_v3_move_evidence(handle, id, from.id, from.revision, to.id, to.revision, at))
-    }
-    public func setLink(from: MemoryTask, to: MemoryTask, related: Bool, at: Int64) throws {
-        try openIfNeeded()
-        try check(
-            ambient_v3_set_link(
-                handle, from.id, from.revision, to.id, to.revision, related ? 1 : 0, at))
     }
     func beginCheck(userReported: Bool, profile: ModelProfile = .low, at: Int64) throws -> UInt64 {
         try openIfNeeded()
@@ -144,16 +200,106 @@ public actor MemorySession {
         guard operation != 0 else { throw ModelCheckFailure.native }
         return operation
     }
+    func setObservationPolicy(_ policy: ObservationPolicy) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            guard (1...60).contains(policy.perHourLimit),
+                policy.started == policy.creditAcknowledged
+            else {
+                throw ModelCheckFailure.invalid
+            }
+            let encoder = JSONEncoder()
+            encoder.keyEncodingStrategy = .convertToSnakeCase
+            let bytes = try encoder.encode(policy)
+            try bytes.withUnsafeBytes {
+                try ModelCheckBridge.check(
+                    ambient_observe_v1_set_policy(
+                        handle,
+                        AmbientText(
+                            bytes: $0.bindMemory(to: UInt8.self).baseAddress,
+                            length: UInt32($0.count)))
+                )
+            }
+
+        }
+    }
+    func submitObservationFrame(_ frame: ObservationFrame, idleSeconds: UInt32, at: ObservationTime)
+        throws -> ObservationFrameResult
+    {
+        try openIfNeeded()
+        return try ObservationBridge.submit(frame, memory: handle, idleSeconds: idleSeconds, at: at)
+    }
+    func observationTick(idleSeconds: UInt32, appSwitched: Bool, at: ObservationTime) throws
+        -> ObservationCadence
+    {
+        try openIfNeeded()
+        var next = AmbientObserveNext()
+        try ModelCheckBridge.check(
+            ambient_observe_v1_tick(
+                handle, at.utc, at.monotonicMS, idleSeconds, appSwitched ? 1 : 0, &next))
+        return try ObservationBridge.cadence(next)
+    }
+    func beginObservation(at: ObservationTime) throws -> ObservationBegin {
+        try openIfNeeded()
+        var out = AmbientObserveBegin()
+        try ModelCheckBridge.check(ambient_observe_v1_begin(handle, at.utc, at.monotonicMS, &out))
+        guard out.reserved == 0, (out.operation != 0) == (out.block == 0) else {
+            throw ModelCheckFailure.native
+        }
+        switch out.block {
+        case 0: return .ready(out.operation)
+        case 1: return .notDue
+        case 2: return .busy
+        case 3: return .cloudUnavailable
+        default: throw ModelCheckFailure.native
+        }
+    }
+    func observationHighlight() throws -> ObservationHighlightState {
+        try openIfNeeded()
+        let state = try ObservationBridge.json(ObservationHighlightState.self, limit: 8192) {
+            ambient_observe_v1_highlight(handle, $0, $1, $2)
+        }
+        if let value = state.highlight {
+            guard value.proposalId > 0, value.proposalId <= UInt64(Int64.max),
+                value.frameId > 0, value.frameId <= UInt64(Int64.max),
+                !value.displayKey.isEmpty, value.displayKey.utf8.count <= 128,
+                !value.anchor.isEmpty, value.anchor.utf8.count <= 1024, value.rect.valid
+            else { throw ModelCheckFailure.native }
+        }
+        return state
+    }
+    func observationJournal(at utc: Int64) throws -> ObservationJournal {
+        try openIfNeeded()
+        let journal = try ObservationBridge.json(ObservationJournal.self, limit: 16_777_216) {
+            ambient_observe_v1_journal(handle, utc, $0, $1, $2)
+        }
+        guard journal.sends.count <= 1440, journal.unsentFrames <= journal.logFrames,
+            journal.logFrames <= 20_000, (1...60).contains(journal.policy.perHourLimit),
+            journal.policy.started == journal.policy.creditAcknowledged
+        else { throw ModelCheckFailure.native }
+        return journal
+    }
+    func deleteObservationLog() async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try ModelCheckBridge.check(ambient_observe_v1_delete_log(handle))
+
+        }
+    }
     func checkSummary() throws -> ModelCheckSummary {
         try openIfNeeded()
         var result = AmbientModelSummary()
         try ModelCheckBridge.check(ambient_model_v6_summary(handle, &result))
         return try ModelCheckBridge.decode(result)
     }
-    func setModelSession(epoch: UInt64, valid: Bool, reported: Bool) throws {
+    func setModelSession(epoch: UInt64, valid: Bool, reported: Bool) async throws {
         try openIfNeeded()
         try ModelCheckBridge.check(
             ambient_model_v6_session(handle, epoch, valid ? 1 : 0, reported ? 1 : 0))
+        guard observationSessionEpoch != epoch || observationSessionValid != valid else { return }
+        observationSessionEpoch = epoch
+        observationSessionValid = valid
+        await observationDidMutate()
     }
     func assistanceAvailable() throws -> Bool {
         try openIfNeeded()
@@ -276,15 +422,22 @@ public actor MemorySession {
         default: throw ModelCheckFailure.native
         }
     }
-    func setProposalVisibility(_ target: ProposalTarget, visible: Bool) throws {
-        try openIfNeeded()
-        try ModelCheckBridge.check(
-            ambient_model_v6_visibility(handle, target.native, visible ? 1 : 0))
+    func setProposalVisibility(_ target: ProposalTarget, visible: Bool) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try ModelCheckBridge.check(
+                ambient_model_v6_visibility(handle, target.native, visible ? 1 : 0))
+
+        }
     }
-    func clearDiscussion(_ task: MemoryTask, workspaceRevision: UInt64) throws {
-        try openIfNeeded()
-        try ModelCheckBridge.check(
-            ambient_model_v6_clear_discussion(handle, task.id, task.revision, workspaceRevision))
+    func clearDiscussion(_ task: MemoryTask, workspaceRevision: UInt64) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try ModelCheckBridge.check(
+                ambient_model_v6_clear_discussion(handle, task.id, task.revision, workspaceRevision)
+            )
+
+        }
     }
     func copyProposal(_ target: ProposalTarget) throws -> String {
         try openIfNeeded()
@@ -306,9 +459,12 @@ public actor MemorySession {
         guard paused <= 1 else { throw MemoryFailure.native }
         return paused == 1
     }
-    public func setManualPause(_ paused: Bool) throws {
-        try openIfNeeded()
-        try check(ambient_v3_set_manual_pause(handle, paused ? 1 : 0))
+    public func setManualPause(_ paused: Bool) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(ambient_v3_set_manual_pause(handle, paused ? 1 : 0))
+
+        }
     }
     public func evidence(taskID: UInt64, after: UInt64 = 0) throws -> MemoryPage<MemoryEvidence> {
         try openIfNeeded()
@@ -409,30 +565,36 @@ public actor MemorySession {
     }
     public func ingestSource(
         to task: MemoryTask, key: MemorySourceKey, version: String?, evidence: MemorySourceEvidence
-    ) throws -> MemoryIngestOutcome {
-        try openIfNeeded()
-        var result = AmbientIngest()
-        try withSource(key, version, evidence) { k, e in
-            try check(ambient_v3_ingest_source(handle, task.id, task.revision, k, e, &result))
-        }
-        switch result.outcome {
-        case 0 where validID(result.evidence_id): return .applied(result.evidence_id)
-        case 1 where result.evidence_id == 0: return .forgotten
-        case 2 where result.evidence_id == 0: return .userProtected
-        default: throw MemoryFailure.native
+    ) async throws -> MemoryIngestOutcome {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var result = AmbientIngest()
+            try withSource(key, version, evidence) { k, e in
+                try check(ambient_v3_ingest_source(handle, task.id, task.revision, k, e, &result))
+            }
+            switch result.outcome {
+            case 0 where validID(result.evidence_id): return .applied(result.evidence_id)
+            case 1 where result.evidence_id == 0: return .forgotten
+            case 2 where result.evidence_id == 0: return .userProtected
+            default: throw MemoryFailure.native
+            }
+
         }
     }
     public func bindSource(
         to task: MemoryTask, key: MemorySourceKey, version: String?, evidence: MemorySourceEvidence,
         at: Int64
-    ) throws -> UInt64 {
-        try openIfNeeded()
-        var id: UInt64 = 0
-        try withSource(key, version, evidence) { k, e in
-            try check(ambient_v3_bind_source(handle, task.id, task.revision, k, e, at, &id))
+    ) async throws -> UInt64 {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var id: UInt64 = 0
+            try withSource(key, version, evidence) { k, e in
+                try check(ambient_v3_bind_source(handle, task.id, task.revision, k, e, at, &id))
+            }
+            guard validID(id) else { throw MemoryFailure.native }
+            return id
+
         }
-        guard validID(id) else { throw MemoryFailure.native }
-        return id
     }
     public func close() throws {
         guard !closed else { return }
@@ -731,122 +893,174 @@ public actor MemorySession {
                 return MemoryReference(id: r.id, taskID: taskID, text: text)
             })
     }
-    public func addStep(to task: MemoryTask, input: MemoryStepInput) throws -> UInt64 {
-        try openIfNeeded()
-        var id: UInt64 = 0
-        try withStep(input) {
-            try check(ambient_v3_add_step(handle, task.id, task.revision, $0, &id))
-        }
-        guard validID(id) else { throw MemoryFailure.native }
-        return id
-    }
-    public func editStep(_ task: MemoryTask, id: UInt64, input: MemoryStepInput) throws {
-        try openIfNeeded()
-        try withStep(input) {
-            try check(ambient_v3_edit_step(handle, task.id, task.revision, id, $0))
+    public func addStep(to task: MemoryTask, input: MemoryStepInput) async throws -> UInt64 {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var id: UInt64 = 0
+            try withStep(input) {
+                try check(ambient_v3_add_step(handle, task.id, task.revision, $0, &id))
+            }
+            guard validID(id) else { throw MemoryFailure.native }
+            return id
+
         }
     }
-    public func deleteStep(_ task: MemoryTask, id: UInt64) throws {
-        try openIfNeeded()
-        try check(ambient_v3_delete_step(handle, task.id, task.revision, id))
+    public func editStep(_ task: MemoryTask, id: UInt64, input: MemoryStepInput) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try withStep(input) {
+                try check(ambient_v3_edit_step(handle, task.id, task.revision, id, $0))
+            }
+
+        }
     }
-    public func setStepCompleted(_ task: MemoryTask, id: UInt64, at: Int64?) throws {
-        try openIfNeeded()
-        try check(
-            ambient_v3_set_step_completed(
-                handle, task.id, task.revision, id, at == nil ? 0 : 1, at ?? 0))
+    public func deleteStep(_ task: MemoryTask, id: UInt64) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(ambient_v3_delete_step(handle, task.id, task.revision, id))
+
+        }
     }
-    public func addCheck(to task: MemoryTask, stepID: UInt64, description: String) throws -> UInt64
+    public func setStepCompleted(_ task: MemoryTask, id: UInt64, at: Int64?) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(
+                ambient_v3_set_step_completed(
+                    handle, task.id, task.revision, id, at == nil ? 0 : 1, at ?? 0))
+
+        }
+    }
+    public func addCheck(to task: MemoryTask, stepID: UInt64, description: String) async throws
+        -> UInt64
     {
-        try openIfNeeded()
-        var id: UInt64 = 0
-        try withText(description) {
-            try check(ambient_v3_add_check(handle, task.id, task.revision, stepID, $0, &id))
-        }
-        guard validID(id) else { throw MemoryFailure.native }
-        return id
-    }
-    public func editCheck(_ task: MemoryTask, id: UInt64, description: String) throws {
-        try openIfNeeded()
-        try withText(description) {
-            try check(ambient_v3_edit_check(handle, task.id, task.revision, id, $0))
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var id: UInt64 = 0
+            try withText(description) {
+                try check(ambient_v3_add_check(handle, task.id, task.revision, stepID, $0, &id))
+            }
+            guard validID(id) else { throw MemoryFailure.native }
+            return id
+
         }
     }
-    public func deleteCheck(_ task: MemoryTask, id: UInt64) throws {
-        try openIfNeeded()
-        try check(ambient_v3_delete_check(handle, task.id, task.revision, id))
+    public func editCheck(_ task: MemoryTask, id: UInt64, description: String) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try withText(description) {
+                try check(ambient_v3_edit_check(handle, task.id, task.revision, id, $0))
+            }
+
+        }
+    }
+    public func deleteCheck(_ task: MemoryTask, id: UInt64) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(ambient_v3_delete_check(handle, task.id, task.revision, id))
+
+        }
     }
     public func setCheckResult(
         _ task: MemoryTask, id: UInt64, result: MemoryCheckResult, at: Int64?
-    ) throws {
-        try openIfNeeded()
-        try check(
-            ambient_v3_set_check_result(
-                handle, task.id, task.revision, id, result.rawValue, at == nil ? 0 : 1, at ?? 0))
+    ) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(
+                ambient_v3_set_check_result(
+                    handle, task.id, task.revision, id, result.rawValue, at == nil ? 0 : 1, at ?? 0)
+            )
+
+        }
     }
-    public func addDependency(_ task: MemoryTask, predecessor: UInt64, dependent: UInt64) throws {
-        try openIfNeeded()
-        var id: UInt64 = 0
-        try check(
-            ambient_v3_add_dependency(handle, task.id, task.revision, predecessor, dependent, &id))
+    public func addDependency(_ task: MemoryTask, predecessor: UInt64, dependent: UInt64)
+        async throws
+    {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            var id: UInt64 = 0
+            try check(
+                ambient_v3_add_dependency(
+                    handle, task.id, task.revision, predecessor, dependent, &id))
+
+        }
     }
-    public func deleteDependency(_ task: MemoryTask, id: UInt64) throws {
-        try openIfNeeded()
-        try check(ambient_v3_delete_dependency(handle, task.id, task.revision, id))
+    public func deleteDependency(_ task: MemoryTask, id: UInt64) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(ambient_v3_delete_dependency(handle, task.id, task.revision, id))
+
+        }
     }
-    public func setPlanCompleteness(_ task: MemoryTask, value: MemoryCompleteness) throws {
-        try openIfNeeded()
-        try check(ambient_v3_set_plan_completeness(handle, task.id, task.revision, value.rawValue))
+    public func setPlanCompleteness(_ task: MemoryTask, value: MemoryCompleteness) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(
+                ambient_v3_set_plan_completeness(handle, task.id, task.revision, value.rawValue))
+
+        }
     }
-    public func setInitiativeSuppressed(_ task: MemoryTask, value: Bool) throws {
-        try openIfNeeded()
-        try check(
-            ambient_v3_set_initiative_suppressed(handle, task.id, task.revision, value ? 1 : 0))
+    public func setInitiativeSuppressed(_ task: MemoryTask, value: Bool) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(
+                ambient_v3_set_initiative_suppressed(handle, task.id, task.revision, value ? 1 : 0))
+
+        }
     }
-    public func reopenTask(_ task: MemoryTask) throws {
-        try openIfNeeded()
-        try check(ambient_v3_reopen_task(handle, task.id, task.revision))
+    public func reopenTask(_ task: MemoryTask) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            try check(ambient_v3_reopen_task(handle, task.id, task.revision))
+
+        }
     }
     public func completeTask(
         _ task: MemoryTask, summary: String, keep: [UInt64], references: [String]
-    ) throws {
-        try openIfNeeded()
-        guard keep.count <= 1023, references.count <= 32 else { throw MemoryFailure.invalidInput }
-        var versions: [AmbientTaskVersion] = []
-        var after: UInt64 = 0
-        repeat {
-            let result = try keep.withUnsafeBufferPointer { k in
-                try page(
-                    empty: AmbientTask(),
-                    call: { p, r, b in
-                        ambient_v3_completion_impact(
-                            handle, task.id, k.baseAddress, UInt32(k.count), after, 50, p, r, 50, b,
-                            262_144)
-                    }, decode: decodeTask)
+    ) async throws {
+        return try await withObservationMutation {
+            try openIfNeeded()
+            guard keep.count <= 1023, references.count <= 32 else {
+                throw MemoryFailure.invalidInput
             }
-            guard result.taskRevision == task.revision else { throw MemoryFailure.stale }
-            versions += result.items.map {
-                AmbientTaskVersion(task_id: $0.id, revision: $0.revision)
-            }
-            guard versions.count <= 1023 else { throw MemoryFailure.native }
-            guard let next = result.nextAfter else { break }
-            guard next > after else { throw MemoryFailure.native }
-            after = next
-        } while true
-        try withText(summary) { summary in
-            try withTexts(references, limit: 2048) { refs in
-                try keep.withUnsafeBufferPointer { k in
-                    try refs.withUnsafeBufferPointer { r in
-                        try versions.withUnsafeBufferPointer { v in
-                            try check(
-                                ambient_v3_complete_task(
-                                    handle, task.id, task.revision, summary, k.baseAddress,
-                                    UInt32(k.count), r.baseAddress, UInt32(r.count), v.baseAddress,
-                                    UInt32(v.count)))
+            var versions: [AmbientTaskVersion] = []
+            var after: UInt64 = 0
+            repeat {
+                let result = try keep.withUnsafeBufferPointer { k in
+                    try page(
+                        empty: AmbientTask(),
+                        call: { p, r, b in
+                            ambient_v3_completion_impact(
+                                handle, task.id, k.baseAddress, UInt32(k.count), after, 50, p, r,
+                                50, b,
+                                262_144)
+                        }, decode: decodeTask)
+                }
+                guard result.taskRevision == task.revision else { throw MemoryFailure.stale }
+                versions += result.items.map {
+                    AmbientTaskVersion(task_id: $0.id, revision: $0.revision)
+                }
+                guard versions.count <= 1023 else { throw MemoryFailure.native }
+                guard let next = result.nextAfter else { break }
+                guard next > after else { throw MemoryFailure.native }
+                after = next
+            } while true
+            try withText(summary) { summary in
+                try withTexts(references, limit: 2048) { refs in
+                    try keep.withUnsafeBufferPointer { k in
+                        try refs.withUnsafeBufferPointer { r in
+                            try versions.withUnsafeBufferPointer { v in
+                                try check(
+                                    ambient_v3_complete_task(
+                                        handle, task.id, task.revision, summary, k.baseAddress,
+                                        UInt32(k.count), r.baseAddress, UInt32(r.count),
+                                        v.baseAddress,
+                                        UInt32(v.count)))
+                            }
                         }
                     }
                 }
             }
+
         }
     }
     private func withTexts<T>(

@@ -5,10 +5,21 @@ struct ChatGPTSettingsView: View {
     let chatGPT: ChatGPTModel
     @State private var confirmRecovery = false
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(LocalizedStringKey(chatGPT.state.key), bundle: .module).font(.headline)
-                Text("auth.help", bundle: .module)
+        Form {
+            Section {
+                Text("auth.summary", bundle: .module)
+            }
+            Section {
+                LabeledContent {
+                    Text(LocalizedStringKey(chatGPT.state.key), bundle: .module)
+                } label: {
+                    Text("auth.title", bundle: .module)
+                }
+                DisclosureGroup {
+                    Text("auth.help", bundle: .module).foregroundStyle(.secondary)
+                } label: {
+                    Text("settings.details", bundle: .module)
+                }
                 if let failure = chatGPT.failure {
                     Callout(
                         tone: Theme.error, systemImage: "exclamationmark.circle",
@@ -40,7 +51,7 @@ struct ChatGPTSettingsView: View {
                             Task { await chatGPT.connect() }
                         } label: {
                             Text("auth.continue", bundle: .module)
-                        }
+                        }.ambientPrimary()
                         if chatGPT.state == .saved || chatGPT.state == .expired {
                             Button {
                                 Task { await chatGPT.connect(refresh: true) }
@@ -50,15 +61,18 @@ struct ChatGPTSettingsView: View {
                         }
                     }
                 }
+            } header: {
+                Text("settings.connection", bundle: .module)
+            }
+            Section {
                 Button {
                     Task { await chatGPT.signOut() }
                 } label: {
                     Text("auth.signOut", bundle: .module)
                 }
-                Text("auth.localHelp", bundle: .module).font(.caption)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
-            Text("auth.title", bundle: .module)
+            } footer: {
+                Text("auth.localHelp", bundle: .module)
+            }
         }
         .confirmationDialog(
             Text("auth.confirmRecovery", bundle: .module), isPresented: $confirmRecovery

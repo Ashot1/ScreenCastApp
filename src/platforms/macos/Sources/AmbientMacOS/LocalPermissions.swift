@@ -23,27 +23,29 @@ import SwiftUI
 struct LocalPermissionsView: View {
     @Binding var permissions: LocalPermissions
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("permissions.help", bundle: .module)
-                LabeledContent {
-                    result(permissions.screenCapture)
-                } label: {
-                    Text("permissions.screenCapture", bundle: .module)
-                }
-                LabeledContent {
-                    result(permissions.accessibility)
-                } label: {
-                    Text("permissions.accessibility", bundle: .module)
-                }
+        Section {
+            LabeledContent {
+                result(permissions.screenCapture)
+            } label: {
+                Text("permissions.screenCapture", bundle: .module)
+            }
+            LabeledContent {
+                result(permissions.accessibility)
+            } label: {
+                Text("permissions.accessibility", bundle: .module)
+            }
+        } header: {
+            HStack {
+                Text("permissions.title", bundle: .module)
+                Spacer()
                 Button {
                     permissions.check()
                 } label: {
                     Text("permissions.check", bundle: .module)
-                }
+                }.buttonStyle(.link)
             }
-        } label: {
-            Text("permissions.title", bundle: .module)
+        } footer: {
+            Text("permissions.help", bundle: .module)
         }
     }
     private func result(_ value: Bool?) -> Text {

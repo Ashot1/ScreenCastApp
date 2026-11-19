@@ -1,4 +1,5 @@
 module CAmbient [system] {
+    header "../../../../bridge/include/ambient_observe.h"
     header "../../../../bridge/include/ambient.h"
     header "../../../../bridge/include/ambient_model.h"
     link "ambient_bridge"

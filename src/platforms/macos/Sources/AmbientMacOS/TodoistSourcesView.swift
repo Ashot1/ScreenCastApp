@@ -143,10 +143,18 @@ struct TodoistSettingsView: View {
     @State private var pendingAccount = ""
     @State private var pendingExcluded = false
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("todoist.help", bundle: .module)
-                Text("todoist.accountHelp", bundle: .module).font(.caption)
+        Form {
+            Section {
+                DisclosureGroup {
+                    Text("todoist.help", bundle: .module)
+                    Text("todoist.accountHelp", bundle: .module)
+                } label: {
+                    Text("settings.details", bundle: .module)
+                }
+            } header: {
+                Text("todoist.title", bundle: .module)
+            }
+            Section {
                 ForEach(source.profiles) { p in
                     Button {
                         Task { await source.use(p) }
@@ -159,13 +167,17 @@ struct TodoistSettingsView: View {
                 } label: {
                     Text("integration.newProfile", bundle: .module)
                 }
+            }
+            Section {
                 TextField(text: $source.draft.name) { Text("integration.name", bundle: .module) }
                 Button {
                     Task { await source.saveProfile(chatGPT: chatGPT) }
                 } label: {
                     Text("integration.saveProfile", bundle: .module)
                 }
-                if let profile = source.profile {
+            }
+            if let profile = source.profile {
+                Section {
                     LabeledContent {
                         if let account = profile.scope {
                             Text(verbatim: account)
@@ -187,8 +199,12 @@ struct TodoistSettingsView: View {
                     SecureField(text: $source.draft.token) {
                         Text("todoist.token", bundle: .module)
                     }
-                    Text("todoist.secretHelp", bundle: .module).font(.caption)
-                    Text("todoist.replaceHelp", bundle: .module).font(.caption)
+                    DisclosureGroup {
+                        Text("todoist.secretHelp", bundle: .module).font(.caption)
+                        Text("todoist.replaceHelp", bundle: .module).font(.caption)
+                    } label: {
+                        Text("settings.details", bundle: .module)
+                    }
                     Button {
                         Task { await source.replaceSecret(chatGPT: chatGPT) }
                     } label: {
@@ -206,8 +222,9 @@ struct TodoistSettingsView: View {
                         Text("todoist.delete", bundle: .module)
                     }
                 }
-                if !source.exclusions.isEmpty {
-                    Text("todoist.exclusions", bundle: .module)
+            }
+            if !source.exclusions.isEmpty {
+                Section {
                     ForEach(source.exclusions, id: \.self) { account in
                         HStack {
                             Text(verbatim: account)
@@ -220,50 +237,53 @@ struct TodoistSettingsView: View {
                             }
                         }
                     }
+                } header: {
+                    Text("todoist.exclusions", bundle: .module)
                 }
-                if let failure = source.failureKey {
-                    Callout(
-                        tone: Theme.error, systemImage: "exclamationmark.circle",
-                        message: Text(LocalizedStringKey(failure), bundle: .module))
-                }
-            }.disabled(source.changingCredential)
-        } label: {
-            Text("todoist.title", bundle: .module)
-        }
-        .task { await source.loadProfiles() }
-        .confirmationDialog(Text("todoist.delete", bundle: .module), isPresented: $confirmDelete) {
-            Button(role: .destructive) {
-                Task { await source.deleteProfile(chatGPT: chatGPT) }
-            } label: {
-                Text("todoist.delete", bundle: .module)
             }
-            Button(role: .cancel) {
-            } label: {
-                Text("auth.dismiss", bundle: .module)
+            if let failure = source.failureKey {
+                Callout(
+                    tone: Theme.error, systemImage: "exclamationmark.circle",
+                    message: Text(LocalizedStringKey(failure), bundle: .module))
             }
-        } message: {
-            Text("todoist.deleteHelp", bundle: .module)
-        }
-        .confirmationDialog(Text(verbatim: pendingAccount), isPresented: $confirmAccount) {
-            Button {
-                Task {
-                    await source.setScopeExcluded(
-                        pendingAccount, excluded: pendingExcluded, chatGPT: chatGPT)
+        }.disabled(source.changingCredential)
+            .task { await source.loadProfiles() }
+            .confirmationDialog(
+                Text("todoist.delete", bundle: .module), isPresented: $confirmDelete
+            ) {
+                Button(role: .destructive) {
+                    Task { await source.deleteProfile(chatGPT: chatGPT) }
+                } label: {
+                    Text("todoist.delete", bundle: .module)
                 }
-            } label: {
+                Button(role: .cancel) {
+                } label: {
+                    Text("auth.dismiss", bundle: .module)
+                }
+            } message: {
+                Text("todoist.deleteHelp", bundle: .module)
+            }
+            .confirmationDialog(Text(verbatim: pendingAccount), isPresented: $confirmAccount) {
+                Button {
+                    Task {
+                        await source.setScopeExcluded(
+                            pendingAccount, excluded: pendingExcluded, chatGPT: chatGPT)
+                    }
+                } label: {
+                    Text(
+                        LocalizedStringKey(pendingExcluded ? "todoist.exclude" : "todoist.allow"),
+                        bundle: .module)
+                }
+                Button(role: .cancel) {
+                } label: {
+                    Text("auth.dismiss", bundle: .module)
+                }
+            } message: {
                 Text(
-                    LocalizedStringKey(pendingExcluded ? "todoist.exclude" : "todoist.allow"),
+                    LocalizedStringKey(
+                        pendingExcluded ? "todoist.excludeHelp" : "todoist.allowHelp"),
                     bundle: .module)
             }
-            Button(role: .cancel) {
-            } label: {
-                Text("auth.dismiss", bundle: .module)
-            }
-        } message: {
-            Text(
-                LocalizedStringKey(pendingExcluded ? "todoist.excludeHelp" : "todoist.allowHelp"),
-                bundle: .module)
-        }
     }
 }
 extension TodoistAdapter: IntegrationPresentation {
