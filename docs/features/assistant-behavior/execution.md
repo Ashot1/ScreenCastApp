@@ -1,8 +1,10 @@
 # Выполнение задач по волнам
 
+**Текущий фронт, 23 октября 2026:** по D105/D108 работа ведётся текущим Codex и исполнителями Codex. 26E/D107, 27E, 27F и 26F приняты локально. 26F: verify 8/394/126, расширенные 182 Swift, ревью, сборки и подписи PASS; ограничения визуальной проверки и VoiceOver сохранены. Контрольная база 36 приложений / 686 файлов. 27G передана одному исполнителю после освобождения настроек и трёх проверок контракта; 27H требует отдельного согласия на реальные разрешения и запрос со снимком. Прежние указания среды и routing ниже — история; D105–D108 имеют приоритет. Коммиты не разрешены; автоматизация `ambient` остаётся приостановленной.
+
 Начало: 2026-10-18. Прежний управляющий тред: `01a14bcd-17ea-7393-b123-a913316ead11`, host `local`; с решения20 октября он остаётся только планировщиком. Проект: `95fe5a08-7ba5-4cc0-960c-515ea90e2385`, `/Users/gojda/Projects/ScreenCastApp`.
 
-**Текущее поручение:** [ADR-019](../../decisions/0019-unified-integrations.md) согласован; общий слой → GitHub/Jira → Todoist → конкретный MCP. С 20 октября 2026 разработкой управляет отдельный оркестратор: сессия Claude Code `024011b0-b1de-40d7-99bb-4a80905b488b` (Opus 5.5), см. раздел «Оркестратор принял управление» ниже. `ambient` приостановлена. Все старые routing records17A ниже недействительны до нового контракта.
+**Историческое поручение 20 октября:** [ADR-019](../../decisions/0019-unified-integrations.md) согласован; общий слой → GitHub/Jira → Todoist → конкретный MCP. С 20 октября 2026 разработкой управляет отдельный оркестратор: сессия Claude Code `024011b0-b1de-40d7-99bb-4a80905b488b` (Opus 5.5), см. раздел «Оркестратор принял управление» ниже. `ambient` приостановлена. Все старые routing records17A ниже недействительны до нового контракта.
 
 **Текущий бюджет Jev по D53:** $1 предварительных проверок, $1,50 проверок реального приложения во время/после разработки, $2,50 личного использования. Текущий стенд имеет доступ только к первому доллару. Ранее записанные ниже $2,50 на все наши тесты — история заменённого решения; перенос денег между этапами не разрешён.
 
@@ -1302,3 +1304,48 @@ ADR-023 принят 21 октября 2026 после повторных про
 - **Вопрос 26D:** состояния за входом ChatGPT не рисовать, а сверить по коду (вариант B); тексты S1–S13 одобрены; сверка — в светлом оформлении, пользователь переключил Mac.
 - **26D вернула DONE.** Оркестратор отметил расхождение из 26C: «Следующий шаг» стоит над всеми вкладками, а в макете — только на «Плане»; исправление — в 26E.
 - **Приёмка оркестратора:** хэши совпали; свежий yarn verify — exit 0; контрольная сборка `Ambient-sources-26d.app`; коммит только файлов 26D. Хэш приложения отличается от доказательства исполнителя: между сборками отладочная библиотека моста пересобиралась (тестовая сборка с другими признаками), исходники совпадают.
+
+## 26E, 27E и 27F — 23 октября 2026, Codex
+
+- D105: пользователь заменил среду D59 для этих карточек на Codex; независимые исполнители работали в общей папке, каждый в своей области.
+- 27E: исправлена ошибка кольца снимков, реализованы локальный захват/OCR и цикл наблюдения. D106 разрешил обновлять рамку после локальных изменений; ядро остаётся владельцем решения. Локальная приёмка: [27e-parent-inspection](../../../target/verification/orchestration/27e-parent-inspection.md). Обычный запуск пока включает только чистку журнала, реальный захват/разрешения/модель — 27H.
+- 27F: локально принята нативная рамка; живой показ остаётся в 27H.
+- 26E: принята лента в окне и отдельной панели. Пользовательский снимок подтвердил исправление ложного пустого состояния. D107 заменил фиксированную высоту панели на высоту по содержимому с ограничением и прокруткой; компактное окно подтверждено пользователем. [Приёмка D107](../../../target/verification/orchestration/26e-d107-parent-inspection.md).
+- После D107: 8 tooling / 394 Rust / 125 Swift, расширенные 181 Swift; ревью, сборки, подписи и аудит PASS. Ограничения реальных состояний отражены в матрице 26E; они не выданы за проверенный полный продукт.
+- Контрольная сборка `Ambient-feed-observation-26e27e27f.app`; новый baseline 35 приложений / 664 файла, старые 34 / 642 неизменны. [Доказательство](../../../target/verification/orchestration/26e27e27f-checkpoint-proof.json).
+
+## D108: 26F → 27G → 27H — 23 октября 2026
+
+- Пользователь сказал «Давай, делай» после предложения этой последовательности. Исключение Codex продолжено; реальные действия 27H по-прежнему требуют предусмотренного отдельного согласия.
+- Для 26F повторно использован один завершивший 26E исполнитель `/root/implement_26e`; Scout и Pattern Librarian проверили текущие места. Localization Mechanic обновил EN/RU (867 ключей), Code Simplicity Review PASS. Полный пакет доказательств — `target/verification/26f`; последующая локальная приёмка зафиксирована ниже.
+- На выбранный раздел приходится один настоящий Form; task/sheet/dialog не навешаны на прозрачный Group. Корневые состояние и reload сохранены. Модельные охраны и транспорт не менялись.
+- Подготовка 27G только read-only: [карта операций, независимая альтернатива и библиотечные факты](../../../target/verification/orchestration/27g-preparation.md). Новый исполнитель пока не запущен.
+- Учёт реального стенда сохраняется: 7 POST / 1 021 известный токен / 3 неизвестных расхода; новых модельных/Jev вызовов нет.
+
+## Восстановление журнала — 23 октября 2026
+
+При сверке общих документов обнаружено, что журнал выполнения был заменён копией project-status и последним routing-блоком. История до 26D восстановлена из текущего HEAD без изменения Git; последние решения и приёмки 23 октября добавлены по актуальным ADR, статусу и сохранённым доказательствам. Полная предшествовавшая восстановлению версия сохранена в `target/verification/orchestration/26f-execution-before-history-repair.md`; последний routing-блок сохранён ниже. Исходники и доказательства проверок не изменялись.
+
+HH Worker Routing (26F):
+- Objective: accepted ADR-024 settings pass, pages15–20, current eight settings sections and their existing dialogs; no observation settings yet.
+- Autonomy: ADR-023/024 and D108 resolve requirements; 26E/D107,27E,27F owners released their source. Scout and Librarian completed current scope discovery. One implementation owner can start now; no concurrent shared source writer.
+- Scope: settings compositions in AssistantSettingsView, ChatGPTSettingsView, ConnectionCheckView, IntegrationSwitches (view only), GitHub/Jira/TodoistSourcesView (settings portions only), PluginsView (settings/review/dialogs), LoginItemView, LocalPermissions (view only), VoiceReplyView (VoiceSettingsView only), AssistantView (AssistantStatusView only if needed). Local tests/fixture tests and macOS README. Localization files are delegated exclusively to the required mechanic. Shared Design/App scene expansion only with concrete parent review; model/core/provider/bridge/capture/feed files excluded.
+- Dependencies: existing native Form/Section/LabeledContent and same white-sheet pattern as AssistantView. Keep root settings state and reload task; remove outer page ScrollView when Form takes over. Preserve scopes, admission, lifecycle and real model-tier behavior. Existing Plugins disclosure can perform discovery and is not clicked in live remote GUI states.
+- Benefit: reuse the completed UI implementer with the existing Visual access/session and test/build knowledge; isolate the eight-section implementation and extensive native GUI outputs from root's contracts/documentation. Root remains planner and inspects final result instead of repeating implementation.
+- Nested delegation: required named specialists only; current Scout/Librarian findings reused. Localization Mechanic, focused Code Simplicity Reviewer, and Visual Inspector triggered. Type/registry specialists only if their actual declaration/registry trigger appears. No second generic implementer for this coupled settings package.
+- Model: existing GPT-6.1 Sol worker; Effort: existing xhigh. Same `/root/implement_26e` now exclusively owns 26F; old package is released, no duplicate worker/chat.
+- Baselines: orchestration/26f-checkpoints-baseline.json (35apps/664files),26f-source-start.json. Evidence target/verification/26f. Root owns shared docs/ADRs/status/execution/checkpoints.
+
+## 26F принята — 23 октября 2026
+
+Владелец освободил исходники и README. Родитель проверил ключевые границы, свежие логи, снимки и независимые обзоры; [отчёт](../../../target/verification/orchestration/26f-parent-inspection.md). Verify 8/394/126, расширенные Swift 182, обе сборки/аудиты/подписи PASS. Визуальная матрица сохраняет непроверенные живые состояния и VoiceOver. 295 исходных путей совпали с проверенной версией; старые 35/664 неизменны. После приёмки создана точная контрольная копия `Ambient-settings-26f.app`; база 36/686. Реальный учёт 7 POST / 1 021 известный токен / 3 неизвестных расхода не изменён. 27G теперь может получить настройки; до выбора минимальной UI-границы идёт только read-only проверка.
+
+HH Worker Routing (27G):
+- Objective: implement the complete accepted27G observation UI, commands, menu and normal persisted restore under ADR-025/D108; contract target/verification/orchestration/27g-implementation-contract.md.
+- Autonomy:26F/27E/27F accepted, source released; final Scout/Librarian/independent alternative, focused Finished Plan Review/Evidence Audit and read-only Type review PASS. All current product decisions resolved; no concurrent source owner.
+- Scope: macOS Observation directory/session/source/types; new internal presentation/Settings view; AssistantSettingsView, AssistantMenu, ChatGPTModel factory wiring; App/AmbientApp.swift; narrow MemorySession journal decode validation/adaptation; adjacent macOS tests and README. Catalogs exclusively Localization Mechanic. Parent owns shared docs/ADRs/status/execution/checkpoints. Core/provider/bridge/agent rules/prototype out of scope unless a concrete blocker is returned before edits.
+- Dependencies: one AppDelegate session, Core authoritative policy/budget/cadence, real capture and image request not executed before27H consent. Normal restore implements approved story1; ordinary Visual remains journal-only. All earlier changes preserved.
+- Benefit: reuse the completed26F Sol implementer with current settings, build and native GUI context; isolate substantial actor/UI/TDD implementation from root acceptance/docs. Parent will inspect final code/evidence, not repeat implementation. No second generic owner.
+- Nested delegation: named mandatory specialists only; use current findings rather than repeating discovery. Localization Mechanic and final Code Simplicity Review/Visual Inspector required. Type Scaffolder read-only, important code/types written by Sol. Additional generic decomposition would require demonstrated autonomous package and non-overlapping contract; none currently exists.
+- Model: existing GPT-6.1 Sol, xhigh, authorized by D105/D108. Reuse /root/implement_26e, now exclusively27G; no new chat.
+- Baseline: fresh27g-checkpoints-baseline.json36apps/686files;27g-source-start.json295paths. Evidence target/verification/27g. Stop on product/owner/lifecycle fork or automatic refusal; no bypass. Ledger7POST/1021known/3unknown unchanged.

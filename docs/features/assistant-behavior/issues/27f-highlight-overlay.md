@@ -6,11 +6,11 @@ Spec: [ADR-025](../../../decisions/0025-background-observation.md). Decisions: [
 
 **Blocked by:** приёмка 27D (принята)
 
-**Status:** ready — исполнитель запускается оркестратором (D102: параллельно с 26E и 27E, без общих файлов)
+**Status:** accepted locally — принята оркестратором 23 октября 2026 (D105): 4 теста 27F, полный verify (8 tooling / 394 Rust / 117 Swift), all-features Clippy, сборка и аудит PASS. Доказательства: `target/verification/27f/handoff.txt`; живая проверка — 27H. Новый checkpoint не создан из-за параллельных незавершённых пакетов.
 
-- [ ] Договор с 27E: `@MainActor final class HighlightOverlay` с `show(normalizedRect:displayKey:)` и `hide()`; `displayKey` — UUID дисплея строкой; прямоугольник нормализован, как у Vision.
-- [ ] Тест перевода координат (Retina, несколько дисплеев).
-- [ ] TDD для логики; обязательные специалисты; Code Simplicity Review; изменения общих документов — списком в handoff.
-- [ ] `yarn verify`, Clippy со всеми признаками, аудит экспортов и подписей, контрольные сборки по базе оркестратора.
+- [x] Договор с 27E: `@MainActor final class HighlightOverlay` с `show(normalizedRect:displayKey:)` и `hide()`; `displayKey` — UUID дисплея строкой; прямоугольник нормализован, как у Vision.
+- [x] Тест перевода координат (Retina, несколько дисплеев).
+- [x] TDD для логики; обязательные специалисты; Code Simplicity Review; изменения общих документов — списком в handoff.
+- [x] `yarn verify`, Clippy со всеми признаками, аудит экспортов и подписей, контрольные сборки по базе оркестратора.
 
 **Не входит:** интерфейс (27G).
