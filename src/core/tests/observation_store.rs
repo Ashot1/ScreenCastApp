@@ -421,3 +421,37 @@ fn the_newest_frame_is_always_sent_even_when_escaping_doubles_it()
     assert_eq!(context["frames"].as_array().ok_or("frames")?.len(), 1);
     Ok(())
 }
+
+#[test]
+fn duplicate_image_replacement_evicts_oldest_and_reports_the_image_loss()
+-> Result<(), Box<dyn std::error::Error>> {
+    let db = Database::new();
+    let mut s = Store::open(&db.0)?;
+    started(&mut s)?;
+    let mut newer = frame("newer screen");
+    newer.image = vec![2; 768 * 1024];
+    // Exactly 1 MiB fits before replacing the older display's duplicate JPEG.
+    let mut duplicate = frame("older screen");
+    duplicate.display_key = "display-B".into();
+    // Keep the older text as the last frame on its own display.
+    duplicate.image = vec![1; 256 * 1024];
+    s.submit_frame(duplicate.clone(), at(0))?;
+    let newest = s.submit_frame(newer, at(1))?.frame.ok_or("frame")?;
+    duplicate.image = vec![3; 768 * 1024];
+    assert_eq!(
+        s.submit_frame(duplicate, at(4))?.disposition,
+        FrameDisposition::Duplicate
+    );
+    let ObservationBegin::Ready(a) = s.begin_observation(at(20))? else {
+        return Err("not ready".into());
+    };
+    let d = s.dispatch_check(a, at(20).utc)?;
+    let request = d.observation().ok_or("request")?;
+    assert_eq!(request.images().len(), 1);
+    assert_eq!(request.images()[0].frame, newest);
+    assert_eq!(request.images()[0].jpeg.len(), 768 * 1024);
+    let context: Value = serde_json::from_str(request.context())?;
+    assert_eq!(context["dropped_images"], 1);
+    assert_eq!(context["frames"].as_array().ok_or("frames")?.len(), 2);
+    Ok(())
+}

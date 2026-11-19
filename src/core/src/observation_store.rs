@@ -578,10 +578,31 @@ impl Store {
             && bundle == frame.bundle_id
             && t == title
         {
+            let mut ring = self.observation.ring.clone();
+            if let Some(f) = ring.iter_mut().find(|f| f.shape.frame.0 == id) {
+                f.jpeg = jpeg;
+                f.shape.lines = frame.lines.clone();
+            }
+            let mut evicted = 0;
+            // Replacing an image can exceed the same byte bound as inserting one.
+            while ring.len() > RING_FRAMES
+                || ring.iter().map(|f| f.jpeg.len()).sum::<usize>() > RING_BYTES
+            {
+                ring.pop_front();
+                evicted += 1;
+            }
             self.change(|c| {
                 c.execute(
                     "UPDATE observation_frames SET last_seen_utc=max(last_seen_utc,?1) WHERE id=?2",
                     params![now.utc, id],
+                )?;
+                add_losses(
+                    c,
+                    Losses {
+                        frames: 0,
+                        bytes: 0,
+                        images: evicted,
+                    },
                 )?;
                 Ok(())
             })?;
@@ -592,15 +613,8 @@ impl Store {
                 lines: frame.lines,
             };
             self.follow_highlight(&shape);
+            self.observation.ring = ring;
             if let Some(f) = self
-                .observation
-                .ring
-                .iter_mut()
-                .find(|f| f.shape.frame == shape.frame)
-            {
-                f.jpeg = jpeg;
-                f.shape = shape;
-            } else if let Some(f) = self
                 .observation
                 .sent
                 .iter_mut()
