@@ -64,7 +64,7 @@ struct CaseDetailView: View {
         if model.editorKind == .task && (editingTask || model.hasUnsavedChanges) {
             DraftEditor(model: model, titleFont: .title3.weight(.semibold)) { editingTask = false }
         }
-        if task.lifecycle == .open, let step = model.nextStep {
+        if shownTab(task) == .plan, task.lifecycle == .open, let step = model.nextStep {
             NextStepBlock(model: model, step: step)
         }
         HStack {

@@ -11,6 +11,10 @@ func seedVisualFixtureTemplates() async throws {
     let seed = URL(
         filePath: try #require(ProcessInfo.processInfo.environment["AMBIENT_VISUAL_SEED_DIR"]),
         directoryHint: .isDirectory)
+    try await writeVisualFixtureTemplates(seed: seed)
+}
+
+@MainActor func writeVisualFixtureTemplates(seed: URL) async throws {
     let fm = FileManager.default
     for name in ["empty", "corrupt", "cases"] {
         let root = seed.appending(path: name, directoryHint: .isDirectory)
@@ -22,6 +26,9 @@ func seedVisualFixtureTemplates() async throws {
     let s = MemorySession(databaseURL: seed.appending(path: "cases/memory.sqlite3"))
     try await seedCases(s)
     try await seedSourceSettings(s, seed: seed)
+    #if AMBIENT_MODEL_TEST_SUPPORT
+        try await seedVisualFeed(s)
+    #endif
     try await s.close()
 }
 

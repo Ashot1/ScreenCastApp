@@ -169,6 +169,16 @@ import Testing
                    old=context.get('proposals',[])
                    proposal={'proposal_id':old[0]['proposal_id'] if old else None,'kind':kind,'message':'Copy exact 🌿 saved text','rationale':'From selected saved content','evidence_ids':['note:999999'] if mode=='wrong-citation' else ([ground,context['notes'][0]['evidence_id']] if mode=='branch' else [ground]),'step_id':ready[0]['evidence_id'] if ready and kind=='suggestion' else None}
                    proposals=[] if kind=='silence' else [proposal]
+                   if mode=='visual-feed':
+                    title=context['task']['text']
+                    if title.startswith('Починить'):
+                     proposal=dict(proposal,kind='clarification',message='Шаг 2 упирается в PR #482. Проверять сначала ветку fix/session-refresh или продолжить на main?')
+                    elif title.startswith('Ревью'):
+                     proposal=dict(proposal,message='На карточке предложения виден номер дела. Покажите название в одну строку, а номер оставьте в подсказке.')
+                    else:
+                     proposal=dict(proposal,message='В ответе стоит назвать оба предела: 16 KiB на ответ и 256 KiB контекста, и объяснить, почему запрос ограничен 320 KiB.')
+                    proposal['rationale']='Основание — сохранённый текст дела.'
+                    proposals=[proposal]
                    if mode=='feed':
                     first=dict(proposal,kind='clarification',message='first' if not old else 'rephrased')
                     second=dict(proposal,proposal_id=old[1]['proposal_id'] if old else None,kind='suggestion',message='second')

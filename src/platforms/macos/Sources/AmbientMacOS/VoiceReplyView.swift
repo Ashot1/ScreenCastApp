@@ -29,7 +29,7 @@ struct VoiceReplyView: View {
                             } icon: {
                                 Image(systemName: "checkmark")
                             }
-                        }
+                        }.ambientPrimary()
                     }
                     Button {
                         voice.cancel()
@@ -49,12 +49,23 @@ struct VoiceReplyView: View {
                 Text(LocalizedStringKey(key), bundle: .module).font(.caption)
             }
             if voice.modelDirectory == nil {
-                Text("voice.models.none", bundle: .module).font(.caption)
-                Button {
-                    voice.chooseModels()
-                } label: {
-                    Text("voice.models.choose", bundle: .module)
-                }.disabled(voice.busy)
+                HStack(spacing: 10) {
+                    Image(systemName: "mic").foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("voice.models.noneTitle", bundle: .module).font(.caption.bold())
+                        Text("voice.error.models", bundle: .module)
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 4)
+                    Button {
+                        voice.chooseModels()
+                    } label: {
+                        Text("voice.models.chooseShort", bundle: .module)
+                    }
+                    .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+                    .help(Text("voice.models.choose", bundle: .module))
+                    .disabled(voice.busy)
+                }.padding(10).ambientInset()
             }
             if !chatGPT.replyDraft.isEmpty && !voice.busy {
                 Text("voice.replace.help", bundle: .module).font(.caption).foregroundStyle(
@@ -111,15 +122,17 @@ struct VoiceReplyView: View {
 struct VoiceSettingsView: View {
     let voice: VoiceReplyModel
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("voice.privacy", bundle: .module)
-                if let directory = voice.modelDirectory {
-                    Text(verbatim: directory.path).font(.caption).textSelection(.enabled)
-                    Text("voice.models.selected", bundle: .module).font(.caption)
-                } else {
-                    Text("voice.models.none", bundle: .module)
+        Section {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    if let directory = voice.modelDirectory {
+                        Text(verbatim: directory.path).font(.caption).textSelection(.enabled)
+                        Text("voice.models.selected", bundle: .module).font(.caption)
+                    } else {
+                        Text("voice.models.none", bundle: .module)
+                    }
                 }
+                Spacer()
                 HStack {
                     Button {
                         voice.chooseModels()
@@ -134,8 +147,14 @@ struct VoiceSettingsView: View {
                         }
                     }
                 }.disabled(voice.busy)
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
+            }
+            Text("voice.summary", bundle: .module)
+            DisclosureGroup {
+                Text("voice.privacy", bundle: .module).foregroundStyle(.secondary)
+            } label: {
+                Text("settings.details", bundle: .module)
+            }
+        } header: {
             Text("voice.settings.title", bundle: .module)
         }
     }

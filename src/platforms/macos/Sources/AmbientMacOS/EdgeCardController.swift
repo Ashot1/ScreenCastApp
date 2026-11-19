@@ -9,6 +9,7 @@ import SwiftUI
     private var panel: NSPanel?
     private var running = false
     private var displayed = false
+    private var contentHeight: CGFloat?
     public init(model: AssistantModel, chatGPT: ChatGPTModel) {
         self.model = model
         self.chatGPT = chatGPT
@@ -28,6 +29,7 @@ import SwiftUI
         NotificationCenter.default.removeObserver(self)
         panel?.orderOut(nil)
         panel = nil
+        contentHeight = nil
     }
     private func observe() {
         guard running else { return }
@@ -85,13 +87,16 @@ import SwiftUI
             ]
             window.delegate = self
             window.contentView = NSHostingView(
-                rootView: AssistanceCardView(model: model, chatGPT: chatGPT, edge: true)
-                    .background {
-                        // The glass fills the whole panel, title bar included (25A R2): a clear
-                        // area would still take clicks, so no part of the panel stays empty.
-                        Color.clear.glassEffect(in: .rect(cornerRadius: 30)).ignoresSafeArea()
-                    }
-                    .ambientTheme())
+                rootView: AssistanceCardView(
+                    model: model, chatGPT: chatGPT, edge: true,
+                    contentHeightChanged: { [weak self] height in self?.resize(to: height) }
+                )
+                .background {
+                    // The glass fills the whole panel, title bar included (25A R2): a clear
+                    // area would still take clicks, so no part of the panel stays empty.
+                    Color.clear.glassEffect(in: .rect(cornerRadius: 30)).ignoresSafeArea()
+                }
+                .ambientTheme())
             panel = window
         }
         guard let panel else { return }
@@ -101,12 +106,17 @@ import SwiftUI
                 ?? NSScreen.screens.first
             {
                 panel.setFrame(
-                    Self.placement(in: screen.visibleFrame, existing: nil), display: false)
+                    Self.placement(
+                        in: screen.visibleFrame, existing: nil, contentHeight: contentHeight),
+                    display: false)
             }
             displayed = true
         }
         // Never activate the app, makeKey, or install global input monitors on arrival.
-        if !panel.isVisible { panel.orderFrontRegardless() }
+        if !panel.isVisible {
+            panel.contentView?.layoutSubtreeIfNeeded()
+            panel.orderFrontRegardless()
+        }
     }
     public func windowShouldClose(_ sender: NSWindow) -> Bool {
         Task { await chatGPT.hideEdge() }
@@ -115,22 +125,43 @@ import SwiftUI
     }
     @objc private func screensChanged() {
         guard let panel, displayed else { return }
-        let screen = NSScreen.screens.max { a, b in
+        if let screen = screen(for: panel) {
+            panel.setFrame(
+                Self.placement(
+                    in: screen.visibleFrame, existing: panel.frame, contentHeight: contentHeight),
+                display: panel.isVisible)
+        }
+    }
+    private func resize(to height: CGFloat) {
+        // Scroll layout can precede the first nonzero content measurement. Keep only UI geometry;
+        // screen changes need it even when the capped content size itself has not changed.
+        guard height > 0 else { return }
+        contentHeight = height
+        guard let panel, let screen = screen(for: panel) else { return }
+        let frame = Self.placement(
+            in: screen.visibleFrame, existing: panel.frame, contentHeight: contentHeight)
+        if frame != panel.frame { panel.setFrame(frame, display: panel.isVisible) }
+    }
+    private func screen(for panel: NSPanel) -> NSScreen? {
+        NSScreen.screens.max { a, b in
             let x = a.visibleFrame.intersection(panel.frame)
             let y = b.visibleFrame.intersection(panel.frame)
             return (x.isNull ? 0 : x.width * x.height) < (y.isNull ? 0 : y.width * y.height)
         }
-        if let screen {
-            panel.setFrame(
-                Self.placement(in: screen.visibleFrame, existing: panel.frame),
-                display: panel.isVisible)
-        }
     }
-    static func placement(in usable: CGRect, existing: CGRect?) -> CGRect {
+    static func placement(in usable: CGRect, existing: CGRect?, contentHeight: CGFloat? = nil)
+        -> CGRect
+    {
         let width = min(existing?.width ?? 420, usable.width)
-        let height = min(existing?.height ?? 600, usable.height)
+        let height = min(
+            contentHeight.map { $0.rounded(.up) } ?? existing?.height ?? 600, 600, usable.height)
         let x = existing?.minX ?? usable.maxX - width - 16
-        let y = existing?.minY ?? usable.maxY - height - 16
+        let y =
+            if let existing, contentHeight != nil {
+                existing.maxY - height
+            } else {
+                existing?.minY ?? usable.maxY - height - 16
+            }
         return CGRect(
             x: min(max(x, usable.minX), usable.maxX - width),
             y: min(max(y, usable.minY), usable.maxY - height), width: width, height: height)

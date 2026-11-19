@@ -211,6 +211,8 @@ public struct AssistantView: View {
                 } icon: {
                     Image(systemName: "tray")
                 }
+            } description: {
+                Text("feed.emptyHelp", bundle: .module)
             }
         }
     }
@@ -219,21 +221,28 @@ public struct AssistantView: View {
 struct AssistantStatusView: View {
     let model: AssistantModel
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label {
-                Text(LocalizedStringKey(model.statusKey), bundle: .module)
-            } icon: {
-                Image(systemName: "pause.circle.fill")
-            }.font(.headline)
-            Text("status.cloudUnavailable", bundle: .module)
-            AssistantPauseButton(model: model).labelStyle(.titleOnly)
-            if model.manualPause == nil {
-                AssistantPauseReadButton(model: model).labelStyle(.titleOnly)
-            }
-            Text("pause.help", bundle: .module).font(.caption).foregroundStyle(.secondary)
+        Section {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label {
+                            Text(LocalizedStringKey(model.statusKey), bundle: .module)
+                        } icon: {
+                            Image(systemName: "pause.circle.fill")
+                        }.font(.headline)
+                        Text("status.cloudUnavailable", bundle: .module)
+                    }
+                    Spacer()
+                    AssistantPauseButton(model: model).labelStyle(.titleOnly)
+                }
+                if model.manualPause == nil {
+                    AssistantPauseReadButton(model: model).labelStyle(.titleOnly)
+                }
+            }.task { await model.loadManualPause() }
+        } header: {
+            Text("settings.status", bundle: .module)
+        } footer: {
+            Text("pause.help", bundle: .module)
         }
-        .padding().frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
-        .task { await model.loadManualPause() }
     }
 }
